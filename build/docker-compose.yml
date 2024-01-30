@@ -1,0 +1,22 @@
+name: testing-htmx
+version: "3"
+
+services:
+  # notion-dashboard:
+  #   image: "notion-dashboard:${NOTION_DASHBOARD_VERSION}"
+  #   env_file:
+  #     - "../.compose.env"
+  db:
+    image: postgres:12-alpine
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+      - POSTGRES_DB
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data: {}

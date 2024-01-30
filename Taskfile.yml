@@ -1,0 +1,14 @@
+version: '3'
+
+tasks:
+  run:
+    summary: Run application with hot-reload
+    cmds:
+      - cargo watch -x 'run -- -release'
+  compose-run:
+    summary: Run application in docker compose with database
+    cmds:
+      - |
+        export $(cat .env | xargs)
+        cd build
+        docker compose up -d
