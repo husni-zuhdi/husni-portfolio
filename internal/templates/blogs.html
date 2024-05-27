@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Blogs{% endblock %}
+{% block description %}"Husni Naufal Zuhdi Blogs"{% endblock %}
+
+{% block content %}
+<h1>Blogs</h1>
+
+{% for blog in blogs %}
+    <h2>Blog {{blog.id}}</h2>
+    <p>{{blog.name}}</p>
+{% endfor %}
+
+{% endblock content %}

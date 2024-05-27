@@ -7,9 +7,11 @@
         <meta name="description" content={% block description %}{% endblock %}>
         <meta name="author" content="Husni Zuhdi">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- CSS and Script (HTMX)-->
+        <!-- HTMX-->
         <script src="https://unpkg.com/htmx.org@1.9.8"></script>
+        <!-- Emoji as icon -->
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☸️</text></svg>">
+        <!-- Sttlesheet CSS -->
         <link rel="stylesheet" href="/styles.css"/>
     </head>
     <body class="body">
@@ -19,21 +21,31 @@
             >
                 Home
             </a>
+            <a class="btn"
+                href="/blogs"
+            >
+                Blogs
+            </a>
         </div>
         <div id="main" class="main">
             {% block content %}<p>Placeholder content</p>{% endblock %}
         </div>
         <div id="footer" class="footer">
             <address>
-                Husni Naufal Zuhdi - 2024<br>
-                <a href="mailto:husninaufalz@gmail.com">husninaufalz@gmail.com</a><br>
+                Husni Naufal Zuhdi - 2024
+                <br>
+
+                <a href="mailto:husninaufalz@gmail.com"> husninaufalz@gmail.com</a>
+                <br>
+
                 <a href="https://www.linkedin.com/in/husni-naufal-zuhdi" target="_blank">
                 LinkedIn
                 </a>
-
+                
                 <a href="https://github.com/Hazunanafaru" target="_blank">
                 GitHub
-                </a><br>
+                </a>
+                <br>
             </address>
         </div>
     </body>
