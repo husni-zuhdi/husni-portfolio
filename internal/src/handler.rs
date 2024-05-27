@@ -21,6 +21,8 @@ pub async fn handler(cfg: &Config) -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .service(web::resource("/").route(web::get().to(profile)))
             .service(web::resource("/styles.css").route(web::get().to(styles)))
+            .service(web::resource("/blogs").route(web::get().to(blogs)))
+            .service(web::resource("/blogs/{blogid}").route(web::get().to(get_blog)))
     })
     .bind((endpoint, port))
     .expect("Failed to start Http Server")
