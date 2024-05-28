@@ -7,7 +7,7 @@
 <h1>Blogs</h1>
 
 {% for blog in blogs %}
-    <h2>Blog {{blog.id}}</h2>
+    <h2><a href="/blogs/{{blog.id}}">Blog {{blog.id}}</a></h2>
     <p>{{blog.name}}</p>
 {% endfor %}
 
