@@ -5,6 +5,7 @@ use std::env;
 pub struct Config {
     pub svc_endpoint: String,
     pub svc_port: String,
+    pub log_level: String,
     pub postgre_user: String,
     pub postgre_password: String,
     pub postgre_db: String,
@@ -16,6 +17,7 @@ impl Default for Config {
     fn default() -> Self {
         let svc_endpoint: String = "127.0.0.1".to_string();
         let svc_port: String = "8080".to_string();
+        let log_level: String = "info".to_string();
         let postgre_user: String = "admin".to_string();
         let postgre_password: String = "admin-password".to_string();
         let postgre_db: String = "testing".to_string();
@@ -25,6 +27,7 @@ impl Default for Config {
         Self {
             svc_endpoint,
             svc_port,
+            log_level,
             postgre_user,
             postgre_password,
             postgre_db,
@@ -40,6 +43,8 @@ impl Config {
             env::var("SVC_ENDPOINT").expect("Failed to load SVC_ENDPOINT environment variable");
         let svc_port: String =
             env::var("SVC_PORT").expect("Failed to load SVC_PORT environment variable");
+        let log_level: String =
+            env::var("LOG_LEVEL").expect("Failed to load LOG_LEVEL environment variable");
         let postgre_user: String =
             env::var("POSTGRE_USER").expect("Failed to load POSTGRE_USER environment variable");
         let postgre_password: String = env::var("POSTGRE_PASSWORD")
@@ -54,6 +59,7 @@ impl Config {
         Self {
             svc_endpoint,
             svc_port,
+            log_level,
             postgre_user,
             postgre_password,
             postgre_db,
