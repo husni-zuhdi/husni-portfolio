@@ -68,3 +68,62 @@ impl Config {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_default() {
+        let svc_endpoint: String = "127.0.0.1".to_string();
+        let svc_port: String = "8080".to_string();
+        let log_level: String = "info".to_string();
+        let postgre_user: String = "admin".to_string();
+        let postgre_password: String = "admin-password".to_string();
+        let postgre_db: String = "testing".to_string();
+        let postgre_host: String = "127.0.0.1".to_string();
+        let postgre_port: String = "5432".to_string();
+
+        let result = Config::default();
+
+        assert_eq!(result.svc_endpoint, svc_endpoint);
+        assert_eq!(result.svc_port, svc_port);
+        assert_eq!(result.log_level, log_level);
+        assert_eq!(result.postgre_user, postgre_user);
+        assert_eq!(result.postgre_password, postgre_password);
+        assert_eq!(result.postgre_db, postgre_db);
+        assert_eq!(result.postgre_host, postgre_host);
+        assert_eq!(result.postgre_port, postgre_port);
+    }
+
+    #[test]
+    fn test_from_envar() {
+        let svc_endpoint = "127.0.0.1";
+        let svc_port = "8080";
+        let log_level = "info";
+        let postgre_user = "admin";
+        let postgre_password = "admin-password";
+        let postgre_db = "testing";
+        let postgre_host = "127.0.0.1";
+        let postgre_port = "5432";
+
+        env::set_var("SVC_ENDPOINT", svc_endpoint);
+        env::set_var("SVC_PORT", svc_port);
+        env::set_var("LOG_LEVEL", log_level);
+        env::set_var("POSTGRE_USER", postgre_user);
+        env::set_var("POSTGRE_PASSWORD", postgre_password);
+        env::set_var("POSTGRE_DB", postgre_db);
+        env::set_var("POSTGRE_HOST", postgre_host);
+        env::set_var("POSTGRE_PORT", postgre_port);
+
+        let result = Config::from_envar();
+        assert_eq!(result.svc_endpoint, svc_endpoint);
+        assert_eq!(result.svc_port, svc_port);
+        assert_eq!(result.log_level, log_level);
+        assert_eq!(result.postgre_user, postgre_user);
+        assert_eq!(result.postgre_password, postgre_password);
+        assert_eq!(result.postgre_db, postgre_db);
+        assert_eq!(result.postgre_host, postgre_host);
+        assert_eq!(result.postgre_port, postgre_port);
+    }
+}
