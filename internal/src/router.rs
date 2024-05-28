@@ -1,10 +1,9 @@
-use crate::model::templates::*;
+use crate::model::{data::*, templates::*};
 use actix_files::NamedFile;
 use actix_web::{web, Responder, Result};
 use actix_web_lab::respond::Html;
 use askama::Template;
 use log::info;
-use std::fs;
 
 pub async fn styles() -> Result<NamedFile> {
     Ok(NamedFile::open("./statics/styles.css")?)
@@ -15,46 +14,41 @@ pub async fn profile() -> Result<impl Responder> {
     Ok(Html(profile))
 }
 
-pub async fn blogs() -> Result<impl Responder> {
-    let static_path = fs::read_dir("./statics/blogs/").unwrap();
-
-    let blogs_paths: Vec<String> = static_path
-        .filter_map(|blog_path| {
-            let path = blog_path.ok().expect("Failed to get blog path").path();
-            if path.is_file() {
-                path.file_name()
-                    .expect("Failed to get filename")
-                    .to_str()
-                    .map(|s| s.to_owned())
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    let blogs: Vec<Blog> = blogs_paths
+pub async fn blogs(blogs_data: web::Data<BlogsData>) -> Result<impl Responder> {
+    // Copy data to Template struct
+    let blogs_template: Vec<Blog> = blogs_data
+        .blogs
         .iter()
-        .map(|blog_path| {
-            let (id, name) = blog_path
-                .split_once("-")
-                .expect("Failed to split filename into id and name");
-            Blog { id, name }
+        .map(|blog| Blog {
+            id: &blog.id,
+            name: &blog.name,
         })
         .collect();
 
-    info!("Blogs: {:?}", blogs);
-
-    let blogs = Blogs { blogs: &blogs }
-        .render()
-        .expect("Failed to render blogs.html");
+    let blogs = Blogs {
+        blogs: &blogs_template,
+    }
+    .render()
+    .expect("Failed to render blogs.html");
+    info!("Blogs Template created");
     Ok(Html(blogs))
 }
 
-pub async fn get_blog(path: web::Path<String>) -> Result<impl Responder> {
-    let blogid = path.into_inner();
+pub async fn get_blog(
+    path: web::Path<String>,
+    blogs_data: web::Data<BlogsData>,
+) -> Result<impl Responder> {
+    let blog_id = path.into_inner();
+    let blog_name = blogs_data
+        .blogs
+        .iter()
+        .filter(|blog| blog.id == blog_id)
+        .next()
+        .expect("Failed to get blog name with id {blog_id}");
+
     let blog = Blog {
-        id: &blogid,
-        name: "test",
+        id: &blog_id,
+        name: &blog_name.name,
     }
     .render()
     .expect("Failed to render blog.html");
