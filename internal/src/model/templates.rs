@@ -15,4 +15,6 @@ pub struct Blogs<'a> {
 pub struct Blog<'a> {
     pub id: &'a str,
     pub name: &'a str,
+    pub filename: &'a str,
+    pub body: &'a str,
 }

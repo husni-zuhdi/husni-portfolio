@@ -10,4 +10,6 @@ pub struct BlogsData {
 pub struct BlogData {
     pub id: String,
     pub name: String,
+    pub filename: String,
+    pub body: String,
 }
