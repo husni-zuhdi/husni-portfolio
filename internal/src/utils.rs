@@ -1,5 +1,6 @@
 use crate::model::data::*;
 use log::info;
+use markdown::to_html;
 use std::fs;
 
 pub async fn create_blogs() -> Result<BlogsData, String> {
@@ -28,6 +29,8 @@ pub async fn create_blogs() -> Result<BlogsData, String> {
             BlogData {
                 id: id.to_string(),
                 name: name.to_string(),
+                filename: blog_path.to_owned(),
+                body: "".to_string(),
             }
         })
         .collect();
@@ -35,4 +38,10 @@ pub async fn create_blogs() -> Result<BlogsData, String> {
     info!("Blogs: {:?}", blogs);
 
     Ok(BlogsData { blogs })
+}
+
+pub async fn md_to_html(filename: String) -> Result<String, String> {
+    let full_path = format!("./statics/blogs/{}", &filename);
+    let body_md = fs::read_to_string(full_path).expect("Failed to read markdown blog file");
+    Ok(to_html(&body_md))
 }
