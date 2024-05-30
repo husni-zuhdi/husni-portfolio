@@ -1,5 +1,3 @@
-use std::fs;
-
 use crate::model::{data::*, templates::*};
 use crate::utils::md_to_html;
 use actix_files::NamedFile;
@@ -7,7 +5,6 @@ use actix_web::{web, Responder, Result};
 use actix_web_lab::respond::Html;
 use askama::Template;
 use log::info;
-use markdown::*;
 
 pub async fn styles() -> Result<NamedFile> {
     Ok(NamedFile::open("./statics/styles.css")?)
