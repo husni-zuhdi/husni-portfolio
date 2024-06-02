@@ -1,6 +1,10 @@
 version: '3'
 
 tasks:
+  test:
+    summary: Run unit test with logs
+    cmds:
+      - RUST_LOG=debug cargo test -- --nocapture
   run:
     summary: Run application with hot-reload
     cmds:
