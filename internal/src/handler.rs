@@ -1,6 +1,6 @@
 use crate::config::Config;
+use crate::model::data::BlogsData;
 use crate::router::*;
-use crate::utils::create_blogs;
 use actix_web::{middleware, web, App, HttpServer};
 
 pub async fn handler(cfg: &Config) -> std::io::Result<()> {
@@ -11,7 +11,7 @@ pub async fn handler(cfg: &Config) -> std::io::Result<()> {
         .svc_port
         .parse::<u16>()
         .expect("Failed to get port number");
-    let blogs_data = create_blogs().await.expect("Failed to get blogs data");
+    let blogs_data = BlogsData::default();
 
     log::info!(
         "Starting HTTP Server at http://{}:{}",

@@ -1,5 +1,4 @@
 use crate::model::{data::*, templates::*};
-use crate::utils::md_to_html;
 use actix_files::NamedFile;
 use actix_web::{web, Responder, Result};
 use actix_web_lab::respond::Html;
@@ -24,7 +23,7 @@ pub async fn blogs(blogs_data: web::Data<BlogsData>) -> Result<impl Responder> {
             id: &blog.id,
             name: &blog.name,
             filename: &blog.filename,
-            body: "",
+            body: &blog.body,
         })
         .collect();
 
@@ -49,15 +48,11 @@ pub async fn get_blog(
         .next()
         .expect("Failed to get blog name with id {blog_id}");
 
-    let body = md_to_html(blog_data.filename.clone())
-        .await
-        .expect("Failed to render markdown to html");
-
     let blog = Blog {
         id: &blog_id,
         name: &blog_data.name,
         filename: &blog_data.filename,
-        body: &body,
+        body: &blog_data.body,
     }
     .render()
     .expect("Failed to render blog.html");
