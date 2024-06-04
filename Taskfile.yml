@@ -8,7 +8,18 @@ tasks:
   run:
     summary: Run application with hot-reload
     cmds:
-      - cargo watch -x 'run -- -release'
+      - cargo watch -s 'export $(cat .env | xargs) && cargo run -- -release'
+  update_version:
+    summary: Update version manifest
+    cmds:
+      - |
+        cat <<EOF> version
+        {
+          "version": "$(cat cmd/Cargo.toml| grep '^version' | awk -F '=' '{print $2}' | sed 's/[[:space:]|\"]//g')",
+          "build_date": "$(date +%F)",
+          "build_hash": "$(git rev-parse HEAD)"
+        }
+        EOF
   compose-run:
     summary: Run application in docker compose with database
     cmds:
