@@ -1,4 +1,6 @@
+use crate::config::Config;
 use crate::model::{data::*, templates::*};
+use crate::utils::read_version_manifest;
 use actix_files::NamedFile;
 use actix_web::{web, Responder, Result};
 use actix_web_lab::respond::Html;
@@ -14,7 +16,7 @@ pub async fn profile() -> Result<impl Responder> {
     Ok(Html(profile))
 }
 
-pub async fn blogs(blogs_data: web::Data<BlogsData>) -> Result<impl Responder> {
+pub async fn get_blogs(blogs_data: web::Data<BlogsData>) -> Result<impl Responder> {
     // Copy data to Template struct
     let blogs_template: Vec<Blog> = blogs_data
         .blogs
@@ -57,4 +59,19 @@ pub async fn get_blog(
     .render()
     .expect("Failed to render blog.html");
     Ok(Html(blog))
+}
+
+pub async fn get_version(config: web::Data<Config>) -> Result<impl Responder> {
+    let version_json = read_version_manifest().expect("Failed to get version manifest");
+    let version = Version {
+        version: version_json.version.as_str(),
+        environment: config.environment.as_str(),
+        build_hash: version_json.build_hash.as_str(),
+        build_date: version_json.build_date.as_str(),
+    }
+    .render()
+    .expect("Failed to render version.html");
+    info!("Version Template created");
+
+    Ok(Html(version))
 }
