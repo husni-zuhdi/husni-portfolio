@@ -1,5 +1,6 @@
 use crate::utils::md_to_html;
 use log::{debug, info};
+use serde::Deserialize;
 use std::fs;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -16,6 +17,13 @@ pub struct BlogData {
     pub name: String,
     pub filename: String,
     pub body: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct VersionData {
+    pub version: String,
+    pub build_hash: String,
+    pub build_date: String,
 }
 
 impl Default for BlogsData {

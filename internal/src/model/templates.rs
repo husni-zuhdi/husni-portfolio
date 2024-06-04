@@ -18,3 +18,12 @@ pub struct Blog<'a> {
     pub filename: &'a str,
     pub body: &'a str,
 }
+
+#[derive(Template, Debug)]
+#[template(path = "version.html")]
+pub struct Version<'a> {
+    pub version: &'a str,
+    pub environment: &'a str,
+    pub build_hash: &'a str,
+    pub build_date: &'a str,
+}
