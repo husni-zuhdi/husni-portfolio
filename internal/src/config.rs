@@ -1,11 +1,12 @@
 use std::env;
 
 /// Struct Config for setup environment variables
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Config {
     pub svc_endpoint: String,
     pub svc_port: String,
     pub log_level: String,
+    pub environment: String,
     pub postgre_user: String,
     pub postgre_password: String,
     pub postgre_db: String,
@@ -18,6 +19,7 @@ impl Default for Config {
         let svc_endpoint: String = "127.0.0.1".to_string();
         let svc_port: String = "8080".to_string();
         let log_level: String = "info".to_string();
+        let environment: String = "dev".to_string();
         let postgre_user: String = "admin".to_string();
         let postgre_password: String = "admin-password".to_string();
         let postgre_db: String = "testing".to_string();
@@ -28,6 +30,7 @@ impl Default for Config {
             svc_endpoint,
             svc_port,
             log_level,
+            environment,
             postgre_user,
             postgre_password,
             postgre_db,
@@ -45,6 +48,8 @@ impl Config {
             env::var("SVC_PORT").expect("Failed to load SVC_PORT environment variable");
         let log_level: String =
             env::var("LOG_LEVEL").expect("Failed to load LOG_LEVEL environment variable");
+        let environment: String =
+            env::var("ENVIRONMENT").expect("Failed to load ENVIRONMENT environment variable");
         let postgre_user: String =
             env::var("POSTGRE_USER").expect("Failed to load POSTGRE_USER environment variable");
         let postgre_password: String = env::var("POSTGRE_PASSWORD")
@@ -60,6 +65,7 @@ impl Config {
             svc_endpoint,
             svc_port,
             log_level,
+            environment,
             postgre_user,
             postgre_password,
             postgre_db,
@@ -78,6 +84,7 @@ mod test {
         let svc_endpoint: String = "127.0.0.1".to_string();
         let svc_port: String = "8080".to_string();
         let log_level: String = "info".to_string();
+        let environment: String = "dev".to_string();
         let postgre_user: String = "admin".to_string();
         let postgre_password: String = "admin-password".to_string();
         let postgre_db: String = "testing".to_string();
@@ -89,6 +96,7 @@ mod test {
         assert_eq!(result.svc_endpoint, svc_endpoint);
         assert_eq!(result.svc_port, svc_port);
         assert_eq!(result.log_level, log_level);
+        assert_eq!(result.environment, environment);
         assert_eq!(result.postgre_user, postgre_user);
         assert_eq!(result.postgre_password, postgre_password);
         assert_eq!(result.postgre_db, postgre_db);
@@ -101,6 +109,7 @@ mod test {
         let svc_endpoint = "127.0.0.1";
         let svc_port = "8080";
         let log_level = "info";
+        let environment = "dev";
         let postgre_user = "admin";
         let postgre_password = "admin-password";
         let postgre_db = "testing";
@@ -110,6 +119,7 @@ mod test {
         env::set_var("SVC_ENDPOINT", svc_endpoint);
         env::set_var("SVC_PORT", svc_port);
         env::set_var("LOG_LEVEL", log_level);
+        env::set_var("ENVIRONMENT", environment);
         env::set_var("POSTGRE_USER", postgre_user);
         env::set_var("POSTGRE_PASSWORD", postgre_password);
         env::set_var("POSTGRE_DB", postgre_db);
@@ -120,6 +130,7 @@ mod test {
         assert_eq!(result.svc_endpoint, svc_endpoint);
         assert_eq!(result.svc_port, svc_port);
         assert_eq!(result.log_level, log_level);
+        assert_eq!(result.environment, environment);
         assert_eq!(result.postgre_user, postgre_user);
         assert_eq!(result.postgre_password, postgre_password);
         assert_eq!(result.postgre_db, postgre_db);
