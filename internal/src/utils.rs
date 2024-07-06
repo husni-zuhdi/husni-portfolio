@@ -23,3 +23,12 @@ pub fn read_version_manifest() -> Result<VersionData, String> {
     let json: VersionData = serde_json::from_reader(reader).expect("Failed to parse version.json");
     Ok(json)
 }
+
+/// Capitalizes the first character in s.
+pub fn capitalize(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
+}
