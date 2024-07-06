@@ -94,11 +94,11 @@ mod test {
     fn test_blogs_data_from_dir() {
         // Preparation
         let test_id = "999";
-        let test_name = "test-blog.md";
+        let test_name = "Test blog";
         let test_body = "# Testing Blog for Unit Test";
         let test_body_html = "<h1>Testing Blog for Unit Test</h1>";
-        let test_filename = "999-test-blog.md";
-        let test_path = "../statics/blogs/999-test-blog.md";
+        let test_filename = "999-test_blog.md";
+        let test_path = "../statics/blogs/999-test_blog.md";
 
         // Get current directory
         debug!(
