@@ -8,7 +8,8 @@ use askama::Template;
 use log::info;
 
 pub async fn styles() -> Result<NamedFile> {
-    Ok(NamedFile::open("./statics/styles.css")?)
+    let styles = NamedFile::open("./statics/styles.css").expect("Failed to render styles.css");
+    Ok(styles)
 }
 
 pub async fn profile() -> Result<impl Responder> {

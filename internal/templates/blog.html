@@ -4,8 +4,8 @@
 {% block description %}"Blog {{id}} - {{name}}"{% endblock %}
 
 {% block content %}
-    <h1>{{id}} - {{name}}</h1>
-    <h2>{{filename}}</h2>
+    <h1>{{id}} | {{name}}</h1>
+    <!-- <h2>{{filename}}</h2> -->
     <hr>
     <div>
         {{body|safe}}

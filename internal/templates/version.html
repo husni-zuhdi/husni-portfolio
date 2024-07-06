@@ -1,13 +1,11 @@
-<h1></h1>
 {% extends "base.html" %}
 
 {% block title %}Husni Blog v{{version}}{% endblock %}
 {% block description %}"Husni Blog v{{version}}"{% endblock %}
 
 {% block content %}
-    <h1>Husni Blog v{{version}}</h1>
-    <hr>
-    <h2>Environment: {{environment}}</h2>
-    <h2>Githash: {{build_hash}}</h2>
-    <h2>Build Date: {{build_date}}</h2>
+    <p>Husni Blog v{{version}}</p>
+    <p>Environment: {{environment}}</p>
+    <p>Githash: {{build_hash}}</p>
+    <p>Build Date: {{build_date}}</p>
 {% endblock content %}

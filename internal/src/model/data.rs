@@ -1,4 +1,4 @@
-use crate::utils::md_to_html;
+use crate::utils::{capitalize, md_to_html};
 use log::{debug, info};
 use serde::Deserialize;
 use std::fs;
@@ -55,9 +55,14 @@ impl BlogsData {
         let blogs: Vec<BlogData> = blogs_paths
             .iter()
             .map(|blog_path| {
-                let (id, name) = blog_path
+                let (id, name_init) = blog_path
                     .split_once("-")
                     .expect("Failed to split filename into id and name");
+                let name_formated = name_init.replace("_", " ");
+                let (name_lower, _) = name_formated
+                    .split_once(".")
+                    .expect("Failed to remove file extension");
+                let name = capitalize(name_lower);
                 let fullpath = format!("{}{}", directory, blog_path);
 
                 info!("markdown loaded: {}", fullpath);
@@ -89,11 +94,11 @@ mod test {
     fn test_blogs_data_from_dir() {
         // Preparation
         let test_id = "999";
-        let test_name = "test-blog.md";
+        let test_name = "Test blog";
         let test_body = "# Testing Blog for Unit Test";
         let test_body_html = "<h1>Testing Blog for Unit Test</h1>";
-        let test_filename = "999-test-blog.md";
-        let test_path = "../statics/blogs/999-test-blog.md";
+        let test_filename = "999-test_blog.md";
+        let test_path = "../statics/blogs/999-test_blog.md";
 
         // Get current directory
         debug!(

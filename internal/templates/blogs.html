@@ -5,10 +5,11 @@
 
 {% block content %}
 <h1>Blogs</h1>
-
+<hr>
 {% for blog in blogs %}
-    <h2><a href="/blogs/{{blog.id}}">Blog {{blog.id}}</a></h2>
-    <p>{{blog.name}}</p>
+    <h2>
+        {{blog.id}} | <a href="/blogs/{{blog.id}}">{{blog.name}}</a>
+    </h2>
 {% endfor %}
 
 {% endblock content %}
