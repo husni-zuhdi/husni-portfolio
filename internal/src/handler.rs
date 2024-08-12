@@ -31,6 +31,7 @@ pub async fn handler(cfg: Config) -> std::io::Result<()> {
             .service(web::resource("/blogs").route(web::get().to(get_blogs)))
             .service(web::resource("/blogs/{blogid}").route(web::get().to(get_blog)))
             .service(web::resource("/version").route(web::get().to(get_version)))
+            .service(web::resource("/not-found").route(web::get().to(get_404_not_found)))
     })
     .bind((endpoint, port))
     .expect("Failed to start Http Server")

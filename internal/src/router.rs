@@ -30,6 +30,11 @@ pub async fn profile() -> Result<impl Responder> {
     Ok(Html(profile))
 }
 
+pub async fn get_404_not_found() -> Result<impl Responder> {
+    let html = NotFound.render().expect("Failed to render not_found.html");
+    Ok(Html(html))
+}
+
 pub async fn get_blogs(blogs_data: web::Data<BlogsData>) -> Result<impl Responder> {
     // Copy data to Template struct
     let blogs_template: Vec<Blog> = blogs_data
