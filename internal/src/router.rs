@@ -5,11 +5,24 @@ use actix_files::NamedFile;
 use actix_web::{web, Responder, Result};
 use actix_web_lab::respond::Html;
 use askama::Template;
-use log::info;
+use log::{error, info};
 
-pub async fn styles() -> Result<NamedFile> {
-    let styles = NamedFile::open("./statics/styles.css").expect("Failed to render styles.css");
-    Ok(styles)
+pub async fn statics(path: web::Path<String>) -> Result<impl Responder> {
+    info!("Statics path: {}", path.clone());
+    let static_path = match path.into_inner().as_str() {
+        "styles.css" => Ok(format!("./statics/styles.css")),
+        "apple-touch-icon.png" => Ok(format!("./statics/favicon/apple-touch-icon.png")),
+        "favicon-16x16.png" => Ok(format!("./statics/favicon/favicon-16x16.png")),
+        "favicon-32x32.png" => Ok(format!("./statics/favicon/favicon-32x32.png")),
+        _ => {
+            let err = "Failed to get static path. Statics path is not allowed.";
+            error!("{}", err);
+            Err(err)
+        }
+    }
+    .expect("Failed to get static path");
+    let static_file = NamedFile::open(static_path).expect("Failed to render static file(s)");
+    Ok(static_file)
 }
 
 pub async fn profile() -> Result<impl Responder> {

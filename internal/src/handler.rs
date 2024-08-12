@@ -27,7 +27,7 @@ pub async fn handler(cfg: Config) -> std::io::Result<()> {
             .app_data(web::Data::new(blogs_data.clone()))
             .app_data(web::Data::new(config.clone()))
             .service(web::resource("/").route(web::get().to(profile)))
-            .service(web::resource("/styles.css").route(web::get().to(styles)))
+            .service(web::resource("/statics/{static_file}").route(web::get().to(statics)))
             .service(web::resource("/blogs").route(web::get().to(get_blogs)))
             .service(web::resource("/blogs/{blogid}").route(web::get().to(get_blog)))
             .service(web::resource("/version").route(web::get().to(get_version)))
