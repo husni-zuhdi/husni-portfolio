@@ -7,6 +7,7 @@ My Portfolio webiste
 * [Askama](https://github.com/djc/askama)
 * [Markdown-rs](https://github.com/wooorm/markdown-rs)
 * [Taskfile](https://taskfile.dev/)
+* [TailwindCSS](https://tailwindcss.com/)
 
 ## How to use
 
