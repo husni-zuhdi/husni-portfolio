@@ -27,3 +27,7 @@ pub struct Version<'a> {
     pub build_hash: &'a str,
     pub build_date: &'a str,
 }
+
+#[derive(Template, Debug)]
+#[template(path = "not_found.html")]
+pub struct NotFound;

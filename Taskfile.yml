@@ -5,8 +5,14 @@ tasks:
     summary: Run unit test with logs
     cmds:
       - RUST_LOG=debug cargo test -- --nocapture
+  build-tailwind:
+    summary: Build tailwindcss
+    cmds:
+      - tailwindcss -i ./statics/input.css -o ./statics/styles.css
   run:
     summary: Run application with hot-reload
+    deps:
+      - build-tailwind
     cmds:
       - cargo watch -s 'export $(cat .env | xargs) && cargo run -- -release'
   update_version:
@@ -22,6 +28,8 @@ tasks:
         EOF
   compose-run:
     summary: Run application in docker compose with database
+    deps:
+      - build-tailwind
     cmds:
       - |
         export $(cat .env | xargs)
