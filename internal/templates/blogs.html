@@ -4,10 +4,10 @@
 {% block description %}"Husni Naufal Zuhdi Blogs"{% endblock %}
 
 {% block content %}
-<h1>Blogs</h1>
+<h1 class="mb-4 font-semibold uppercase md:justify-start">Blogs</h1>
 <hr>
 {% for blog in blogs %}
-    <h2>
+    <h2 class="mb-2 hover:font-bold md:justify-start">
         {{blog.id}} | <a href="/blogs/{{blog.id}}">{{blog.name}}</a>
     </h2>
 {% endfor %}
