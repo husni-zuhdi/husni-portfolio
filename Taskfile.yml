@@ -5,6 +5,10 @@ tasks:
     summary: Run unit test with logs
     cmds:
       - RUST_LOG=debug cargo test -- --nocapture
+  build:
+    summary: Build Docker Image
+    cmds:
+      - docker build -t husni-portfolio:$(cat version.json | jq --raw-output '.version') .
   build-tailwind:
     summary: Build tailwindcss
     cmds:
