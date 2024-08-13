@@ -4,4 +4,5 @@ RUN cargo build --release
 
 FROM gcr.io/distroless/cc
 COPY --from=builder ./target/release/cmd /husni-portfolio
+COPY ./statics /statics
 CMD ["/husni-portfolio"]
