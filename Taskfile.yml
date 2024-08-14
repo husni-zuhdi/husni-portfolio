@@ -5,21 +5,47 @@ tasks:
     summary: Run unit test with logs
     cmds:
       - RUST_LOG=debug cargo test -- --nocapture
-  build:
+  run:
+    summary: Run application with hot-reload
+    cmds:
+      # Add tailwindcss build for hot reloading
+      - tailwindcss -i ./statics/input.css -o ./statics/styles.css
+      - cargo watch -s 'export $(cat .env | xargs) && cargo run -- -release'
+
+  docker-build:
     summary: Build Docker Image
     cmds:
       - docker build -t husni-portfolio:$(cat version.json | jq --raw-output '.version') .
-  build-tailwind:
+  docker-run:
+    summary: Run Docker Image
+    cmds:
+      - docker run --name husni-portfolio-$(date +'%Y-%m-%d-%H-%M-%S') -it -d --env-file=.env husni-portfolio:$(cat version.json | jq --raw-output '.version')
+  docker-compose-up:
+    summary: Run application in docker compose with database
+    deps:
+      - tailwind-build
+      - update-version
+      - docker-build
+    cmds:
+      - |
+        export $(cat .env | xargs)
+        export SVC_VERSION=$(cat version.json | jq --raw-output '.version')
+        cd build
+        docker compose up -d
+  docker-compose-down:
+    summary: Teardown docker compose
+    cmds:
+      - |
+        export $(cat .env | xargs)
+        export SVC_VERSION=$(cat version.json | jq --raw-output '.version')
+        cd build
+        docker compose down
+
+  tailwind-build:
     summary: Build tailwindcss
     cmds:
       - tailwindcss -i ./statics/input.css -o ./statics/styles.css
-  run:
-    summary: Run application with hot-reload
-    deps:
-      - build-tailwind
-    cmds:
-      - cargo watch -s 'export $(cat .env | xargs) && cargo run -- -release'
-  update_version:
+  update-version:
     summary: Update version manifest
     cmds:
       - |
@@ -30,12 +56,3 @@ tasks:
           "build_hash": "$(git rev-parse HEAD)"
         }
         EOF
-  compose-run:
-    summary: Run application in docker compose with database
-    deps:
-      - build-tailwind
-    cmds:
-      - |
-        export $(cat .env | xargs)
-        cd build
-        docker compose up -d
