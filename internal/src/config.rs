@@ -51,15 +51,15 @@ impl Config {
         let environment: String =
             env::var("ENVIRONMENT").expect("Failed to load ENVIRONMENT environment variable");
         let postgre_user: String =
-            env::var("POSTGRE_USER").expect("Failed to load POSTGRE_USER environment variable");
-        let postgre_password: String = env::var("POSTGRE_PASSWORD")
-            .expect("Failed to load POSTGRE_PASSWORD environment variable");
+            env::var("POSTGRES_USER").expect("Failed to load POSTGRES_USER environment variable");
+        let postgre_password: String = env::var("POSTGRES_PASSWORD")
+            .expect("Failed to load POSTGRES_PASSWORD environment variable");
         let postgre_db: String =
-            env::var("POSTGRE_DB").expect("Failed to load POSTGRE_DB environment variable");
+            env::var("POSTGRES_DB").expect("Failed to load POSTGRES_DB environment variable");
         let postgre_host: String =
-            env::var("POSTGRE_HOST").expect("Failed to load POSTGRE_DB environment variable");
+            env::var("POSTGRES_HOST").expect("Failed to load POSTGRES_DB environment variable");
         let postgre_port: String =
-            env::var("POSTGRE_PORT").expect("Failed to load POSTGRE_PORT environment variable");
+            env::var("POSTGRES_PORT").expect("Failed to load POSTGRES_PORT environment variable");
 
         Self {
             svc_endpoint,
@@ -120,11 +120,11 @@ mod test {
         env::set_var("SVC_PORT", svc_port);
         env::set_var("LOG_LEVEL", log_level);
         env::set_var("ENVIRONMENT", environment);
-        env::set_var("POSTGRE_USER", postgre_user);
-        env::set_var("POSTGRE_PASSWORD", postgre_password);
-        env::set_var("POSTGRE_DB", postgre_db);
-        env::set_var("POSTGRE_HOST", postgre_host);
-        env::set_var("POSTGRE_PORT", postgre_port);
+        env::set_var("POSTGRES_USER", postgre_user);
+        env::set_var("POSTGRES_PASSWORD", postgre_password);
+        env::set_var("POSTGRES_DB", postgre_db);
+        env::set_var("POSTGRES_HOST", postgre_host);
+        env::set_var("POSTGRES_PORT", postgre_port);
 
         let result = Config::from_envar();
         assert_eq!(result.svc_endpoint, svc_endpoint);
