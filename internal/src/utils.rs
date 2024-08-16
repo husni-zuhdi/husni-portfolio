@@ -6,8 +6,20 @@ use std::io::BufReader;
 /// md_to_html: Markdown to HTML
 /// take String of filename
 /// return String of converted markdown in html or String of error
-pub fn md_to_html(filename: String) -> Result<String, String> {
-    let body_md = fs::read_to_string(filename).expect("Failed to read markdown blog file");
+pub fn md_to_html(filename: Option<String>, body: Option<String>) -> Result<String, String> {
+    let mut body_md = String::new();
+    match filename {
+        Some(val) => {
+            body_md = fs::read_to_string(val).expect("Failed to read markdown blog file");
+        }
+        None => (),
+    }
+
+    match body {
+        Some(val) => body_md = val,
+        None => (),
+    }
+    // let body_md = fs::read_to_string(filename.unwrap()).expect("Failed to read markdown blog file");
     Ok(to_html(&body_md))
 }
 
