@@ -1,6 +1,7 @@
+use crate::api::github::get_gh_blog_data;
 use crate::utils::{capitalize, md_to_html};
 use log::{debug, info};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -11,10 +12,17 @@ pub struct BlogsData {
     pub blogs: Vec<BlogData>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub enum BlogDataType {
+    FileSystem,
+    Github,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct BlogData {
     pub id: String,
     pub name: String,
+    pub source: BlogDataType,
     pub filename: String,
     pub body: String,
 }
@@ -34,6 +42,17 @@ impl Default for BlogsData {
 }
 
 impl BlogsData {
+    pub async fn with_gh(owner: &String, repo: &String, branch: &String) -> Self {
+        let dir = Some("./statics/blogs/".to_string());
+        let mut blog_data = Self::from_dir(dir).blogs;
+        let mut gh_blog_data =
+            get_gh_blog_data(owner.to_string(), repo.to_string(), branch.to_string())
+                .await
+                .expect("Failed to get github blog data");
+        blog_data.append(&mut gh_blog_data);
+        Self { blogs: blog_data }
+    }
+
     pub fn from_dir(dir: Option<String>) -> Self {
         let directory = dir.clone().expect("Failed to get directory");
         let static_path = fs::read_dir(directory.as_str()).unwrap();
@@ -67,10 +86,12 @@ impl BlogsData {
 
                 info!("markdown loaded: {}", fullpath);
 
-                let body = md_to_html(fullpath).expect("Failed to convert markdown to html");
+                let body =
+                    md_to_html(Some(fullpath), None).expect("Failed to convert markdown to html");
                 BlogData {
                     id: id.to_string(),
                     name: name.to_string(),
+                    source: BlogDataType::FileSystem,
                     filename: blog_path.to_owned(),
                     body,
                 }
@@ -81,6 +102,60 @@ impl BlogsData {
 
         BlogsData { blogs }
     }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct Trees {
+    pub sha: String,
+    pub url: String,
+    pub tree: Vec<Tree>,
+}
+
+// The file mode one of
+// 100644 for file (blob)
+// 100755 for executable (blob)
+// 040000 for subdirectory (tree)
+// 160000 for submodule (commit)
+// 120000 for a blob that specifies the path of a symlink.
+// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum TreeMode {
+    #[serde(rename(deserialize = "100644"))]
+    File,
+    #[serde(rename(deserialize = "100755"))]
+    Executable,
+    #[serde(rename(deserialize = "040000"))]
+    SubDir,
+    #[serde(rename(deserialize = "160000"))]
+    SubModeule,
+    #[serde(rename(deserialize = "120000"))]
+    Symlink,
+}
+
+// Either blob, tree, or commit.
+// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum TreeType {
+    #[serde(rename(deserialize = "blob"))]
+    Blob,
+    #[serde(rename(deserialize = "tree"))]
+    Tree,
+    #[serde(rename(deserialize = "commit"))]
+    Commit,
+}
+
+// Tree structure of git
+// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct Tree {
+    pub path: String,
+    #[serde(rename(deserialize = "mode"))]
+    pub tree_mode: TreeMode,
+    #[serde(rename(deserialize = "type"))]
+    pub tree_type: TreeType,
+    pub sha: String,
+    pub size: Option<i64>,
+    pub url: String,
 }
 
 #[cfg(test)]
