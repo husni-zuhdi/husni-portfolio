@@ -1,5 +1,5 @@
 use crate::model::data::{BlogData, BlogDataType, Trees};
-use crate::utils::{capitalize, md_to_html};
+use crate::utils::{capitalize, md_to_html, replace_gh_link};
 use http_body_util::BodyExt;
 use log::{error, info};
 use octocrab;
@@ -90,10 +90,24 @@ pub async fn get_gh_blog_data(
                                         let name = capitalize(&name_formated);
                                         info!("Markdown of {} loaded", &blog_name);
 
-                                        let body =
+                                        let raw_body =
                                             md_to_html(None, Some(decoded_content.to_string()))
                                                 .expect("Failed to convert markdown to html");
-                                        info!("HTML Body of {}: {}", &blog_name, &body);
+                                        info!("HTML Body of {}: {}", &blog_name, &raw_body);
+
+                                        let gh_blog_link = format!(
+                                            "https://github.com/{}/{}/tree/{}/{}",
+                                            &owner, &repo, &branch, &blog_path
+                                        );
+                                        let gh_raw_blog_link = format!(
+                                            "https://raw.githubusercontent.com/{}/{}/{}/{}",
+                                            &owner, &repo, &branch, &blog_path
+                                        );
+                                        let body = replace_gh_link(
+                                            raw_body,
+                                            gh_blog_link,
+                                            gh_raw_blog_link,
+                                        );
 
                                         blog_trees.push(BlogData {
                                             id: format!("{}-g", blog_id).to_string(),
