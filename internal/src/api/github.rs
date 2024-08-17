@@ -1,24 +1,10 @@
 use crate::model::data::{BlogData, BlogDataType, Trees};
 use crate::utils::{capitalize, md_to_html, replace_gh_link};
 use http_body_util::BodyExt;
-use log::{error, info};
+use log::{debug, error, info};
 use octocrab;
 use serde_json;
 use std::num::IntErrorKind;
-
-/// Testing 1
-/// Nge get readme dulu
-pub async fn get_blog_readme() -> String {
-    let readme = octocrab::instance()
-        .repos("husni-zuhdi", "husni-blog-resources")
-        .get_readme()
-        .path("README.md")
-        .r#ref("main")
-        .send()
-        .await
-        .expect("Failed to get readme content");
-    readme.name
-}
 
 /// get_gh_blog_data()
 /// An async function that
@@ -93,7 +79,7 @@ pub async fn get_gh_blog_data(
                                         let raw_body =
                                             md_to_html(None, Some(decoded_content.to_string()))
                                                 .expect("Failed to convert markdown to html");
-                                        info!("HTML Body of {}: {}", &blog_name, &raw_body);
+                                        debug!("HTML Body of {}: {}", &blog_name, &raw_body);
 
                                         let gh_blog_link = format!(
                                             "https://github.com/{}/{}/tree/{}/{}",
