@@ -520,6 +520,7 @@ code {
 }
 
 pre {
+  text-wrap: wrap;
   border-radius: 0.25rem;
   border-width: 2px;
   border-style: solid;
