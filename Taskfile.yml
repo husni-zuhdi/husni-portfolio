@@ -4,7 +4,7 @@ tasks:
   test:
     summary: Run unit test with logs
     cmds:
-      - RUST_LOG=debug cargo test -- --nocapture
+      - RUST_LOG=debug cargo test -- --nocapture --test-threads=1
   run:
     summary: Run application with hot-reload
     cmds:

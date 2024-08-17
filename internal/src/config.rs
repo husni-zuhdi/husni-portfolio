@@ -196,6 +196,19 @@ mod test {
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
+
+        env::remove_var("SVC_ENDPOINT");
+        env::remove_var("SVC_PORT");
+        env::remove_var("LOG_LEVEL");
+        env::remove_var("ENVIRONMENT");
+        env::remove_var("POSTGRES_USER");
+        env::remove_var("POSTGRES_PASSWORD");
+        env::remove_var("POSTGRES_DB");
+        env::remove_var("POSTGRES_HOST");
+        env::remove_var("POSTGRES_PORT");
+        env::remove_var("GITHUB_OWNER");
+        env::remove_var("GITHUB_REPO");
+        env::remove_var("GITHUB_BRANCH");
     }
 
     #[test]
@@ -240,5 +253,18 @@ mod test {
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
+
+        env::remove_var("SVC_ENDPOINT");
+        env::remove_var("SVC_PORT");
+        env::remove_var("LOG_LEVEL");
+        env::remove_var("ENVIRONMENT");
+        env::remove_var("POSTGRES_USER");
+        env::remove_var("POSTGRES_PASSWORD");
+        env::remove_var("POSTGRES_DB");
+        env::remove_var("POSTGRES_HOST");
+        env::remove_var("POSTGRES_PORT");
+        env::remove_var("GITHUB_OWNER");
+        env::remove_var("GITHUB_REPO");
+        env::remove_var("GITHUB_BRANCH");
     }
 }
