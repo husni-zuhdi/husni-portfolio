@@ -532,6 +532,11 @@ pre {
   padding-right: 1rem;
 }
 
+img {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;

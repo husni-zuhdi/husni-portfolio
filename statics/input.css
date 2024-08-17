@@ -27,4 +27,7 @@
     pre {
         @apply px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-gray-200;
     }
+    img {
+        @apply py-4;
+    }
 }
