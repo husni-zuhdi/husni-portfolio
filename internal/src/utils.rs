@@ -57,8 +57,6 @@ pub fn capitalize(s: &str) -> String {
 /// and String of github blog endpoint
 /// then return String of updated body
 pub fn replace_gh_link(body: String, gh_blog_link: String, gh_raw_blog_link: String) -> String {
-    let mut res = String::new();
-
     // Regex href=.\.\/ mean
     // find string with character 'href='
     // then followed by any character (I tried to use '"' but didn't work)
@@ -69,10 +67,10 @@ pub fn replace_gh_link(body: String, gh_blog_link: String, gh_raw_blog_link: Str
     let replaced_str_href = format!("href=\"{}/", gh_blog_link);
     debug!("Replaced str: {}", &replaced_str_href);
 
-    res = re_href
+    let res_href = re_href
         .replace_all(body.as_str(), replaced_str_href.as_str())
         .to_string();
-    debug!("Replaced Body: {}", &res);
+    debug!("Replaced Body: {}", &res_href);
 
     // Regex src=.\.\/ mean
     // find string with character 'src='
@@ -84,8 +82,8 @@ pub fn replace_gh_link(body: String, gh_blog_link: String, gh_raw_blog_link: Str
     let replaced_str_src = format!("src=\"{}/", gh_raw_blog_link);
     debug!("Replaced str: {}", &replaced_str_src);
 
-    res = re_src
-        .replace_all(res.as_str(), replaced_str_src.as_str())
+    let res = re_src
+        .replace_all(res_href.as_str(), replaced_str_src.as_str())
         .to_string();
     debug!("Replaced Body: {}", &res);
 
