@@ -12,9 +12,12 @@ pub async fn handler(cfg: Config) -> std::io::Result<()> {
         .svc_port
         .parse::<u16>()
         .expect("Failed to get port number");
-    // let version = cfg.version.clone();
+
     let config = cfg.clone();
-    let blogs_data = BlogsData::default();
+    let mut blogs_data = BlogsData::default();
+    if !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty() {
+        blogs_data = BlogsData::with_gh(&config.gh_owner, &config.gh_repo, &config.gh_branch).await;
+    }
 
     info!(
         "Starting HTTP Server at http://{}:{}",

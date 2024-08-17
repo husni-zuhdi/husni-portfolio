@@ -15,4 +15,16 @@
     a {
         @apply text-blue-500 hover:text-blue-900;
     }
+    ol {
+        @apply mx-8 px-4 list-decimal;
+    }
+    ul {
+        @apply mx-8 px-4 list-disc;
+    }
+    code {
+        @apply text-sm;
+    }
+    pre {
+        @apply px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-gray-200;
+    }
 }
