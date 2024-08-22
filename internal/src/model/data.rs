@@ -1,4 +1,5 @@
 use crate::api::github::get_gh_blog_data;
+use crate::config::Config;
 use crate::utils::{capitalize, md_to_html};
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
@@ -156,6 +157,14 @@ pub struct Tree {
     pub sha: String,
     pub size: Option<i64>,
     pub url: String,
+}
+
+// Axum state
+// Consist of Config and BlogsData
+#[derive(Debug, Clone)]
+pub struct AppState {
+    pub config: Config,
+    pub blogs_data: BlogsData,
 }
 
 #[cfg(test)]

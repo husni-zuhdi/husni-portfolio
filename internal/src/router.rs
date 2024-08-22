@@ -5,7 +5,7 @@ use actix_files::NamedFile;
 use actix_web::{web, Responder, Result};
 // use actix_web_lab::respond::Html;
 use askama::Template;
-use axum::extract::Path;
+use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse};
 use log::{debug, error, info};
@@ -29,62 +29,61 @@ pub async fn get_404_not_found() -> Html<String> {
     Html(html)
 }
 
-// pub async fn get_blogs(blogs_data: web::Data<BlogsData>) -> Result<impl Responder> {
-//     // Copy data to Template struct
-//     let blogs_template: Vec<Blog> = blogs_data
-//         .blogs
-//         .iter()
-//         .map(|blog| Blog {
-//             id: &blog.id,
-//             name: &blog.name,
-//             filename: &blog.filename,
-//             body: &blog.body,
-//         })
-//         .collect();
-//
-//     let blogs = Blogs {
-//         blogs: &blogs_template,
-//     }
-//     .render()
-//     .expect("Failed to render blogs.html");
-//     info!("Blogs Template created");
-//     Ok(Html(blogs))
-// }
-//
-// pub async fn get_blog(
-//     path: web::Path<String>,
-//     blogs_data: web::Data<BlogsData>,
-// ) -> Result<impl Responder> {
-//     let blog_id = path.into_inner();
-//     let blog_data = blogs_data
-//         .blogs
-//         .iter()
-//         .filter(|blog| blog.id == blog_id)
-//         .next()
-//         .expect("Failed to get blog name with id {blog_id}");
-//
-//     let blog = Blog {
-//         id: &blog_id,
-//         name: &blog_data.name,
-//         filename: &blog_data.filename,
-//         body: &blog_data.body,
-//     }
-//     .render()
-//     .expect("Failed to render blog.html");
-//     Ok(Html(blog))
-// }
-//
-// pub async fn get_version(config: web::Data<Config>) -> Result<impl Responder> {
-//     let version_json = read_version_manifest().expect("Failed to get version manifest");
-//     let version = Version {
-//         version: version_json.version.as_str(),
-//         environment: config.environment.as_str(),
-//         build_hash: version_json.build_hash.as_str(),
-//         build_date: version_json.build_date.as_str(),
-//     }
-//     .render()
-//     .expect("Failed to render version.html");
-//     info!("Version Template created");
-//
-//     Ok(Html(version))
-// }
+pub async fn get_blogs(State(app_state): State<AppState>) -> Html<String> {
+    // Copy data to Template struct
+    let blogs_template: Vec<Blog> = app_state
+        .blogs_data
+        .blogs
+        .iter()
+        .map(|blog| Blog {
+            id: &blog.id,
+            name: &blog.name,
+            filename: &blog.filename,
+            body: &blog.body,
+        })
+        .collect();
+
+    let blogs = Blogs {
+        blogs: &blogs_template,
+    }
+    .render()
+    .expect("Failed to render blogs.html");
+    info!("Blogs Template created");
+    Html(blogs)
+}
+
+pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState>) -> Html<String> {
+    let blog_id = path;
+    let blog_data = app_state
+        .blogs_data
+        .blogs
+        .iter()
+        .filter(|blog| blog.id == blog_id)
+        .next()
+        .expect("Failed to get blog name with id {blog_id}");
+
+    let blog = Blog {
+        id: &blog_id,
+        name: &blog_data.name,
+        filename: &blog_data.filename,
+        body: &blog_data.body,
+    }
+    .render()
+    .expect("Failed to render blog.html");
+    Html(blog)
+}
+
+pub async fn get_version(State(app_state): State<AppState>) -> Html<String> {
+    let version_json = read_version_manifest().expect("Failed to get version manifest");
+    let version = Version {
+        version: version_json.version.as_str(),
+        environment: app_state.config.environment.as_str(),
+        build_hash: version_json.build_hash.as_str(),
+        build_date: version_json.build_date.as_str(),
+    }
+    .render()
+    .expect("Failed to render version.html");
+    info!("Version Template created");
+
+    Html(version)
+}
