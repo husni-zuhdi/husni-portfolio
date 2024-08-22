@@ -29,5 +29,9 @@ pub struct Version<'a> {
 }
 
 #[derive(Template, Debug)]
-#[template(path = "not_found.html")]
+#[template(path = "404_not_found.html")]
 pub struct NotFound;
+
+#[derive(Template, Debug)]
+#[template(path = "500_internal_server_error.html")]
+pub struct InternalServerError;
