@@ -1,43 +1,37 @@
-use crate::config::Config;
 use crate::model::{data::*, templates::*};
 use crate::utils::read_version_manifest;
-use actix_files::NamedFile;
-use actix_web::{web, Responder, Result};
-use actix_web_lab::respond::Html;
 use askama::Template;
-use log::{error, info};
+use axum::extract::{Path, State};
+use axum::response::Html;
+use log::{debug, error, info, warn};
 
-pub async fn statics(path: web::Path<String>) -> Result<impl Responder> {
-    info!("Statics path: {}", path.clone());
-    let static_path = match path.into_inner().as_str() {
-        "styles.css" => Ok(format!("./statics/styles.css")),
-        "apple-touch-icon.png" => Ok(format!("./statics/favicon/apple-touch-icon.png")),
-        "favicon-16x16.png" => Ok(format!("./statics/favicon/favicon-16x16.png")),
-        "favicon-32x32.png" => Ok(format!("./statics/favicon/favicon-32x32.png")),
-        _ => {
-            let err = "Failed to get static path. Statics path is not allowed.";
-            error!("{}", err);
-            Err(err)
+/// Note: In axum [example](https://docs.rs/axum/latest/axum/response/index.html#building-responses)
+/// They show an example to return Html<&'static str>
+/// Instaed of Html<String>. But using static give me a headache :")
+
+/// get_profile
+/// Serve Profile/Biography HTML file
+pub async fn get_profile() -> Html<String> {
+    let profile = Profile.render();
+    match profile {
+        Ok(res) => {
+            info!("Profile askama template rendered.");
+            Html(res)
+        }
+        Err(err) => {
+            error!("Failed to render profile.html. {}", err);
+            get_500_internal_server_error()
         }
     }
-    .expect("Failed to get static path");
-    let static_file = NamedFile::open(static_path).expect("Failed to render static file(s)");
-    Ok(static_file)
 }
 
-pub async fn profile() -> Result<impl Responder> {
-    let profile = Profile.render().expect("Failed to render profile.html");
-    Ok(Html(profile))
-}
-
-pub async fn get_404_not_found() -> Result<impl Responder> {
-    let html = NotFound.render().expect("Failed to render not_found.html");
-    Ok(Html(html))
-}
-
-pub async fn get_blogs(blogs_data: web::Data<BlogsData>) -> Result<impl Responder> {
+/// get_blogs
+/// Serve get_blogs HTML file
+/// List our blogs title and id
+pub async fn get_blogs(State(app_state): State<AppState>) -> Html<String> {
     // Copy data to Template struct
-    let blogs_template: Vec<Blog> = blogs_data
+    let blogs: Vec<Blog> = app_state
+        .blogs_data
         .blogs
         .iter()
         .map(|blog| Blog {
@@ -47,50 +41,117 @@ pub async fn get_blogs(blogs_data: web::Data<BlogsData>) -> Result<impl Responde
             body: &blog.body,
         })
         .collect();
+    debug!("Blogs: {:?}", &blogs);
 
-    let blogs = Blogs {
-        blogs: &blogs_template,
+    let blogs_res = Blogs { blogs: &blogs }.render();
+    match blogs_res {
+        Ok(res) => {
+            info!("Blogs askama template rendered.");
+            Html(res)
+        }
+        Err(err) => {
+            error!("Failed to render get_blogs.html. {}", err);
+            get_500_internal_server_error()
+        }
     }
-    .render()
-    .expect("Failed to render blogs.html");
-    info!("Blogs Template created");
-    Ok(Html(blogs))
 }
 
-pub async fn get_blog(
-    path: web::Path<String>,
-    blogs_data: web::Data<BlogsData>,
-) -> Result<impl Responder> {
-    let blog_id = path.into_inner();
-    let blog_data = blogs_data
+/// get_blog
+/// Serve get_blog HTML file
+/// Render our blog
+pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState>) -> Html<String> {
+    let state = app_state
+        .blogs_data
         .blogs
         .iter()
-        .filter(|blog| blog.id == blog_id)
-        .next()
-        .expect("Failed to get blog name with id {blog_id}");
+        .filter(|blog| &blog.id == &path)
+        .next();
+    debug!("BlogData: {:?}", &state);
 
+    match state {
+        Some(_) => {}
+        None => {
+            warn!(
+                "Failed to get blog with ID {}. Retunre 404 Not Found",
+                &path
+            );
+            return get_404_not_found().await;
+        }
+    }
+
+    let blog_data = state.unwrap();
     let blog = Blog {
-        id: &blog_id,
+        id: path.clone().as_str(),
         name: &blog_data.name,
         filename: &blog_data.filename,
         body: &blog_data.body,
     }
-    .render()
-    .expect("Failed to render blog.html");
-    Ok(Html(blog))
+    .render();
+
+    match blog {
+        Ok(res) => {
+            info!("Blog ID {} askama template rendered.", &path);
+            Html(res)
+        }
+        Err(err) => {
+            error!("Failed to render blog.html. {}", err);
+            get_500_internal_server_error()
+        }
+    }
 }
 
-pub async fn get_version(config: web::Data<Config>) -> Result<impl Responder> {
+/// get_version
+/// Serve get_version HTML file
+pub async fn get_version(State(app_state): State<AppState>) -> Html<String> {
     let version_json = read_version_manifest().expect("Failed to get version manifest");
     let version = Version {
         version: version_json.version.as_str(),
-        environment: config.environment.as_str(),
+        environment: app_state.config.environment.as_str(),
         build_hash: version_json.build_hash.as_str(),
         build_date: version_json.build_date.as_str(),
     }
-    .render()
-    .expect("Failed to render version.html");
-    info!("Version Template created");
+    .render();
 
-    Ok(Html(version))
+    match version {
+        Ok(res) => {
+            info!("Version askama template rendered.");
+            Html(res)
+        }
+        Err(err) => {
+            error!("Failed to render version.html. {}", err);
+            get_500_internal_server_error()
+        }
+    }
+}
+
+/// get_404_not_found
+/// Serve 404 Not found HTML file
+pub async fn get_404_not_found() -> Html<String> {
+    let not_found = NotFound.render();
+    match not_found {
+        Ok(res) => {
+            info!("NotFound askama template rendered.");
+            Html(res)
+        }
+        Err(err) => {
+            error!("Failed to render 404_not_found.html. {}", err);
+            get_500_internal_server_error()
+        }
+    }
+}
+
+/// get_500_internal_server_error
+/// Serve 500 Internal Server Error HTML file
+fn get_500_internal_server_error() -> Html<String> {
+    let internal_server_error = InternalServerError.render();
+    match internal_server_error {
+        Ok(res) => {
+            info!("InternalServerError askama template rendered.");
+            Html(res)
+        }
+        Err(err) => {
+            error!("Failed to render 500_internal_server_error.html. {}", err);
+            Html("We're fucked up.".to_string())
+        }
+    }
 }

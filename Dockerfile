@@ -1,4 +1,4 @@
-FROM rust:1.73-buster AS builder
+FROM rust:1.74-buster AS builder
 COPY . .
 RUN cargo build --release
 
