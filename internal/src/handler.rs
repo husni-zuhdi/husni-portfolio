@@ -2,7 +2,6 @@ use crate::config::Config;
 use crate::model::data::{AppState, BlogsData};
 use crate::router::*;
 use axum::{
-    extract::State,
     routing::{get, get_service},
     Router,
 };
@@ -10,13 +9,8 @@ use log::info;
 use tower_http::services::{ServeDir, ServeFile};
 
 pub async fn handler(cfg: Config) -> () {
-    // Initialize Tracing and Logger
-    // tracing_subscriber::fmt::init();
+    // Initialize Logger
     env_logger::init_from_env(env_logger::Env::new().default_filter_or(cfg.log_level.clone()));
-
-    let endpoint = cfg.svc_endpoint.as_str();
-    let port = cfg.svc_port.as_str();
-    let running_endpoint = format!("{}:{}", endpoint, port);
 
     // Setup config and blogs_data states
     let config = cfg.clone();
@@ -26,7 +20,8 @@ pub async fn handler(cfg: Config) -> () {
     }
     let app_state = AppState { config, blogs_data };
 
-    info!("Starting HTTP Server at http://{}", running_endpoint);
+    let endpoint = format!("{}:{}", cfg.svc_endpoint, cfg.svc_port);
+    info!("Starting HTTP Server at http://{}", endpoint);
 
     // Axum Application
     let app = Router::new()
@@ -44,8 +39,6 @@ pub async fn handler(cfg: Config) -> () {
         .fallback(get(get_404_not_found));
 
     // Start Axum Application
-    let listener = tokio::net::TcpListener::bind(running_endpoint)
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(endpoint).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
