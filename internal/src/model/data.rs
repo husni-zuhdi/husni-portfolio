@@ -112,13 +112,13 @@ pub struct Trees {
     pub tree: Vec<Tree>,
 }
 
-// The file mode one of
-// 100644 for file (blob)
-// 100755 for executable (blob)
-// 040000 for subdirectory (tree)
-// 160000 for submodule (commit)
-// 120000 for a blob that specifies the path of a symlink.
-// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
+/// The file mode one of
+/// 100644 for file (blob)
+/// 100755 for executable (blob)
+/// 040000 for subdirectory (tree)
+/// 160000 for submodule (commit)
+/// 120000 for a blob that specifies the path of a symlink.
+/// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum TreeMode {
     #[serde(rename(deserialize = "100644"))]
@@ -133,8 +133,8 @@ pub enum TreeMode {
     Symlink,
 }
 
-// Either blob, tree, or commit.
-// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
+/// Either blob, tree, or commit.
+/// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum TreeType {
     #[serde(rename(deserialize = "blob"))]
@@ -145,8 +145,8 @@ pub enum TreeType {
     Commit,
 }
 
-// Tree structure of git
-// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
+/// Tree structure of git
+/// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Tree {
     pub path: String,
@@ -159,8 +159,8 @@ pub struct Tree {
     pub url: String,
 }
 
-// Axum state
-// Consist of Config and BlogsData
+/// Axum state
+/// Consist of Config and BlogsData
 #[derive(Debug, Clone)]
 pub struct AppState {
     pub config: Config,

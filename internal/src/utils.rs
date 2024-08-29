@@ -1,6 +1,6 @@
 use crate::model::data::VersionData;
 use log::debug;
-use markdown::to_html;
+use markdown::{to_html_with_options, Options};
 use regex::Regex;
 use std::fs;
 use std::io::BufReader;
@@ -21,8 +21,9 @@ pub fn md_to_html(filename: Option<String>, body: Option<String>) -> Result<Stri
         Some(val) => body_md = val,
         None => (),
     }
-    // let body_md = fs::read_to_string(filename.unwrap()).expect("Failed to read markdown blog file");
-    Ok(to_html(&body_md))
+    let html = to_html_with_options(&body_md, &Options::gfm())
+        .expect("Failed to convert html with options");
+    Ok(html)
 }
 
 /// read_version_manifest

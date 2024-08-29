@@ -30,4 +30,19 @@
     pre {
         @apply px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-gray-200;
     }
+    table {
+        @apply table-auto rounded border-solid border-2 border-gray-500;
+    }
+    thead {
+        @apply bg-gray-400 text-center;
+    }
+    th {
+        @apply px-3 py-1;
+    }
+    tbody {
+        @apply bg-gray-200;
+    }
+    td {
+        @apply px-3 py-1;
+    }
 }
