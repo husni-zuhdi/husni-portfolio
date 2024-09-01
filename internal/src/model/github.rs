@@ -34,6 +34,7 @@ impl Display for GithubBranch {
 /// Collection of Tree of github blog data
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct GithubTrees {
+    #[serde(rename(deserialize = "tree"))]
     pub trees: Vec<GithubTree>,
 }
 
