@@ -8,9 +8,22 @@ tasks:
   run:
     summary: Run application with hot-reload
     cmds:
-      # Add tailwindcss build for hot reloading
-      - tailwindcss -i ./statics/input.css -o ./statics/styles.css
-      - cargo watch -s 'export $(cat .env | xargs) && cargo run -- -release'
+      - cargo watch -s 'tailwindcss -i ./statics/input.css -o ./statics/styles.css && export $(cat .env | xargs) && cargo run -- -release'
+
+  sqlx-create:
+    summary: Create db with sqlx
+    cmds:
+      - sqlx db create --database-url $DATABASE_URL
+  sqlx-migrate-run:
+    summary: Migrate db with sqlx
+    cmds:
+      - sqlx migrate run --source internal/migrations --database_url $DATABASE_URL
+  sqlx-migrate-add:
+    summary: Creata new migration db with sqlx. Please pass migration description too
+    vars:
+      DESCRIPTION: '{{index .MATCH 0}}'
+    cmds:
+      - sqlx migrate add --source internal/migrations --database_url $DATABASE_URL {{.DESCRIPTION}}
 
   docker-build:
     summary: Build Docker Image
