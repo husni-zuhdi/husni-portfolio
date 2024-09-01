@@ -4,7 +4,7 @@ use crate::utils::read_version_manifest;
 use askama::Template;
 use axum::extract::{Path, State};
 use axum::response::Html;
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 
 /// Note: In axum [example](https://docs.rs/axum/latest/axum/response/index.html#building-responses)
 /// They show an example to return Html<&'static str>
@@ -30,8 +30,10 @@ pub async fn get_profile() -> Html<String> {
 /// Serve get_blogs HTML file
 /// List our blogs title and id
 pub async fn get_blogs(State(app_state): State<AppState>) -> Html<String> {
+    // Locking Mutex
+    let data = app_state.blog_usecase.lock().expect("Mutex was poisoned");
     // Copy data to Template struct
-    let blogs_data = app_state.blog_usecase.blog_repo.find_all();
+    let blogs_data = data.blog_repo.find_all();
     let blogs: Vec<BlogTemplate> = blogs_data
         .iter()
         .map(|blog| BlogTemplate {
@@ -60,13 +62,15 @@ pub async fn get_blogs(State(app_state): State<AppState>) -> Html<String> {
 /// Serve get_blog HTML file
 /// Render our blog
 pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState>) -> Html<String> {
-    let state = app_state.blog_usecase.blog_repo.find(BlogId(path.clone()));
+    // Locking Mutex
+    let data = app_state.blog_usecase.lock().expect("Mutex was poisoned");
+    let blog_data = data.blog_repo.find(BlogId(path.clone()));
 
     let blog = BlogTemplate {
         id: path.clone().as_str(),
-        name: &state.name.as_str(),
-        filename: &state.filename.as_str(),
-        body: &state.body.as_str(),
+        name: &blog_data.name.as_str(),
+        filename: &blog_data.filename.as_str(),
+        body: &blog_data.body.as_str(),
     }
     .render();
 

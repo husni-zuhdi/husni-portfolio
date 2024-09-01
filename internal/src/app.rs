@@ -7,6 +7,7 @@ use axum::{
     Router,
 };
 use log::info;
+use std::sync::{Arc, Mutex};
 use tower_http::services::{ServeDir, ServeFile};
 
 pub async fn app() -> () {
@@ -49,7 +50,7 @@ async fn state_factory(config: Config) -> AppState {
         blog_repo =
             MemoryBlogRepo::from_github(&config.gh_owner, &config.gh_repo, &config.gh_branch).await;
     }
-    let blog_usecase = BlogUseCase::new(Box::new(blog_repo));
+    let blog_usecase = Arc::new(Mutex::new(BlogUseCase::new(Box::new(blog_repo))));
     let app_state = AppState {
         config,
         blog_usecase,

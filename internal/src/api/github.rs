@@ -2,7 +2,7 @@ use crate::model::blog::{Blog, BlogBody, BlogFilename, BlogId, BlogName, BlogSou
 use crate::model::github::{GithubTree, GithubTrees};
 use crate::utils::capitalize;
 use http_body_util::BodyExt;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use markdown::{to_html_with_options, Options};
 use octocrab;
 use regex::Regex;
@@ -125,27 +125,27 @@ async fn get_gh_blog(
     repo: String,
     branch: String,
 ) -> Option<Blog> {
-    let blog_path = tree.path;
+    let tree_path = tree.path;
     let gh_blog_link = format!(
         "https://github.com/{}/{}/tree/{}/{}",
-        &owner, &repo, &branch, &blog_path
+        &owner, &repo, &branch, &tree_path
     );
     let gh_raw_blog_link = format!(
         "https://raw.githubusercontent.com/{}/{}/{}/{}",
-        &owner, &repo, &branch, &blog_path
+        &owner, &repo, &branch, &tree_path
     );
 
     // Check to make sure the path doesn't have a extention
-    if !blog_path.contains(".") {
+    if !tree_path.contains(".") {
         // Get blog id with specification of 3 digit integer
-        let blog_id = blog_path.get(0..3).unwrap();
-        let blog_name = blog_path.get(4..).unwrap();
+        let blog_id = tree_path.get(0..3).unwrap();
+        let blog_name = tree_path.get(4..).unwrap();
 
         match blog_id.parse::<i32>() {
             Ok(_) => {
                 if &blog_id != &"000" {
                     info!("Blog Name: {}", &blog_name);
-                    let blog_readme_path = format!("{}/README.md", &blog_path);
+                    let blog_readme_path = format!("{}/README.md", &tree_path);
                     let blog_content = octocrab::instance()
                         .repos(&owner, &repo)
                         .get_content()
@@ -199,14 +199,18 @@ async fn get_gh_blog(
             }
             Err(err) => {
                 if err.kind() == &IntErrorKind::InvalidDigit {
-                    debug!("Error Kind {:?}. Safe to ignore.", err.kind());
+                    debug!("Error Kind {:?}. Skipped.", err.kind());
                 }
-                error!("Failed to parse Blog ID: {}", err);
+                warn!(
+                    "Failed to parse Tree Path {}. Error {:?}. Skipped",
+                    &tree_path,
+                    err.kind()
+                );
                 None
             }
         }
     } else {
-        info!("This is not a folder. Skip this tree");
+        info!("Tree {} is not a folder. Skipped.", &tree_path);
         None
     }
 }
