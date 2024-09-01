@@ -2,17 +2,17 @@ use askama::Template;
 
 #[derive(Template, Debug)]
 #[template(path = "profile.html")]
-pub struct Profile;
+pub struct ProfileTemplate;
 
 #[derive(Template, Debug)]
 #[template(path = "blogs.html")]
-pub struct Blogs<'a> {
-    pub blogs: &'a Vec<Blog<'a>>,
+pub struct BlogsTemplate<'a> {
+    pub blogs: &'a Vec<BlogTemplate<'a>>,
 }
 
 #[derive(Template, Debug)]
 #[template(path = "blog.html")]
-pub struct Blog<'a> {
+pub struct BlogTemplate<'a> {
     pub id: &'a str,
     pub name: &'a str,
     pub filename: &'a str,
@@ -21,7 +21,7 @@ pub struct Blog<'a> {
 
 #[derive(Template, Debug)]
 #[template(path = "version.html")]
-pub struct Version<'a> {
+pub struct VersionTemplate<'a> {
     pub version: &'a str,
     pub environment: &'a str,
     pub build_hash: &'a str,
@@ -30,8 +30,8 @@ pub struct Version<'a> {
 
 #[derive(Template, Debug)]
 #[template(path = "404_not_found.html")]
-pub struct NotFound;
+pub struct NotFoundTemplate;
 
 #[derive(Template, Debug)]
 #[template(path = "500_internal_server_error.html")]
-pub struct InternalServerError;
+pub struct InternalServerErrorTemplate;
