@@ -25,6 +25,7 @@ http-body-util = "0.1.2"
 regex = "1.10.6"
 sqlx = { version = "=0.8.1", features = ["sqlite", "runtime-tokio"] }
 async-trait = "0.1.81"
+dyn-clone = "1.0.17"
 # rusqlite = "=0.32.1"
 
 [build-dependencies]
