@@ -8,6 +8,7 @@ use crate::utils::{capitalize, md_to_html};
 use log::{debug, info};
 use std::fs;
 
+#[derive(Clone)]
 pub struct MemoryBlogRepo {
     pub blogs: Vec<Blog>,
 }
@@ -60,7 +61,7 @@ impl BlogRepo for MemoryBlogRepo {
         match name {
             Some(val) => {
                 debug!("Update Blog {} name from {} to {}", &id, &result.name, &val);
-                result.update_name(val)
+                result.name = val
             }
             None => (),
         }

@@ -2,8 +2,9 @@ use crate::model::blog::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
     BlogStartPage,
 };
+use dyn_clone::{clone_trait_object, DynClone};
 
-pub trait BlogRepo {
+pub trait BlogRepo: DynClone {
     fn find(&self, id: BlogId) -> Blog;
     fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog>;
     fn find_all(&self) -> Vec<Blog>;
@@ -17,3 +18,5 @@ pub trait BlogRepo {
     ) -> Blog;
     fn delete(&mut self, id: BlogId) -> BlogDeleted;
 }
+
+clone_trait_object!(BlogRepo);

@@ -5,14 +5,9 @@ use crate::model::blog::{
 use crate::port::blog::{command::BlogQueryCommand, query::BlogQueryPort};
 use crate::repo::blog::BlogRepo;
 
+#[derive(Clone)]
 pub struct BlogUseCase {
-    pub blog_repo: Box<dyn BlogRepo>,
-}
-
-impl Clone for BlogUseCase {
-    fn clone(&self) -> Self {
-        self.clone()
-    }
+    pub blog_repo: Box<dyn BlogRepo + Send>,
 }
 
 impl BlogQueryPort for BlogUseCase {
@@ -44,7 +39,7 @@ impl BlogQueryCommand for BlogUseCase {
 }
 
 impl BlogUseCase {
-    pub fn new(blog_repo: Box<dyn BlogRepo>) -> BlogUseCase {
+    pub fn new(blog_repo: Box<dyn BlogRepo + Send>) -> BlogUseCase {
         BlogUseCase { blog_repo }
     }
 }
