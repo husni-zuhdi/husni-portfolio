@@ -1,13 +1,12 @@
-use crate::api::github::get_gh_blogs;
 use crate::model::blog::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
     BlogStartPage,
 };
 use crate::repo::blog::BlogRepo;
 use async_trait::async_trait;
-use log::{debug, error, info};
+use log::{debug, info};
 use sqlx::sqlite::SqlitePool;
-use sqlx::{query, query_as, Row};
+use sqlx::{query, query_as};
 
 #[derive(Clone)]
 pub struct SqliteBlogRepo {
@@ -16,7 +15,7 @@ pub struct SqliteBlogRepo {
 
 #[async_trait]
 impl BlogRepo for SqliteBlogRepo {
-    async fn find(&mut self, id: BlogId) -> Blog {
+    async fn find(&self, id: BlogId) -> Blog {
         let blog_id = id.0;
         let prep_query = "SELECT * FROM blogs WHERE id = $1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
@@ -30,7 +29,7 @@ impl BlogRepo for SqliteBlogRepo {
         debug!("Blog HTML {}.", &row.body);
         row
     }
-    async fn find_blogs(&mut self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
         let start_seq = start.0;
         let end_seq = end.0;
         let limit = end_seq - start_seq;
@@ -47,7 +46,7 @@ impl BlogRepo for SqliteBlogRepo {
             .await
             .expect("Failed to execute get query");
         info!("Blogs from {} to {} processed.", &start_seq, &end_seq);
-        for row in rows {
+        for row in &rows {
             info!("Blog {} processed.", &row.id);
             debug!("Blog HTML {}.", &row.body);
         }
@@ -79,7 +78,11 @@ impl BlogRepo for SqliteBlogRepo {
             .execute(&self.pool)
             .await
             .expect("Failed to execute add query");
-        info!("Blog {} was added.", &blog_id);
+        info!(
+            "Blog {} in row {} was added.",
+            &blog_id,
+            &query_res.rows_affected()
+        );
 
         let prep_get_query = "SELECT * FROM blogs WHERE id = $1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_get_query, &blog_id);
@@ -156,7 +159,7 @@ impl BlogRepo for SqliteBlogRepo {
                 debug!("Skipped update name field")
             }
         }
-        let prep_update_query = format!("UPDATE blogs SET{}WHERE id = $1", &affected_col).as_str();
+        let prep_update_query = format!("UPDATE blogs SET{}WHERE id = $1", &affected_col);
         debug!("Executing query {} for id {}", &prep_update_query, &blog_id);
 
         let query_res = query(&prep_update_query)
@@ -164,7 +167,11 @@ impl BlogRepo for SqliteBlogRepo {
             .execute(&self.pool)
             .await
             .expect("Failed to execute update query");
-        info!("Blog {} was updated.", &blog_id);
+        info!(
+            "Blog {} in row {} was updated.",
+            &blog_id,
+            &query_res.rows_affected()
+        );
 
         let prep_get_query = "SELECT * FROM blogs WHERE id = $1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_get_query, &blog_id);

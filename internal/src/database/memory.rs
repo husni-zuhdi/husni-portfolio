@@ -16,7 +16,7 @@ pub struct MemoryBlogRepo {
 
 #[async_trait]
 impl BlogRepo for MemoryBlogRepo {
-    async fn find(&mut self, id: BlogId) -> Blog {
+    async fn find(&self, id: BlogId) -> Blog {
         let result = self
             .blogs
             .iter()
@@ -28,7 +28,7 @@ impl BlogRepo for MemoryBlogRepo {
 
         result.clone()
     }
-    async fn find_blogs(&mut self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
         let start_seq = start.0 as usize;
         let end_seq = end.0 as usize;
         let result = &self.blogs[start_seq..end_seq];
