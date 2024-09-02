@@ -17,8 +17,8 @@ pub trait BlogRepo: DynClone {
         source: BlogSource,
         body: BlogBody,
     ) -> Blog;
-    async fn find(&mut self, id: BlogId) -> Blog;
-    async fn find_blogs(&mut self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog>;
+    async fn find(&self, id: BlogId) -> Blog;
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog>;
     async fn update(
         &mut self,
         id: BlogId,

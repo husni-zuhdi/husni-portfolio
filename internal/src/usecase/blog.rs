@@ -8,15 +8,15 @@ use async_trait::async_trait;
 
 #[derive(Clone)]
 pub struct BlogUseCase {
-    pub blog_repo: Box<dyn BlogRepo + Send>,
+    pub blog_repo: Box<dyn BlogRepo + Send + Sync>,
 }
 
 #[async_trait]
 impl BlogQueryPort for BlogUseCase {
-    async fn find(&mut self, id: BlogId) -> Blog {
+    async fn find(&self, id: BlogId) -> Blog {
         self.blog_repo.find(id).await
     }
-    async fn find_blogs(&mut self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
         self.blog_repo.find_blogs(start, end).await
     }
 }
@@ -51,7 +51,7 @@ impl BlogQueryCommand for BlogUseCase {
 }
 
 impl BlogUseCase {
-    pub fn new(blog_repo: Box<dyn BlogRepo + Send>) -> BlogUseCase {
+    pub fn new(blog_repo: Box<dyn BlogRepo + Send + Sync>) -> BlogUseCase {
         BlogUseCase { blog_repo }
     }
 }
