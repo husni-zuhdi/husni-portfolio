@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::usecase::blog::BlogUseCase;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 /// Axum state
 /// Consist of Config and BlogUseCase

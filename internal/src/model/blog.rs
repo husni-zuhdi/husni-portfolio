@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::{sqlite::SqliteRow, Decode, FromRow};
+use sqlx::{sqlite::SqliteRow, FromRow};
 use std::fmt::Display;
 
 /// BlogId
@@ -125,6 +125,10 @@ impl<'r> FromRow<'r, SqliteRow> for Blog {
         let source = match row.try_get("source")? {
             "github" => BlogSource::Github,
             "filesystem" => BlogSource::FileSystem,
+            &_ => {
+                // Default to FileSystem
+                BlogSource::FileSystem
+            }
         };
         let filename = row.try_get("filename")?;
         let body = row.try_get("body")?;

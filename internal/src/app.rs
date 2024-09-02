@@ -8,7 +8,8 @@ use axum::{
     Router,
 };
 use log::info;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tower_http::services::{ServeDir, ServeFile};
 
 pub async fn app() -> () {
