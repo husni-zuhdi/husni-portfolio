@@ -42,6 +42,21 @@ impl Default for Config {
 }
 
 impl Config {
+    fn parse_optional_envar(envar: &str, default: &str) -> String {
+        match env::var(&envar) {
+            Err(e) => {
+                warn!(
+                    "Failed to load {} environment variable. Set default to '{}'. Error {}",
+                    &envar, &default, e
+                );
+                default.to_string()
+            }
+            Ok(val) => match val.as_str() {
+                "" => default.to_string(),
+                _ => val,
+            },
+        }
+    }
     /// from_envar
     /// Setup config from environment variables
     pub fn from_envar() -> Self {
@@ -52,34 +67,13 @@ impl Config {
             .expect("failed to load SVC_PORT environment variable. Double check your config");
 
         // Optional
-        let log_level: String = env::var("LOG_LEVEL").unwrap_or_else(|_| {
-            warn!("Failed to load LOG_LEVEL environment variable. Set default to 'info'");
-            "info".to_string()
-        });
-        let environment: String = env::var("ENVIRONMENT").unwrap_or_else(|_| {
-            warn!("Failed to load ENVIRONMENT environment variable. Set default to 'prod'");
-            "prod".to_string()
-        });
-        let data_source: String = env::var("DATA_SOURCE").unwrap_or_else(|_| {
-            warn!("Failed to load DATA_SOURCE environment variable. Set default to 'memory'");
-            "memory".to_string()
-        });
-        let database_url: String = env::var("DATABASE_URL").unwrap_or_else(|_| {
-            warn!("Failed to load DATABASE_URL environment variable. Set default to ''");
-            "".to_string()
-        });
-        let gh_owner: String = env::var("GITHUB_OWNER").unwrap_or_else(|_| {
-            warn!("Failed to load GITHUB_OWNER environment variable. Set default to ''");
-            "".to_string()
-        });
-        let gh_repo: String = env::var("GITHUB_REPO").unwrap_or_else(|_| {
-            warn!("Failed to load GITHUB_REPO environment variable. Set default to ''");
-            "".to_string()
-        });
-        let gh_branch: String = env::var("GITHUB_BRANCH").unwrap_or_else(|_| {
-            warn!("Failed to load GITHUB_BRANCH environment variable. Set default to ''");
-            "".to_string()
-        });
+        let log_level: String = Self::parse_optional_envar("LOG_LEVEL", "info");
+        let environment: String = Self::parse_optional_envar("ENVIRONMENT", "prod");
+        let data_source: String = Self::parse_optional_envar("DATA_SOURCE", "memory");
+        let database_url: String = Self::parse_optional_envar("DATABASE_URL", "");
+        let gh_owner: String = Self::parse_optional_envar("GITHUB_OWNER", "");
+        let gh_repo: String = Self::parse_optional_envar("GITHUB_REPO", "");
+        let gh_branch: String = Self::parse_optional_envar("GITHUB_BRANCH", "");
 
         Self {
             svc_endpoint,
