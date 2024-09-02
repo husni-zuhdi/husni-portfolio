@@ -1,4 +1,6 @@
 version: '3'
+dotenv:
+  - '.env'
 
 tasks:
   test:
@@ -17,7 +19,7 @@ tasks:
   sqlx-migrate-run:
     summary: Migrate db with sqlx
     cmds:
-      - sqlx migrate run --source internal/migrations --database_url $DATABASE_URL
+      - sqlx migrate run --source internal/migrations --database-url $DATABASE_URL
   sqlx-migrate-add:
     summary: Creata new migration db with sqlx. Please pass migration description too
     vars:
