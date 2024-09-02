@@ -1,7 +1,8 @@
 use crate::model::blog::{Blog, BlogEndPage, BlogId, BlogStartPage};
+use async_trait::async_trait;
 
+#[async_trait]
 pub trait BlogQueryPort {
-    fn find(&self, id: BlogId) -> Blog;
-    fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog>;
-    fn find_all(&self) -> Vec<Blog>;
+    async fn find(&mut self, id: BlogId) -> Blog;
+    async fn find_blogs(&mut self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog>;
 }
