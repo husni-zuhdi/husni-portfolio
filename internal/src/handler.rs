@@ -1,8 +1,9 @@
-use crate::model::blog::BlogId;
+use crate::model::blog::{BlogEndPage, BlogId, BlogPagination, BlogStartPage};
 use crate::model::{axum::AppState, templates::*};
 use crate::utils::read_version_manifest;
 use askama::Template;
-use axum::extract::{Path, State};
+use axum::debug_handler;
+use axum::extract::{Path, Query, State};
 use axum::response::Html;
 use log::{debug, error, info};
 
@@ -29,11 +30,33 @@ pub async fn get_profile() -> Html<String> {
 /// get_blogs
 /// Serve get_blogs HTML file
 /// List our blogs title and id
-pub async fn get_blogs(State(app_state): State<AppState>) -> Html<String> {
+#[debug_handler]
+pub async fn get_blogs(
+    State(app_state): State<AppState>,
+    pagination: Query<BlogPagination>,
+) -> Html<String> {
     // Locking Mutex
-    let data = app_state.blog_usecase.lock().expect("Mutex was poisoned");
+    let data = app_state.blog_usecase.lock().await;
+
+    // Setup Pagination
+    debug!("Pagination {:?}", &pagination);
+    let start = match pagination.0.start {
+        Some(val) => val,
+        None => {
+            info!("Set default start to 0");
+            BlogStartPage(0)
+        }
+    };
+    let end = match pagination.0.end {
+        Some(val) => val,
+        None => {
+            info!("Set default end to 10");
+            BlogEndPage(10)
+        }
+    };
+
     // Copy data to Template struct
-    let blogs_data = data.blog_repo.find_all();
+    let blogs_data = data.blog_repo.find_blogs(start, end).await;
     let blogs: Vec<BlogTemplate> = blogs_data
         .iter()
         .map(|blog| BlogTemplate {
@@ -61,11 +84,13 @@ pub async fn get_blogs(State(app_state): State<AppState>) -> Html<String> {
 /// get_blog
 /// Serve get_blog HTML file
 /// Render our blog
+#[debug_handler]
 pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState>) -> Html<String> {
     // Locking Mutex
-    let data = app_state.blog_usecase.lock().expect("Mutex was poisoned");
-    let blog_data = data.blog_repo.find(BlogId(path.clone()));
+    let data = app_state.blog_usecase.lock().await;
 
+    // Copy data to Template struct
+    let blog_data = data.blog_repo.find(BlogId(path.clone())).await;
     let blog = BlogTemplate {
         id: path.clone().as_str(),
         name: &blog_data.name.as_str(),
