@@ -5,6 +5,7 @@ use crate::model::blog::{
 };
 use crate::repo::blog::BlogRepo;
 use crate::utils::{capitalize, md_to_html};
+use async_trait::async_trait;
 use log::{debug, info};
 use std::fs;
 
@@ -13,8 +14,9 @@ pub struct MemoryBlogRepo {
     pub blogs: Vec<Blog>,
 }
 
+#[async_trait]
 impl BlogRepo for MemoryBlogRepo {
-    fn find(&self, id: BlogId) -> Blog {
+    async fn find(&mut self, id: BlogId) -> Blog {
         let result = self
             .blogs
             .iter()
@@ -26,17 +28,33 @@ impl BlogRepo for MemoryBlogRepo {
 
         result.clone()
     }
-    fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
+    async fn find_blogs(&mut self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
         let start_seq = start.0 as usize;
         let end_seq = end.0 as usize;
         let result = &self.blogs[start_seq..end_seq];
         result.to_vec()
     }
-    fn find_all(&self) -> Vec<Blog> {
-        let result = &self.blogs;
-        result.to_vec()
+    async fn add(
+        &mut self,
+        id: BlogId,
+        name: BlogName,
+        filename: BlogFilename,
+        source: BlogSource,
+        body: BlogBody,
+    ) -> Blog {
+        let result = Blog {
+            id,
+            name,
+            source,
+            filename,
+            body,
+        };
+        self.blogs.push(result.clone());
+        info!("Blog {} added.", &result.id);
+        debug!("Blog HTML {}.", &result.body);
+        result
     }
-    fn delete(&mut self, id: BlogId) -> BlogDeleted {
+    async fn delete(&mut self, id: BlogId) -> BlogDeleted {
         let index = self.blogs.iter().position(|blog| &blog.id == &id).unwrap();
         info!("Deleting Blog with Id {}", &index);
 
@@ -44,7 +62,7 @@ impl BlogRepo for MemoryBlogRepo {
         info!("Deleted Blog with Id {}", &index);
         BlogDeleted(true)
     }
-    fn update(
+    async fn update(
         &mut self,
         id: BlogId,
         name: Option<BlogName>,
