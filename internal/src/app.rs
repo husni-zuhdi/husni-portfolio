@@ -1,4 +1,5 @@
 use crate::database::memory::MemoryBlogRepo;
+use crate::database::sqlite::SqliteBlogRepo;
 use crate::handler;
 use crate::model::axum::AppState;
 use crate::{config::Config, usecase::blog::BlogUseCase};
@@ -44,16 +45,29 @@ pub async fn app() -> () {
 }
 
 async fn state_factory(config: Config) -> AppState {
-    // Setup config and blogs_data states
-    let mut blog_repo = MemoryBlogRepo::new();
-    if !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty() {
-        blog_repo =
-            MemoryBlogRepo::from_github(&config.gh_owner, &config.gh_repo, &config.gh_branch).await;
-    }
-    let blog_usecase = Arc::new(Mutex::new(BlogUseCase::new(Box::new(blog_repo))));
-    let app_state = AppState {
+    // Setup blog use case
+    let blog_usecase = if config.data_source == "sqlite" && config.database_url != "" {
+        // Use SqliteBlogRepo
+        let repo = SqliteBlogRepo::new(config.database_url.clone()).await;
+        Arc::new(Mutex::new(BlogUseCase::new(Box::new(repo))))
+    } else {
+        // Use MemoryBlogRepo
+        if !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty()
+        {
+            // Use from_github method
+            let repo =
+                MemoryBlogRepo::from_github(&config.gh_owner, &config.gh_repo, &config.gh_branch)
+                    .await;
+            Arc::new(Mutex::new(BlogUseCase::new(Box::new(repo))))
+        } else {
+            // Use Default method
+            let repo = MemoryBlogRepo::default();
+            Arc::new(Mutex::new(BlogUseCase::new(Box::new(repo))))
+        }
+    };
+
+    AppState {
         config,
         blog_usecase,
-    };
-    app_state
+    }
 }
