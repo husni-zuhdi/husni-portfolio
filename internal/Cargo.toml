@@ -7,7 +7,7 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.7.5"
+axum = { version = "0.7.5", features = ["macros"] }
 tokio = { version = "1.0", features = ["full"] }
 # tracing = "0.1" # Might not need this
 # tracing-subscriber = { version = "0.3", features = ["env-filter"] } # Might not need this
