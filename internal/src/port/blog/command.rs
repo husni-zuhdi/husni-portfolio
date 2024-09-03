@@ -2,7 +2,7 @@ use crate::model::blog::{Blog, BlogBody, BlogDeleted, BlogFilename, BlogId, Blog
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait BlogQueryCommand {
+pub trait BlogCommandPort {
     async fn add(
         &mut self,
         id: BlogId,

@@ -2,7 +2,7 @@ use crate::model::blog::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
     BlogStartPage,
 };
-use crate::port::blog::{command::BlogQueryCommand, query::BlogQueryPort};
+use crate::port::blog::{command::BlogCommandPort, query::BlogQueryPort};
 use crate::repo::blog::BlogRepo;
 use async_trait::async_trait;
 
@@ -22,7 +22,7 @@ impl BlogQueryPort for BlogUseCase {
 }
 
 #[async_trait]
-impl BlogQueryCommand for BlogUseCase {
+impl BlogCommandPort for BlogUseCase {
     async fn add(
         &mut self,
         id: BlogId,

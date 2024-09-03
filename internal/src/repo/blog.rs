@@ -9,6 +9,8 @@ clone_trait_object!(BlogRepo);
 
 #[async_trait]
 pub trait BlogRepo: DynClone {
+    async fn find(&self, id: BlogId) -> Blog;
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog>;
     async fn add(
         &mut self,
         id: BlogId,
@@ -17,8 +19,6 @@ pub trait BlogRepo: DynClone {
         source: BlogSource,
         body: BlogBody,
     ) -> Blog;
-    async fn find(&self, id: BlogId) -> Blog;
-    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog>;
     async fn update(
         &mut self,
         id: BlogId,
