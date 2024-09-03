@@ -6,7 +6,7 @@ use crate::model::blog::{
 use crate::repo::blog::BlogRepo;
 use crate::utils::{capitalize, md_to_html};
 use async_trait::async_trait;
-use log::{debug, info};
+use log::{debug, info, warn};
 use std::fs;
 
 #[derive(Clone)]
@@ -29,8 +29,23 @@ impl BlogRepo for MemoryBlogRepo {
         result.clone()
     }
     async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
-        let start_seq = start.0 as usize;
-        let end_seq = end.0 as usize;
+        let start_seq = if start.0 as usize > self.blogs.len() {
+            warn!("BlogStartPage is greater than Blogs count. Will reset to 0.");
+            0
+        } else {
+            start.0 as usize
+        };
+
+        let end_seq = if (end.0 as usize > self.blogs.len()) && self.blogs.len() > 10 {
+            warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
+            10
+        } else if (end.0 as usize > self.blogs.len()) && self.blogs.len() < 10 {
+            warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
+            self.blogs.len()
+        } else {
+            end.0 as usize
+        };
+
         let result = &self.blogs[start_seq..end_seq];
         result.to_vec()
     }
