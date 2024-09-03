@@ -28,18 +28,17 @@ pub async fn app() -> () {
 
     // Axum Application
     let app = Router::new()
-        .route("/", get(handler::get_profile))
-        .route("/not-found", get(handler::get_404_not_found))
-        .route("/version", get(handler::get_version))
-        .route("/blogs", get(handler::get_blogs))
-        .route("/blogs/:blog_id", get(handler::get_blog))
+        .route("/", get(handler::profile::get_profile))
+        .route("/version", get(handler::version::get_version))
+        .route("/blogs", get(handler::blog::get_blogs))
+        .route("/blogs/:blog_id", get(handler::blog::get_blog))
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service(
             "/statics/styles.css",
             get_service(ServeFile::new("./statics/styles.css")),
         )
         .with_state(app_state)
-        .fallback(get(handler::get_404_not_found));
+        .fallback(get(handler::error::get_404_not_found));
 
     // Start Axum Application
     let listener = tokio::net::TcpListener::bind(endpoint).await.unwrap();
