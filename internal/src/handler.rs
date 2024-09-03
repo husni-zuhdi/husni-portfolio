@@ -1,6 +1,6 @@
 use crate::model::blog::{BlogEndPage, BlogId, BlogPagination, BlogStartPage};
+use crate::model::version::Version;
 use crate::model::{axum::AppState, templates::*};
-use crate::utils::read_version_manifest;
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
@@ -29,7 +29,7 @@ pub async fn get_profile() -> Html<String> {
 
 /// get_blogs
 /// Serve get_blogs HTML file
-/// List our blogs title and id
+/// List our blogs id and name
 #[debug_handler]
 pub async fn get_blogs(
     State(app_state): State<AppState>,
@@ -55,18 +55,19 @@ pub async fn get_blogs(
         }
     };
 
-    // Copy data to Template struct
+    // Construct BlogsTemplate Struct
     let blogs_data = data.blog_repo.find_blogs(start, end).await;
-    let blogs: Vec<BlogTemplate> = blogs_data
+    let blogs: Vec<BlogsTemplateBlog> = blogs_data
         .iter()
-        .map(|blog| BlogTemplate {
-            id: &blog.id.as_str(),
-            name: &blog.name.as_str(),
-            filename: &blog.filename.as_str(),
-            body: &blog.body.as_str(),
+        .map(|blog| {
+            info!("Construct BlogsTemplateBlog for Blog Id {}", &blog.id);
+            BlogsTemplateBlog {
+                id: &blog.id.as_str(),
+                name: &blog.name.as_str(),
+            }
         })
         .collect();
-    debug!("Blogs: {:?}", &blogs);
+    debug!("BlogsTemplate blogs : {:?}", &blogs);
 
     let blogs_res = BlogsTemplate { blogs: &blogs }.render();
     match blogs_res {
@@ -89,7 +90,7 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
     // Locking Mutex
     let data = app_state.blog_usecase.lock().await;
 
-    // Copy data to Template struct
+    // Construct BlogTemplate Struct
     let blog_data = data.blog_repo.find(BlogId(path.clone())).await;
     let blog = BlogTemplate {
         id: path.clone().as_str(),
@@ -114,12 +115,12 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
 /// get_version
 /// Serve get_version HTML file
 pub async fn get_version(State(app_state): State<AppState>) -> Html<String> {
-    let version_json = read_version_manifest().expect("Failed to get version manifest");
+    let version_data = Version::new().expect("Failed to generate Version struct");
     let version = VersionTemplate {
-        version: version_json.version.as_str(),
+        version: version_data.version.as_str(),
         environment: app_state.config.environment.as_str(),
-        build_hash: version_json.build_hash.as_str(),
-        build_date: version_json.build_date.as_str(),
+        build_hash: version_data.build_hash.as_str(),
+        build_date: version_data.build_date.as_str(),
     }
     .render();
 
