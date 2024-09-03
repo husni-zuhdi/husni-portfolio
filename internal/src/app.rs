@@ -12,6 +12,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tower_http::services::{ServeDir, ServeFile};
 
+/// Run the axum web application
 pub async fn app() -> () {
     // Setup Config
     let config = Config::from_envar();
@@ -45,6 +46,7 @@ pub async fn app() -> () {
     axum::serve(listener, app).await.unwrap();
 }
 
+/// Build App State for Axum Application
 async fn state_factory(config: Config) -> AppState {
     // Setup blog use case
     let blog_usecase = if config.data_source == "sqlite" && config.database_url != "" {
