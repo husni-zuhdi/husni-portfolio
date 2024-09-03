@@ -7,7 +7,13 @@ pub struct ProfileTemplate;
 #[derive(Template, Debug)]
 #[template(path = "blogs.html")]
 pub struct BlogsTemplate<'a> {
-    pub blogs: &'a Vec<BlogTemplate<'a>>,
+    pub blogs: &'a Vec<BlogsTemplateBlog<'a>>,
+}
+
+#[derive(Debug)]
+pub struct BlogsTemplateBlog<'a> {
+    pub id: &'a str,
+    pub name: &'a str,
 }
 
 #[derive(Template, Debug)]
