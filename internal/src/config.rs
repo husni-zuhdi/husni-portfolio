@@ -16,11 +16,13 @@ pub struct Config {
 }
 
 impl Default for Config {
+    /// By default running on localhost:8080 in release
+    /// with log-level info and data from memory
     fn default() -> Self {
-        let svc_endpoint: String = "127.0.0.1".to_string();
+        let svc_endpoint: String = "localhost".to_string();
         let svc_port: String = "8080".to_string();
         let log_level: String = "info".to_string();
-        let environment: String = "prod".to_string();
+        let environment: String = "release".to_string();
         let data_source: String = "memory".to_string();
         let database_url: String = "".to_owned();
         let gh_owner: String = "".to_string();
@@ -42,6 +44,7 @@ impl Default for Config {
 }
 
 impl Config {
+    /// Parse optional environment variable to setup the envar and set default
     fn parse_optional_envar(envar: &str, default: &str) -> String {
         match env::var(&envar) {
             Err(e) => {
@@ -68,7 +71,7 @@ impl Config {
 
         // Optional
         let log_level: String = Self::parse_optional_envar("LOG_LEVEL", "info");
-        let environment: String = Self::parse_optional_envar("ENVIRONMENT", "prod");
+        let environment: String = Self::parse_optional_envar("ENVIRONMENT", "release");
         let data_source: String = Self::parse_optional_envar("DATA_SOURCE", "memory");
         let database_url: String = Self::parse_optional_envar("DATABASE_URL", "");
         let gh_owner: String = Self::parse_optional_envar("GITHUB_OWNER", "");
@@ -95,10 +98,10 @@ mod test {
 
     #[test]
     fn test_default() {
-        let svc_endpoint: String = "127.0.0.1".to_string();
+        let svc_endpoint: String = "localhost".to_string();
         let svc_port: String = "8080".to_string();
         let log_level: String = "info".to_string();
-        let environment: String = "prod".to_string();
+        let environment: String = "release".to_string();
         let data_source: String = "memory".to_string();
         let database_url: String = "".to_string();
         let gh_owner: String = "".to_string();
@@ -120,12 +123,12 @@ mod test {
 
     #[test]
     fn test_from_envar_without_optionals() {
-        let svc_endpoint = "127.0.0.1";
+        let svc_endpoint = "localhost";
         let svc_port = "8080";
         let log_level = "";
         let expected_log_level = "info";
         let environment = "";
-        let expected_environment = "prod";
+        let expected_environment = "release";
         let data_source = "";
         let expected_data_source = "memory";
         let database_url = "";
@@ -168,7 +171,7 @@ mod test {
 
     #[test]
     fn test_from_envar_with_optionals() {
-        let svc_endpoint = "127.0.0.1";
+        let svc_endpoint = "localhost";
         let svc_port = "8080";
         let log_level = "info";
         let environment = "dev";
