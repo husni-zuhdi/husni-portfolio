@@ -1,8 +1,6 @@
-use crate::model::version::Version;
 use log::debug;
 use markdown::{to_html_with_options, CompileOptions, Constructs, Options, ParseOptions};
 use std::fs;
-use std::io::BufReader;
 
 /// md_to_html: Markdown to HTML
 /// take String of filename
@@ -27,19 +25,6 @@ pub fn md_to_html(filename: String) -> Result<String, String> {
     )
     .expect("Failed to convert html with options");
     Ok(html)
-}
-
-/// read_version_manifest
-/// read version manifest on root repository to get this configuration
-/// * version
-/// * git build hash
-/// * build date
-pub fn read_version_manifest() -> Result<Version, String> {
-    let file = fs::File::open("version.json").expect("Failed to open version.json");
-    let reader = BufReader::new(file);
-
-    let json: Version = serde_json::from_reader(reader).expect("Failed to parse version.json");
-    Ok(json)
 }
 
 /// capitalize
