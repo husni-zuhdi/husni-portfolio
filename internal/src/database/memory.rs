@@ -1,13 +1,11 @@
-use crate::api::github::get_gh_blogs;
+// use crate::api::github::get_gh_blogs;
 use crate::model::blog::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
-    BlogStartPage,
+    BlogStartPage, BlogStored,
 };
 use crate::repo::blog::BlogRepo;
-use crate::utils::{capitalize, md_to_html};
 use async_trait::async_trait;
 use log::{debug, info, warn};
-use std::fs;
 
 #[derive(Clone)]
 pub struct MemoryBlogRepo {
@@ -48,6 +46,19 @@ impl BlogRepo for MemoryBlogRepo {
 
         let result = &self.blogs[start_seq..end_seq];
         result.to_vec()
+    }
+    async fn check_id(&self, id: BlogId) -> BlogStored {
+        let result = self.blogs.iter().filter(|blog| &blog.id == &id).next();
+        match result {
+            Some(blog) => {
+                info!("Blog {} is in Memory.", &blog.id.0);
+                BlogStored(true)
+            }
+            None => {
+                info!("Blog {} is not in Memory.", &id.0);
+                BlogStored(false)
+            }
+        }
     }
     async fn add(
         &mut self,
@@ -131,71 +142,8 @@ impl BlogRepo for MemoryBlogRepo {
 
 impl MemoryBlogRepo {
     pub fn new() -> MemoryBlogRepo {
-        let dir = Some("./statics/blogs/".to_string());
-        Self::from_dir(dir)
-    }
-
-    /// Async function to get BlogsData from github
-    /// Borrowed `owner`, `repo`, and `branch` String
-    pub async fn from_github(owner: &String, repo: &String, branch: &String) -> Self {
-        let dir = Some("./statics/blogs/".to_string());
-        let mut blog_data = Self::from_dir(dir).blogs;
-        let mut gh_blog_data =
-            get_gh_blogs(owner.to_string(), repo.to_string(), branch.to_string())
-                .await
-                .expect("Failed to get github blog data");
-        blog_data.append(&mut gh_blog_data);
-        Self { blogs: blog_data }
-    }
-
-    /// Create MemoryBlogRepo from directory
-    pub fn from_dir(dir: Option<String>) -> Self {
-        let directory = dir.clone().expect("Failed to get directory");
-        let static_path = fs::read_dir(directory.as_str()).unwrap();
-
-        let blogs_paths: Vec<String> = static_path
-            .filter_map(|blog_path| {
-                let path = blog_path.ok().expect("Failed to get blog path").path();
-                if path.is_file() {
-                    path.file_name()
-                        .expect("Failed to get filename")
-                        .to_str()
-                        .map(|s| s.to_owned())
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        let blogs: Vec<Blog> = blogs_paths
-            .iter()
-            .map(|blog_path| {
-                let (id, name_init) = blog_path
-                    .split_once("-")
-                    .expect("Failed to split filename into id and name");
-                let name_formated = name_init.replace("_", " ");
-                let (name_lower, _) = name_formated
-                    .split_once(".")
-                    .expect("Failed to remove file extension");
-                let name = capitalize(name_lower);
-                let fullpath = format!("{}{}", directory, blog_path);
-
-                info!("markdown loaded: {}", fullpath);
-
-                let body = md_to_html(fullpath).expect("Failed to convert markdown to html");
-                Blog {
-                    id: BlogId(id.to_string()),
-                    name: BlogName(name.to_string()),
-                    source: BlogSource::FileSystem,
-                    filename: BlogFilename(blog_path.to_owned()),
-                    body: BlogBody(body),
-                }
-            })
-            .collect();
-
-        debug!("Blogs: {:?}", blogs);
-
-        Self { blogs }
+        let blogs: Vec<Blog> = Vec::new();
+        MemoryBlogRepo { blogs }
     }
 }
 
