@@ -1,6 +1,6 @@
 use crate::model::blog::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
-    BlogStartPage,
+    BlogStartPage, BlogStored,
 };
 use async_trait::async_trait;
 use dyn_clone::{clone_trait_object, DynClone};
@@ -11,6 +11,7 @@ clone_trait_object!(BlogRepo);
 pub trait BlogRepo: DynClone {
     async fn find(&self, id: BlogId) -> Blog;
     async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog>;
+    async fn check_id(&self, id: BlogId) -> BlogStored;
     async fn add(
         &mut self,
         id: BlogId,
@@ -19,6 +20,7 @@ pub trait BlogRepo: DynClone {
         source: BlogSource,
         body: BlogBody,
     ) -> Blog;
+    // async fn add_bulk(&mut self, blogs: Vec<Blog>) -> Vec<Blog>;
     async fn update(
         &mut self,
         id: BlogId,

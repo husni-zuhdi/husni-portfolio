@@ -1,6 +1,6 @@
 use crate::model::blog::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
-    BlogStartPage,
+    BlogStartPage, BlogStored,
 };
 use crate::port::blog::{command::BlogCommandPort, query::BlogQueryPort};
 use crate::repo::blog::BlogRepo;
@@ -18,6 +18,9 @@ impl BlogQueryPort for BlogUseCase {
     }
     async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
         self.blog_repo.find_blogs(start, end).await
+    }
+    async fn check_id(&self, id: BlogId) -> BlogStored {
+        self.blog_repo.check_id(id).await
     }
 }
 
