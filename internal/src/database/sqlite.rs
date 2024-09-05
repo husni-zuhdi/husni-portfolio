@@ -1,12 +1,12 @@
 use crate::model::blog::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
-    BlogStartPage,
+    BlogStartPage, BlogStored,
 };
 use crate::repo::blog::BlogRepo;
 use async_trait::async_trait;
 use log::{debug, info};
 use sqlx::sqlite::SqlitePool;
-use sqlx::{query, query_as};
+use sqlx::{query, query_as, Sqlite};
 
 #[derive(Clone)]
 pub struct SqliteBlogRepo {
@@ -51,6 +51,26 @@ impl BlogRepo for SqliteBlogRepo {
             debug!("Blog HTML {}.", &row.body);
         }
         rows
+    }
+    async fn check_id(&self, id: BlogId) -> BlogStored {
+        let blog_id = id.0;
+        let prep_query = "SELECT id FROM blogs WHERE id = $1 ORDER BY id";
+        debug!("Executing query {} for id {}", &prep_query, &blog_id);
+
+        match query_as::<Sqlite, BlogId>(&prep_query)
+            .bind(&blog_id)
+            .fetch_one(&self.pool)
+            .await
+        {
+            Ok(id) => {
+                info!("Blog {} is in Memory.", &id.0);
+                BlogStored(true)
+            }
+            Err(err) => {
+                info!("Blog {} is not in Memory. Error: {}", &blog_id, err);
+                BlogStored(false)
+            }
+        }
     }
     async fn add(
         &mut self,
