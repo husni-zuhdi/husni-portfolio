@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-/// Github Owner Name
+/// Github blog repository owner name
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct GithubOwner(String);
+pub struct GithubOwner(pub String);
 
 impl Display for GithubOwner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -11,9 +11,9 @@ impl Display for GithubOwner {
     }
 }
 
-/// Github Owner Repository
+/// Github blog repository name
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct GithubRepository(String);
+pub struct GithubRepository(pub String);
 
 impl Display for GithubRepository {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -21,9 +21,9 @@ impl Display for GithubRepository {
     }
 }
 
-/// Github Owner Branch
+/// Github blog repository branch
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct GithubBranch(String);
+pub struct GithubBranch(pub String);
 
 impl Display for GithubBranch {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -71,15 +71,45 @@ pub enum GithubTreeType {
     Commit,
 }
 
+/// Github tree path name
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct GithubTreePath(pub String);
+
+impl Display for GithubTreePath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+/// Github tree sha
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct GithubTreeSha(pub String);
+
+impl Display for GithubTreeSha {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+/// Github tree url
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct GithubTreeUrl(pub String);
+
+impl Display for GithubTreeUrl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 /// Tree structure of git
 /// Reference: https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct GithubTree {
-    pub path: String,
+    pub path: GithubTreePath,
     #[serde(rename(deserialize = "mode"))]
     pub tree_mode: GithubTreeMode,
     #[serde(rename(deserialize = "type"))]
     pub tree_type: GithubTreeType,
-    pub sha: String,
-    pub url: String,
+    pub sha: GithubTreeSha,
+    pub url: GithubTreeUrl,
 }
