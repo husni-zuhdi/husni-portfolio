@@ -19,6 +19,14 @@ impl Display for BlogId {
     }
 }
 
+impl<'r> FromRow<'r, SqliteRow> for BlogId {
+    fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
+        use sqlx::Row;
+        let id = row.try_get("id")?;
+        Ok(BlogId(id))
+    }
+}
+
 /// BlogName
 /// Name of the Blog
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -75,22 +83,27 @@ impl Display for BlogBody {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogDeleted(pub bool);
 
+/// BlogStored
+/// Blog is stored in database or not
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BlogStored(pub bool);
+
 /// BlogType
 /// Type of Blog source
 /// Can be:
-/// - FileSystem: Blog markdown come from filesystem
+/// - Filesystem: Blog markdown come from filesystem
 /// - Github: Blog markdown come from github repository
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum BlogSource {
-    FileSystem,
+    Filesystem,
     Github,
 }
 
 impl Display for BlogSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Self::FileSystem => {
-                write!(f, "FileSystem")
+            Self::Filesystem => {
+                write!(f, "Filesystem")
             }
             Self::Github => {
                 write!(f, "Github")
@@ -124,10 +137,10 @@ impl<'r> FromRow<'r, SqliteRow> for Blog {
         let name = row.try_get("name")?;
         let source = match row.try_get("source")? {
             "github" => BlogSource::Github,
-            "filesystem" => BlogSource::FileSystem,
+            "filesystem" => BlogSource::Filesystem,
             &_ => {
-                // Default to FileSystem
-                BlogSource::FileSystem
+                // Default to Filesystem
+                BlogSource::Filesystem
             }
         };
         let filename = row.try_get("filename")?;
@@ -158,4 +171,14 @@ pub struct BlogEndPage(pub i32);
 pub struct BlogPagination {
     pub start: Option<BlogStartPage>,
     pub end: Option<BlogEndPage>,
+}
+
+/// BlogMetadata
+/// Minimum Metadata to query Blog
+/// filename can be full filename in filesystem or url to github blog content
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BlogMetadata {
+    pub id: BlogId,
+    pub name: BlogName,
+    pub filename: BlogFilename,
 }
