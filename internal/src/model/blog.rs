@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 /// BlogId
 /// Identifier of Blog
+/// TODO: change it to integer32
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogId(pub String);
 
