@@ -1,4 +1,3 @@
-// use crate::api::github::get_gh_blogs;
 use crate::model::blog::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
     BlogStartPage, BlogStored,
