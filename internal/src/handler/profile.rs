@@ -1,4 +1,4 @@
-use crate::handler::error::get_500_internal_server_error;
+use crate::handler::status::get_500_internal_server_error;
 use crate::model::templates::ProfileTemplate;
 use askama::Template;
 use axum::response::Html;

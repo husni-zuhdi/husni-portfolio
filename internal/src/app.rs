@@ -43,7 +43,7 @@ pub async fn app() -> () {
             get_service(ServeFile::new("./statics/styles.css")),
         )
         .with_state(app_state)
-        .fallback(get(handler::error::get_404_not_found));
+        .fallback(get(handler::status::get_404_not_found));
 
     // Start Axum Application
     let listener = tokio::net::TcpListener::bind(endpoint).await.unwrap();

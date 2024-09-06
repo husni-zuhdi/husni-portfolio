@@ -1,4 +1,4 @@
-use crate::handler::error::get_500_internal_server_error;
+use crate::handler::status::get_500_internal_server_error;
 use crate::model::version::Version;
 use crate::model::{axum::AppState, templates::VersionTemplate};
 use askama::Template;

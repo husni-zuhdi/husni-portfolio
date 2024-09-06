@@ -1,6 +1,6 @@
 pub mod blog;
-pub mod error;
 pub mod profile;
+pub mod status;
 pub mod version;
 
 // Note: In axum [example](https://docs.rs/axum/latest/axum/response/index.html#building-responses)
