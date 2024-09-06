@@ -1,32 +1,3 @@
-use log::debug;
-use markdown::{to_html_with_options, CompileOptions, Constructs, Options, ParseOptions};
-use std::fs;
-
-/// md_to_html: Markdown to HTML
-/// take String of filename
-/// return String of converted markdown in html or String of error
-pub fn md_to_html(filename: String) -> Result<String, String> {
-    let body_md = fs::read_to_string(filename.clone()).expect("Failed to read markdown blog file");
-    debug!("Markdown Body for filename {}: {}", &filename, body_md);
-
-    let html = to_html_with_options(
-        &body_md,
-        &Options {
-            parse: ParseOptions {
-                constructs: Constructs {
-                    // In case you want to activeat frontmatter in the future
-                    // frontmatter: true,
-                    ..Constructs::gfm()
-                },
-                ..ParseOptions::gfm()
-            },
-            compile: CompileOptions::gfm(),
-        },
-    )
-    .expect("Failed to convert html with options");
-    Ok(html)
-}
-
 /// capitalize
 /// Capitalize the first character in s.
 /// Take borrowed str of s

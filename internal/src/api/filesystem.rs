@@ -5,6 +5,7 @@ use crate::repo::api::ApiRepo;
 use crate::utils::{capitalize, md_to_html};
 use async_trait::async_trait;
 use log::{debug, info};
+use markdown::{to_html_with_options, CompileOptions, Constructs, Options, ParseOptions};
 use std::fs;
 use std::path::PathBuf;
 
@@ -29,8 +30,8 @@ impl ApiRepo for FilesystemApiUseCase {
         blogs_metadata
     }
     async fn fetch(&self, metadata: BlogMetadata) -> Blog {
-        let body =
-            md_to_html(metadata.filename.0.clone()).expect("Failed to convert markdown to html");
+        let body = Self::process_markdown(metadata.filename.0.clone())
+            .expect("Failed to convert markdown to html");
         debug!("Blog Body with Id {}: {}", &metadata.id.0, &body);
 
         Blog {
@@ -83,5 +84,30 @@ impl FilesystemApiUseCase {
             name: BlogName(name),
             filename: BlogFilename(filename),
         }
+    }
+    /// Process Markdown
+    /// take String of filename and convert markdown file into html with option
+    /// return String of converted markdown in html or String of error
+    fn process_markdown(filename: String) -> Result<String, String> {
+        let body_md =
+            fs::read_to_string(filename.clone()).expect("Failed to read markdown blog file");
+        debug!("Markdown Body for filename {}: {}", &filename, body_md);
+
+        let html = to_html_with_options(
+            &body_md,
+            &Options {
+                parse: ParseOptions {
+                    constructs: Constructs {
+                        // In case you want to activeat frontmatter in the future
+                        // frontmatter: true,
+                        ..Constructs::gfm()
+                    },
+                    ..ParseOptions::gfm()
+                },
+                compile: CompileOptions::gfm(),
+            },
+        )
+        .expect("Failed to convert html with options");
+        Ok(html)
     }
 }
