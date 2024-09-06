@@ -181,6 +181,11 @@ impl GithubApiUseCase {
         };
         content
     }
+    /// Process Content Markdown
+    /// Included replace Github Blog relative links with full github content links
+    /// Take String of markdown body
+    /// and String of github blog endpoint and github raw blog link
+    /// then return an optional string of processed markdown
     fn process_content_markdown(
         markdown: String,
         gh_blog_link: String,
@@ -219,11 +224,8 @@ impl GithubApiUseCase {
         debug!("Replaced Body: {}", &body);
         Some(body)
     }
-    /// Process Blog Markdown from Github
-    /// Included replace Github Blog relative links with full github content links
-    /// Take String of markdown body
-    /// and String of github blog endpoint
-    /// then return String of updated body
+    /// Process Github Content and Metadata
+    /// Returned an optional Blog
     fn process_github_content(&self, content: Content, metadata: BlogMetadata) -> Option<Blog> {
         let gh_blog_link = format!(
             "https://github.com/{}/{}/tree/{}/{}-{}",
@@ -236,7 +238,6 @@ impl GithubApiUseCase {
 
         let name_formated = metadata.name.0.replace("-", " ");
         let name = capitalize(&name_formated);
-        // let id = format!("{}-g", &metadata.id).to_string();
 
         info!(
             "Markdown of Blog id {} with name {} loaded",
