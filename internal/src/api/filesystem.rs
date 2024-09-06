@@ -2,7 +2,7 @@ use crate::model::blog::{
     Blog, BlogBody, BlogFilename, BlogId, BlogMetadata, BlogName, BlogSource,
 };
 use crate::repo::api::ApiRepo;
-use crate::utils::{capitalize, md_to_html};
+use crate::utils::capitalize;
 use async_trait::async_trait;
 use log::{debug, info};
 use markdown::{to_html_with_options, CompileOptions, Constructs, Options, ParseOptions};
