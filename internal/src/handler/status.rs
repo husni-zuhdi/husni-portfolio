@@ -1,7 +1,7 @@
 use crate::model::templates::{InternalServerErrorTemplate, NotFoundTemplate};
 use askama::Template;
 use axum::response::Html;
-use log::{error, info};
+use tracing::{error, info};
 
 /// get_404_not_found
 /// Serve 404 Not found HTML file

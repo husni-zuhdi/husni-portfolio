@@ -8,7 +8,7 @@ use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
 use axum::response::Html;
-use log::{debug, error, info};
+use tracing::{debug, error, info};
 
 /// get_blogs
 /// Serve get_blogs HTML file
@@ -26,14 +26,14 @@ pub async fn get_blogs(
     let start = match pagination.0.start {
         Some(val) => val,
         None => {
-            info!("Set default start to 0");
+            debug!("Set default start to 0");
             BlogStartPage(0)
         }
     };
     let end = match pagination.0.end {
         Some(val) => val,
         None => {
-            info!("Set default end to 10");
+            debug!("Set default end to 10");
             BlogEndPage(10)
         }
     };
@@ -43,7 +43,7 @@ pub async fn get_blogs(
     let blogs: Vec<BlogsTemplateBlog> = blogs_data
         .iter()
         .map(|blog| {
-            info!("Construct BlogsTemplateBlog for Blog Id {}", &blog.id);
+            debug!("Construct BlogsTemplateBlog for Blog Id {}", &blog.id);
             BlogsTemplateBlog {
                 id: &blog.id.as_str(),
                 name: &blog.name.as_str(),

@@ -2,7 +2,7 @@ use crate::handler::status::get_500_internal_server_error;
 use crate::model::templates::ProfileTemplate;
 use askama::Template;
 use axum::response::Html;
-use log::{error, info};
+use tracing::{error, info};
 
 /// get_profile
 /// Serve Profile/Biography HTML file

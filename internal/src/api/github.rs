@@ -6,13 +6,13 @@ use crate::repo::api::ApiRepo;
 use crate::utils::capitalize;
 use async_trait::async_trait;
 use http_body_util::BodyExt;
-use log::{debug, error, info, warn};
 use markdown::{to_html_with_options, Options};
 use octocrab;
 use octocrab::models::repos::Content;
 use regex::Regex;
 use serde_json;
 use std::num::IntErrorKind;
+use tracing::{debug, error, info, warn};
 
 #[derive(Clone)]
 pub struct GithubApiUseCase {
@@ -155,7 +155,7 @@ impl GithubApiUseCase {
                 }
             }
         } else {
-            info!("Tree {} is not a directory. Skipped.", &tree.path);
+            debug!("Tree {} is not a directory. Skipped.", &tree.path);
             None
         }
     }

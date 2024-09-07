@@ -1,12 +1,9 @@
-use crate::model::blog::{
-    Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
-    BlogStartPage, BlogStored,
-};
+use crate::model::blog::*;
 use crate::repo::blog::BlogRepo;
 use async_trait::async_trait;
-use log::{debug, info};
 use sqlx::sqlite::SqlitePool;
 use sqlx::{query, query_as, Sqlite};
+use tracing::{debug, info};
 
 #[derive(Clone)]
 pub struct SqliteBlogRepo {

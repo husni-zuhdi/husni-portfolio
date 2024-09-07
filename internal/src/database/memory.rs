@@ -1,10 +1,7 @@
-use crate::model::blog::{
-    Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
-    BlogStartPage, BlogStored,
-};
+use crate::model::blog::*;
 use crate::repo::blog::BlogRepo;
 use async_trait::async_trait;
-use log::{debug, info, warn};
+use tracing::{debug, info, warn};
 
 #[derive(Clone)]
 pub struct MemoryBlogRepo {
