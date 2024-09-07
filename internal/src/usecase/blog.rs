@@ -5,10 +5,17 @@ use crate::model::blog::{
 use crate::port::blog::{command::BlogCommandPort, query::BlogQueryPort};
 use crate::repo::blog::BlogRepo;
 use async_trait::async_trait;
+use core::fmt::Debug;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BlogUseCase {
     pub blog_repo: Box<dyn BlogRepo + Send + Sync>,
+}
+
+impl Debug for dyn BlogRepo + Send + Sync {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "BlogRepo{:?}", self)
+    }
 }
 
 #[async_trait]

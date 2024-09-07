@@ -4,10 +4,10 @@ use crate::model::blog::{
 use crate::repo::api::ApiRepo;
 use crate::utils::capitalize;
 use async_trait::async_trait;
-use log::{debug, info};
 use markdown::{to_html_with_options, CompileOptions, Constructs, Options, ParseOptions};
 use std::fs;
 use std::path::PathBuf;
+use tracing::{debug, info};
 
 #[derive(Clone)]
 pub struct FilesystemApiUseCase {

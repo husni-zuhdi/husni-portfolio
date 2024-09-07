@@ -4,7 +4,7 @@ use crate::model::{axum::AppState, templates::VersionTemplate};
 use askama::Template;
 use axum::extract::State;
 use axum::response::Html;
-use log::{error, info};
+use tracing::{error, info};
 
 /// get_version
 /// Serve get_version HTML file
