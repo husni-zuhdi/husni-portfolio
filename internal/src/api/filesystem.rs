@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use markdown::{to_html_with_options, CompileOptions, Constructs, Options, ParseOptions};
 use std::fs;
 use std::path::PathBuf;
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 
 #[derive(Clone)]
 pub struct FilesystemApiUseCase {
@@ -17,16 +17,28 @@ pub struct FilesystemApiUseCase {
 #[async_trait]
 impl ApiRepo for FilesystemApiUseCase {
     async fn list_metadata(&self) -> Vec<BlogMetadata> {
-        let read_dir = fs::read_dir(self.blogs_dir.clone()).expect("Failed to read dir");
-        let blogs_metadata: Vec<BlogMetadata> = read_dir
-            // Collect Blog Filename
-            .filter_map(|blog_path| {
-                let blog_path_buf = blog_path.expect("Failed to get blog DirEntry").path();
-                Self::process_blog_path(&self, blog_path_buf)
-            })
-            // Collect Blog Metadata
-            .map(|blog_filename| Self::process_blog_metadata(&self, blog_filename))
-            .collect();
+        let read_dir = fs::read_dir(self.blogs_dir.clone());
+        let blogs_metadata: Vec<BlogMetadata> = match read_dir {
+            Ok(value) => {
+                // Collect Blog Filename
+                value
+                    .filter_map(|blog_path| {
+                        let blog_path_buf = blog_path.expect("Failed to get blog DirEntry").path();
+                        Self::process_blog_path(&self, blog_path_buf)
+                    })
+                    // Collect Blog Metadata
+                    .map(|blog_filename| Self::process_blog_metadata(&self, blog_filename))
+                    .collect()
+            }
+            Err(err) => {
+                error!(
+                    "Failed to read directory. Returned empty Vector. Error: {}",
+                    err
+                );
+                let value: Vec<BlogMetadata> = Vec::new();
+                value
+            }
+        };
         blogs_metadata
     }
     async fn fetch(&self, metadata: BlogMetadata) -> Blog {
