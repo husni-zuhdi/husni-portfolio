@@ -1,4 +1,4 @@
-use crate::handler::status::get_500_internal_server_error;
+use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::blog::{BlogEndPage, BlogId, BlogPagination, BlogStartPage};
 use crate::model::{
     axum::AppState,
@@ -39,27 +39,38 @@ pub async fn get_blogs(
     };
 
     // Construct BlogsTemplate Struct
-    let blogs_data = data.blog_repo.find_blogs(start, end).await;
-    let blogs: Vec<BlogsTemplateBlog> = blogs_data
-        .iter()
-        .map(|blog| {
-            debug!("Construct BlogsTemplateBlog for Blog Id {}", &blog.id);
-            BlogsTemplateBlog {
-                id: &blog.id.as_str(),
-                name: &blog.name.as_str(),
-            }
-        })
-        .collect();
-    debug!("BlogsTemplate blogs : {:?}", &blogs);
+    let result = data.blog_repo.find_blogs(start.clone(), end.clone()).await;
+    match result {
+        Some(blogs_data) => {
+            let blogs: Vec<BlogsTemplateBlog> = blogs_data
+                .iter()
+                .map(|blog| {
+                    debug!("Construct BlogsTemplateBlog for Blog Id {}", &blog.id);
+                    BlogsTemplateBlog {
+                        id: &blog.id.as_str(),
+                        name: &blog.name.as_str(),
+                    }
+                })
+                .collect();
+            debug!("BlogsTemplate blogs : {:?}", &blogs);
 
-    let blogs_res = BlogsTemplate { blogs: &blogs }.render();
-    match blogs_res {
-        Ok(res) => {
-            info!("Blogs askama template rendered.");
-            Html(res)
+            let blogs_res = BlogsTemplate { blogs: &blogs }.render();
+            match blogs_res {
+                Ok(res) => {
+                    info!("Blogs askama template rendered.");
+                    Html(res)
+                }
+                Err(err) => {
+                    error!("Failed to render get_blogs.html. {}", err);
+                    get_500_internal_server_error()
+                }
+            }
         }
-        Err(err) => {
-            error!("Failed to render get_blogs.html. {}", err);
+        None => {
+            error!(
+                "Failed to find blogs with Blog Id started at {} and ended at {}.",
+                &start.0, &end.0
+            );
             get_500_internal_server_error()
         }
     }
@@ -74,23 +85,31 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
     let data = app_state.blog_usecase.lock().await;
 
     // Construct BlogTemplate Struct
-    let blog_data = data.blog_repo.find(BlogId(path.clone())).await;
-    let blog = BlogTemplate {
-        id: path.clone().as_str(),
-        name: &blog_data.name.as_str(),
-        filename: &blog_data.filename.as_str(),
-        body: &blog_data.body.as_str(),
-    }
-    .render();
+    let result = data.blog_repo.find(BlogId(path.clone())).await;
+    match result {
+        Some(blog_data) => {
+            let blog = BlogTemplate {
+                id: path.clone().as_str(),
+                name: &blog_data.name.as_str(),
+                filename: &blog_data.filename.as_str(),
+                body: &blog_data.body.as_str(),
+            }
+            .render();
 
-    match blog {
-        Ok(res) => {
-            info!("Blog ID {} askama template rendered.", &path);
-            Html(res)
+            match blog {
+                Ok(res) => {
+                    info!("Blog ID {} askama template rendered.", &path);
+                    Html(res)
+                }
+                Err(err) => {
+                    error!("Failed to render blog.html. {}", err);
+                    get_500_internal_server_error()
+                }
+            }
         }
-        Err(err) => {
-            error!("Failed to render blog.html. {}", err);
-            get_500_internal_server_error()
+        None => {
+            error!("Failed to find Blog with Id {}.", &path);
+            get_404_not_found().await
         }
     }
 }
