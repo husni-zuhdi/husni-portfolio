@@ -20,13 +20,13 @@ impl Debug for dyn BlogRepo + Send + Sync {
 
 #[async_trait]
 impl BlogQueryPort for BlogUseCase {
-    async fn find(&self, id: BlogId) -> Blog {
+    async fn find(&self, id: BlogId) -> Option<Blog> {
         self.blog_repo.find(id).await
     }
-    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Option<Vec<Blog>> {
         self.blog_repo.find_blogs(start, end).await
     }
-    async fn check_id(&self, id: BlogId) -> BlogStored {
+    async fn check_id(&self, id: BlogId) -> Option<BlogStored> {
         self.blog_repo.check_id(id).await
     }
 }
@@ -40,7 +40,7 @@ impl BlogCommandPort for BlogUseCase {
         filename: BlogFilename,
         source: BlogSource,
         body: BlogBody,
-    ) -> Blog {
+    ) -> Option<Blog> {
         self.blog_repo.add(id, name, filename, source, body).await
     }
     async fn update(
@@ -50,12 +50,12 @@ impl BlogCommandPort for BlogUseCase {
         filename: Option<BlogFilename>,
         source: Option<BlogSource>,
         body: Option<BlogBody>,
-    ) -> Blog {
+    ) -> Option<Blog> {
         self.blog_repo
             .update(id, name, filename, source, body)
             .await
     }
-    async fn delete(&mut self, id: BlogId) -> BlogDeleted {
+    async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted> {
         self.blog_repo.delete(id).await
     }
 }

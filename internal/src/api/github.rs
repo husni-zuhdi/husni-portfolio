@@ -23,7 +23,7 @@ pub struct GithubApiUseCase {
 
 #[async_trait]
 impl ApiRepo for GithubApiUseCase {
-    async fn list_metadata(&self) -> Vec<BlogMetadata> {
+    async fn list_metadata(&self) -> Option<Vec<BlogMetadata>> {
         let trees_result = Self::fetch_github_trees(&self).await;
 
         let mut blogs_metadata: Vec<BlogMetadata> = Vec::new();
@@ -43,12 +43,12 @@ impl ApiRepo for GithubApiUseCase {
                 error!("Failed to filter Github Trees result")
             }
         };
-        blogs_metadata
+        Some(blogs_metadata)
     }
-    async fn fetch(&self, metadata: BlogMetadata) -> Blog {
-        let content = Self::fetch_github_content(&self, metadata.filename.clone()).await;
+    async fn fetch(&self, metadata: BlogMetadata) -> Option<Blog> {
+        let result = Self::fetch_github_content(&self, metadata.filename.clone()).await;
 
-        let blog = match content {
+        match result {
             Some(content) => Self::process_github_content(&self, content, metadata),
             None => {
                 error!(
@@ -57,8 +57,7 @@ impl ApiRepo for GithubApiUseCase {
                 );
                 None
             }
-        };
-        blog.unwrap()
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::model::blog::*;
 use crate::repo::blog::BlogRepo;
 use async_trait::async_trait;
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, warn};
 
 #[derive(Clone)]
 pub struct MemoryBlogRepo {
@@ -10,19 +10,21 @@ pub struct MemoryBlogRepo {
 
 #[async_trait]
 impl BlogRepo for MemoryBlogRepo {
-    async fn find(&self, id: BlogId) -> Blog {
-        let result = self
-            .blogs
-            .iter()
-            .filter(|blog| &blog.id == &id)
-            .next()
-            .unwrap();
-        info!("Blog {} processed.", &result.id);
-        debug!("Blog HTML {}.", &result.body);
-
-        result.clone()
+    async fn find(&self, id: BlogId) -> Option<Blog> {
+        let result = self.blogs.iter().filter(|blog| &blog.id == &id).next();
+        match result {
+            Some(blog) => {
+                info!("Blog {} processed.", &blog.id);
+                debug!("Blog HTML {}.", &blog.body);
+                Some(blog.clone())
+            }
+            None => {
+                info!("Blog {} not found. Return None", &id);
+                None
+            }
+        }
     }
-    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Option<Vec<Blog>> {
         let start_seq = if start.0 as usize > self.blogs.len() {
             warn!("BlogStartPage is greater than Blogs count. Will reset to 0.");
             0
@@ -36,23 +38,34 @@ impl BlogRepo for MemoryBlogRepo {
         } else if (end.0 as usize > self.blogs.len()) && self.blogs.len() < 10 {
             warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
             self.blogs.len()
+        } else if start.0 as usize > end.0 as usize {
+            warn!("BlogStartPage is greater than BlogEndPage. Will reset to 10.");
+            self.blogs.len()
         } else {
             end.0 as usize
         };
 
         let result = &self.blogs[start_seq..end_seq];
-        result.to_vec()
+        if result.is_empty() {
+            info!(
+                "Blogs started at {} and ended at {} were not found. Return None",
+                &start.0, &end.0
+            );
+            None
+        } else {
+            Some(result.to_vec())
+        }
     }
-    async fn check_id(&self, id: BlogId) -> BlogStored {
+    async fn check_id(&self, id: BlogId) -> Option<BlogStored> {
         let result = self.blogs.iter().filter(|blog| &blog.id == &id).next();
         match result {
             Some(blog) => {
                 info!("Blog {} is in Memory.", &blog.id.0);
-                BlogStored(true)
+                Some(BlogStored(true))
             }
             None => {
                 info!("Blog {} is not in Memory.", &id.0);
-                BlogStored(false)
+                Some(BlogStored(false))
             }
         }
     }
@@ -63,7 +76,7 @@ impl BlogRepo for MemoryBlogRepo {
         filename: BlogFilename,
         source: BlogSource,
         body: BlogBody,
-    ) -> Blog {
+    ) -> Option<Blog> {
         let result = Blog {
             id,
             name,
@@ -74,15 +87,22 @@ impl BlogRepo for MemoryBlogRepo {
         self.blogs.push(result.clone());
         info!("Blog {} added.", &result.id);
         debug!("Blog HTML {}.", &result.body);
-        result
+        Some(result)
     }
-    async fn delete(&mut self, id: BlogId) -> BlogDeleted {
-        let index = self.blogs.iter().position(|blog| &blog.id == &id).unwrap();
-        info!("Deleting Blog with Id {}", &index);
-
-        self.blogs.remove(index);
-        info!("Deleted Blog with Id {}", &index);
-        BlogDeleted(true)
+    async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted> {
+        let result = self.blogs.iter().position(|blog| &blog.id == &id);
+        match result {
+            Some(val) => {
+                info!("Deleting Blog with Id {}", &val);
+                self.blogs.remove(val);
+                info!("Deleted Blog with Id {}", &val);
+                Some(BlogDeleted(true))
+            }
+            None => {
+                error!("Failed to delete Blog with Id {}. Blog not found.", &id.0);
+                None
+            }
+        }
     }
     async fn update(
         &mut self,
@@ -91,48 +111,52 @@ impl BlogRepo for MemoryBlogRepo {
         filename: Option<BlogFilename>,
         source: Option<BlogSource>,
         body: Option<BlogBody>,
-    ) -> Blog {
-        let result: &mut Blog = self
-            .blogs
-            .iter_mut()
-            .filter(|blog| &blog.id == &id)
-            .next()
-            .unwrap();
-        match name {
-            Some(val) => {
-                debug!("Update Blog {} name from {} to {}", &id, &result.name, &val);
-                result.name = val
+    ) -> Option<Blog> {
+        let result: Option<&mut Blog> = self.blogs.iter_mut().filter(|blog| &blog.id == &id).next();
+
+        match result {
+            Some(blog) => {
+                match name {
+                    Some(val) => {
+                        debug!("Update Blog {} name from {} to {}", &id, &blog.name, &val);
+                        blog.name = val
+                    }
+                    None => (),
+                }
+                match filename {
+                    Some(val) => {
+                        debug!(
+                            "Update Blog {} filename from {} to {}",
+                            &id, &blog.filename, &val
+                        );
+                        blog.filename = val
+                    }
+                    None => (),
+                }
+                match source {
+                    Some(val) => {
+                        debug!(
+                            "Update Blog {} source from {} to {}",
+                            &id, &blog.source, &val
+                        );
+                        blog.source = val
+                    }
+                    None => (),
+                }
+                match body {
+                    Some(val) => {
+                        debug!("Update Blog {} body from {} to {}", &id, &blog.body, &val);
+                        blog.body = val
+                    }
+                    None => (),
+                }
+                Some(blog.clone())
             }
-            None => (),
-        }
-        match filename {
-            Some(val) => {
-                debug!(
-                    "Update Blog {} filename from {} to {}",
-                    &id, &result.filename, &val
-                );
-                result.filename = val
+            None => {
+                error!("Failed to update Blog with Id {}. Blog not found.", &id.0);
+                None
             }
-            None => (),
         }
-        match source {
-            Some(val) => {
-                debug!(
-                    "Update Blog {} source from {} to {}",
-                    &id, &result.source, &val
-                );
-                result.source = val
-            }
-            None => (),
-        }
-        match body {
-            Some(val) => {
-                debug!("Update Blog {} body from {} to {}", &id, &result.body, &val);
-                result.body = val
-            }
-            None => (),
-        }
-        result.clone()
     }
 }
 

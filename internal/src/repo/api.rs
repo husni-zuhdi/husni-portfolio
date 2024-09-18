@@ -6,6 +6,6 @@ clone_trait_object!(ApiRepo);
 
 #[async_trait]
 pub trait ApiRepo: DynClone {
-    async fn list_metadata(&self) -> Vec<BlogMetadata>;
-    async fn fetch(&self, metadata: BlogMetadata) -> Blog;
+    async fn list_metadata(&self) -> Option<Vec<BlogMetadata>>;
+    async fn fetch(&self, metadata: BlogMetadata) -> Option<Blog>;
 }

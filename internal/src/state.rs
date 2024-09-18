@@ -27,8 +27,10 @@ pub async fn state_factory(config: Config) -> AppState {
         BlogUseCase::new(Box::new(repo))
     };
 
-    let fs_usecase = FilesystemApiUseCase::new("./statics/blogs/".to_string()).await;
-    let _ = populate_blog(Box::new(fs_usecase), &mut blog_uc).await;
+    if !config.filesystem_dir.is_empty() {
+        let fs_usecase = FilesystemApiUseCase::new(config.filesystem_dir.clone()).await;
+        let _ = populate_blog(Box::new(fs_usecase), &mut blog_uc).await;
+    }
 
     if github_api_is_enabled {
         let github_usecase = GithubApiUseCase::new(
@@ -49,13 +51,13 @@ pub async fn state_factory(config: Config) -> AppState {
 }
 
 async fn populate_blog(api_uc: Box<dyn ApiRepo + Send + Sync>, blog_uc: &mut BlogUseCase) {
-    let blogs_metadata = api_uc.list_metadata().await;
+    let blogs_metadata = api_uc.list_metadata().await.unwrap();
     for metadata in blogs_metadata {
-        let blog_is_not_stored = !blog_uc.check_id(metadata.id.clone()).await.0;
+        let blog_is_not_stored = !blog_uc.check_id(metadata.id.clone()).await.unwrap().0;
         if blog_is_not_stored {
             info!("Start to populate Blog {}.", &metadata.id);
             debug!("Start to fetch Blog {}.", &metadata.id);
-            let blog = api_uc.fetch(metadata.clone()).await;
+            let blog = api_uc.fetch(metadata.clone()).await.unwrap();
             debug!("Finished to fetch Blog {}.", &metadata.id);
 
             debug!("Start to store Blog {}.", &metadata.id);

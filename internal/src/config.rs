@@ -10,6 +10,7 @@ pub struct Config {
     pub environment: String,
     pub data_source: String,
     pub database_url: String,
+    pub filesystem_dir: String,
     pub gh_owner: String,
     pub gh_repo: String,
     pub gh_branch: String,
@@ -24,7 +25,8 @@ impl Default for Config {
         let log_level = tracing::Level::INFO;
         let environment: String = "release".to_string();
         let data_source: String = "memory".to_string();
-        let database_url: String = "".to_owned();
+        let database_url: String = "".to_string();
+        let filesystem_dir: String = "".to_string();
         let gh_owner: String = "".to_string();
         let gh_repo: String = "".to_string();
         let gh_branch: String = "".to_string();
@@ -36,6 +38,7 @@ impl Default for Config {
             environment,
             data_source,
             database_url,
+            filesystem_dir,
             gh_owner,
             gh_repo,
             gh_branch,
@@ -89,6 +92,7 @@ impl Config {
         let environment: String = Self::parse_optional_envar("ENVIRONMENT", "release");
         let data_source: String = Self::parse_optional_envar("DATA_SOURCE", "memory");
         let database_url: String = Self::parse_optional_envar("DATABASE_URL", "");
+        let filesystem_dir: String = Self::parse_optional_envar("FILESYSTEM_DIR", "");
         let gh_owner: String = Self::parse_optional_envar("GITHUB_OWNER", "");
         let gh_repo: String = Self::parse_optional_envar("GITHUB_REPO", "");
         let gh_branch: String = Self::parse_optional_envar("GITHUB_BRANCH", "");
@@ -100,6 +104,7 @@ impl Config {
             environment,
             data_source,
             database_url,
+            filesystem_dir,
             gh_owner,
             gh_repo,
             gh_branch,
@@ -119,6 +124,7 @@ mod test {
         let environment: String = "release".to_string();
         let data_source: String = "memory".to_string();
         let database_url: String = "".to_string();
+        let filesystem_dir: String = "".to_string();
         let gh_owner: String = "".to_string();
         let gh_repo: String = "".to_string();
         let gh_branch: String = "".to_string();
@@ -131,6 +137,7 @@ mod test {
         assert_eq!(result.environment, environment);
         assert_eq!(result.data_source, data_source);
         assert_eq!(result.database_url, database_url);
+        assert_eq!(result.filesystem_dir, filesystem_dir);
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
@@ -147,6 +154,7 @@ mod test {
         let data_source = "";
         let expected_data_source = "memory";
         let database_url = "";
+        let filesystem_dir = "";
         let gh_owner = "";
         let gh_repo = "";
         let gh_branch = "";
@@ -158,6 +166,7 @@ mod test {
             environment,
             data_source,
             database_url,
+            filesystem_dir,
             gh_owner,
             gh_repo,
             gh_branch,
@@ -171,6 +180,7 @@ mod test {
         assert_eq!(result.environment, expected_environment);
         assert_eq!(result.data_source, expected_data_source);
         assert_eq!(result.database_url, database_url);
+        assert_eq!(result.filesystem_dir, filesystem_dir);
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
@@ -187,6 +197,7 @@ mod test {
         let environment = "dev";
         let data_source = "sqlite";
         let database_url = "sqlite:husni-portfolio.db";
+        let filesystem_dir = "";
         let gh_owner = "husni-zuhdi";
         let gh_repo = "husni-blog-resources";
         let gh_branch = "main";
@@ -198,6 +209,7 @@ mod test {
             environment,
             data_source,
             database_url,
+            filesystem_dir,
             gh_owner,
             gh_repo,
             gh_branch,
@@ -211,6 +223,7 @@ mod test {
         assert_eq!(result.environment, environment);
         assert_eq!(result.data_source, data_source);
         assert_eq!(result.database_url, database_url);
+        assert_eq!(result.filesystem_dir, filesystem_dir);
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
@@ -225,6 +238,7 @@ mod test {
         environment: &str,
         data_source: &str,
         database_url: &str,
+        filesystem_dir: &str,
         gh_owner: &str,
         gh_repo: &str,
         gh_branch: &str,
@@ -235,6 +249,7 @@ mod test {
         env::set_var("ENVIRONMENT", environment);
         env::set_var("DATA_SOURCE", data_source);
         env::set_var("DATABASE_URL", database_url);
+        env::set_var("FILESYSTEM_DIR", filesystem_dir);
         env::set_var("GITHUB_OWNER", gh_owner);
         env::set_var("GITHUB_REPO", gh_repo);
         env::set_var("GITHUB_BRANCH", gh_branch);
@@ -247,6 +262,7 @@ mod test {
         env::remove_var("ENVIRONMENT");
         env::remove_var("DATA_SOURCE");
         env::remove_var("DATABASE_URL");
+        env::remove_var("FILESYSTEM_DIR");
         env::remove_var("GITHUB_OWNER");
         env::remove_var("GITHUB_REPO");
         env::remove_var("GITHUB_BRANCH");
