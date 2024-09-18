@@ -17,10 +17,10 @@ impl Debug for dyn ApiRepo + Send + Sync {
 
 #[async_trait]
 impl ApiQueryPort for ApiUseCase {
-    async fn list_metadata(&self) -> Vec<BlogMetadata> {
+    async fn list_metadata(&self) -> Option<Vec<BlogMetadata>> {
         self.api_repo.list_metadata().await
     }
-    async fn fetch(&self, metadata: BlogMetadata) -> Blog {
+    async fn fetch(&self, metadata: BlogMetadata) -> Option<Blog> {
         self.api_repo.fetch(metadata).await
     }
 }
