@@ -2,8 +2,8 @@ use crate::model::blog::*;
 use crate::repo::blog::BlogRepo;
 use async_trait::async_trait;
 use sqlx::sqlite::SqlitePool;
-use sqlx::{query, query_as, Sqlite};
-use tracing::{debug, info};
+use sqlx::{query, query_as, Error, Sqlite};
+use tracing::{debug, error, info};
 
 #[derive(Clone)]
 pub struct SqliteBlogRepo {
@@ -12,21 +12,32 @@ pub struct SqliteBlogRepo {
 
 #[async_trait]
 impl BlogRepo for SqliteBlogRepo {
-    async fn find(&self, id: BlogId) -> Blog {
+    async fn find(&self, id: BlogId) -> Option<Blog> {
         let blog_id = id.0;
         let prep_query = "SELECT * FROM blogs WHERE id = $1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
-        let row: Blog = query_as(&prep_query)
+        let row: Result<Blog, Error> = query_as(&prep_query)
             .bind(&blog_id)
             .fetch_one(&self.pool)
-            .await
-            .expect("Failed to execute get query");
-        info!("Blog {} processed.", &row.id);
-        debug!("Blog HTML {}.", &row.body);
-        row
+            .await;
+
+        match row {
+            Ok(blog) => {
+                info!("Blog {} processed.", &blog.id);
+                debug!("Blog HTML {}.", &blog.body);
+                Some(blog)
+            }
+            Err(err) => {
+                error!(
+                    "Failed to get Blog with Id {}. Blog Not Found. Err: {}",
+                    &blog_id, err
+                );
+                None
+            }
+        }
     }
-    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Vec<Blog> {
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Option<Vec<Blog>> {
         let start_seq = start.0;
         let end_seq = end.0;
         let limit = end_seq - start_seq;
@@ -36,20 +47,31 @@ impl BlogRepo for SqliteBlogRepo {
             &prep_query, &start_seq, &end_seq, &limit
         );
 
-        let rows: Vec<Blog> = query_as(&prep_query)
+        let rows: Result<Vec<Blog>, Error> = query_as(&prep_query)
             .bind(&limit)
             .bind(&start_seq)
             .fetch_all(&self.pool)
-            .await
-            .expect("Failed to execute get query");
-        info!("Blogs from {} to {} processed.", &start_seq, &end_seq);
-        for row in &rows {
-            info!("Blog {} processed.", &row.id);
-            debug!("Blog HTML {}.", &row.body);
+            .await;
+
+        match rows {
+            Ok(blogs) => {
+                info!("Blogs from {} to {} processed.", &start_seq, &end_seq);
+                for row in &blogs {
+                    info!("Blog {} processed.", &row.id);
+                    debug!("Blog HTML {}.", &row.body);
+                }
+                Some(blogs)
+            }
+            Err(err) => {
+                error!(
+                    "Failed to get Blogs with Id started at {} and ended at {}. Err: {}",
+                    &start_seq, &end_seq, err
+                );
+                None
+            }
         }
-        rows
     }
-    async fn check_id(&self, id: BlogId) -> BlogStored {
+    async fn check_id(&self, id: BlogId) -> Option<BlogStored> {
         let blog_id = id.0;
         let prep_query = "SELECT id FROM blogs WHERE id = $1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
@@ -60,12 +82,12 @@ impl BlogRepo for SqliteBlogRepo {
             .await
         {
             Ok(id) => {
-                info!("Blog {} is in Memory.", &id.0);
-                BlogStored(true)
+                info!("Blog {} is in SQLite.", &id.0);
+                Some(BlogStored(true))
             }
             Err(err) => {
-                info!("Blog {} is not in Memory. Error: {}", &blog_id, err);
-                BlogStored(false)
+                info!("Blog {} is not in SQLite. Error: {}", &blog_id, err);
+                Some(BlogStored(false))
             }
         }
     }
@@ -76,8 +98,8 @@ impl BlogRepo for SqliteBlogRepo {
         filename: BlogFilename,
         source: BlogSource,
         body: BlogBody,
-    ) -> Blog {
-        let blog_id = id.0;
+    ) -> Option<Blog> {
+        let blog_id = &id.0;
         let blog_name = name.0;
         let blog_filename = filename.0;
         let blog_source = format!("{}", source);
@@ -93,42 +115,45 @@ impl BlogRepo for SqliteBlogRepo {
             .bind(&blog_source)
             .bind(&blog_body)
             .execute(&self.pool)
-            .await
-            .expect("Failed to execute add query");
-        info!(
-            "Blog {} in row {} was added.",
-            &blog_id,
-            &query_res.rows_affected()
-        );
+            .await;
 
-        let prep_get_query = "SELECT * FROM blogs WHERE id = $1 ORDER BY id";
-        debug!("Executing query {} for id {}", &prep_get_query, &blog_id);
+        match query_res {
+            Ok(row) => {
+                info!(
+                    "Blog {} in row {} added to SQLite.",
+                    &blog_id,
+                    &row.rows_affected()
+                );
 
-        let row: Blog = query_as(&prep_get_query)
-            .bind(&blog_id)
-            .fetch_one(&self.pool)
-            .await
-            .expect("Failed to execute get query");
-        info!("Blog {} processed.", &row.id);
-        debug!("Blog HTML {}.", &row.body);
-        row
+                Self::find(&self.clone(), id.clone()).await
+            }
+            Err(err) => {
+                error!("Failed to add Blog with Id {}. Err: {}", &blog_id, err);
+                None
+            }
+        }
     }
-    async fn delete(&mut self, id: BlogId) -> BlogDeleted {
+    async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted> {
         let blog_id = id.0;
         let prep_query = "DELETE FROM blogs WHERE id = $1";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
-        let query_res = query(&prep_query)
-            .bind(&blog_id)
-            .execute(&self.pool)
-            .await
-            .expect("Failed to execute delete query");
-        info!(
-            "Blog {} in row {} was deleted.",
-            &blog_id,
-            &query_res.rows_affected()
-        );
-        BlogDeleted(true)
+        let query_res = query(&prep_query).bind(&blog_id).execute(&self.pool).await;
+
+        match query_res {
+            Ok(row) => {
+                info!(
+                    "Blog {} in row {} was deleted.",
+                    &blog_id,
+                    &row.rows_affected()
+                );
+                Some(BlogDeleted(true))
+            }
+            Err(err) => {
+                error!("Failed to delete Blog with Id {}. Err: {}", &blog_id, err);
+                None
+            }
+        }
     }
     async fn update(
         &mut self,
@@ -137,8 +162,8 @@ impl BlogRepo for SqliteBlogRepo {
         filename: Option<BlogFilename>,
         source: Option<BlogSource>,
         body: Option<BlogBody>,
-    ) -> Blog {
-        let blog_id = id.0;
+    ) -> Option<Blog> {
+        let blog_id = &id.0;
         let mut affected_col = "".to_string();
         match name {
             Some(val) => {
@@ -182,25 +207,23 @@ impl BlogRepo for SqliteBlogRepo {
         let query_res = query(&prep_update_query)
             .bind(&blog_id)
             .execute(&self.pool)
-            .await
-            .expect("Failed to execute update query");
-        info!(
-            "Blog {} in row {} was updated.",
-            &blog_id,
-            &query_res.rows_affected()
-        );
+            .await;
 
-        let prep_get_query = "SELECT * FROM blogs WHERE id = $1 ORDER BY id";
-        debug!("Executing query {} for id {}", &prep_get_query, &blog_id);
+        match query_res {
+            Ok(row) => {
+                info!(
+                    "Blog {} in row {} was updated on SQLite.",
+                    &blog_id,
+                    &row.rows_affected()
+                );
 
-        let row: Blog = query_as(&prep_get_query)
-            .bind(&blog_id)
-            .fetch_one(&self.pool)
-            .await
-            .expect("Failed to execute get query");
-        info!("Blog {} processed.", &row.id);
-        debug!("Blog HTML {}.", &row.body);
-        row
+                Self::find(&self.clone(), id.clone()).await
+            }
+            Err(err) => {
+                error!("Failed to update Blog with Id {}. Err: {}", &blog_id, err);
+                None
+            }
+        }
     }
 }
 
