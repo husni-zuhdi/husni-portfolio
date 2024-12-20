@@ -35,6 +35,10 @@ pub struct VersionTemplate<'a> {
 }
 
 #[derive(Template, Debug)]
+#[template(path = "talks.html")]
+pub struct TalksTemplate;
+
+#[derive(Template, Debug)]
 #[template(path = "404_not_found.html")]
 pub struct NotFoundTemplate;
 
