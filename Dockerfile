@@ -1,4 +1,4 @@
-FROM rust:1.74-buster AS builder
+FROM rust:1.81.0-slim-bookworm AS builder
 COPY . .
 RUN cargo build --release
 
