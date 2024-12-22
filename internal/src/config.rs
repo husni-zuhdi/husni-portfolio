@@ -1,5 +1,5 @@
 use std::env;
-use tracing::warn;
+use tracing::{error, warn};
 
 /// Struct Config for setup environment variables
 #[derive(PartialEq, Debug, Clone)]
@@ -90,7 +90,25 @@ impl Config {
             },
         };
         let environment: String = Self::parse_optional_envar("ENVIRONMENT", "release");
-        let data_source: String = Self::parse_optional_envar("DATA_SOURCE", "memory");
+        // let data_source: String = Self::parse_optional_envar("DATA_SOURCE", "memory");
+        let data_source: String = match env::var("DATA_SOURCE") {
+            Err(e) => {
+                warn!(
+                "Failed to load DATA_SOURCE environment variable. Set default to 'memory'. Error {}", e
+                );
+                "memory".to_string()
+            }
+            Ok(val) => match val.as_str() {
+                "memory" | "sqlite" | "turso" => val,
+                _ => {
+                    error!(
+                        "Data Source type {} is not supported! Default to 'memory'.",
+                        val
+                    );
+                    "memory".to_string()
+                }
+            },
+        };
         let database_url: String = Self::parse_optional_envar("DATABASE_URL", "");
         let filesystem_dir: String = Self::parse_optional_envar("FILESYSTEM_DIR", "");
         let gh_owner: String = Self::parse_optional_envar("GITHUB_OWNER", "");
