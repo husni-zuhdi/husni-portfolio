@@ -5,6 +5,8 @@ use axum::{
     routing::{get, get_service},
     Router,
 };
+use tower::ServiceBuilder;
+use tower_http::compression::CompressionLayer;
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
 
@@ -37,6 +39,7 @@ pub async fn app() -> () {
             get_service(ServeFile::new("./statics/styles.css")),
         )
         .with_state(app_state)
+        .layer(ServiceBuilder::new().layer(CompressionLayer::new()))
         .fallback(get(handler::status::get_404_not_found));
 
     // Start Axum Application
