@@ -1,5 +1,5 @@
-use crate::model::blog::*;
-use crate::repo::blog::BlogRepo;
+use crate::model::blogs::*;
+use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
 use libsql::{de, params, Builder, Connection};
 use tracing::{debug, error, info, warn};
@@ -23,7 +23,7 @@ impl BlogRepo for TursoBlogRepo {
             .expect("Failed to prepare find query.");
 
         let row = stmt
-            .query([1])
+            .query([blog_id])
             .await
             .expect("Failed to query blog.")
             .next()
@@ -53,7 +53,7 @@ impl BlogRepo for TursoBlogRepo {
             .expect("Failed to prepare find query.");
 
         let row = stmt
-            .query([1, 2])
+            .query([start_seq, limit])
             .await
             .expect("Failed to query blogs.")
             .next()
@@ -78,7 +78,7 @@ impl BlogRepo for TursoBlogRepo {
             .expect("Failed to prepare find query.");
 
         let row = stmt
-            .query([1])
+            .query([blog_id.clone()])
             .await
             .expect("Failed to query blog id.")
             .next()
@@ -113,11 +113,54 @@ impl BlogRepo for TursoBlogRepo {
         let prep_add_query =
             "INSERT INTO blogs (id, name, filename, source, body) VALUES (?1, ?2, ?3, ?4, ?5)";
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
+
+        let mut stmt = self
+            .blogs
+            .prepare(prep_add_query)
+            .await
+            .expect("Failed to prepare add query.");
+
+        let row = stmt
+            .query([
+                blog_id.clone(),
+                blog_name.clone(),
+                blog_filename.clone(),
+                blog_source.clone(),
+                blog_body.clone(),
+            ])
+            .await
+            .expect("Failed to add blog.")
+            .next()
+            .await
+            .expect("Failed to access add blog.")
+            .expect("Failed to access row blog.");
+
+        let blog =
+            de::from_row::<Blog>(&row).expect("Failed to deserialize blog row to Blog struct.");
+
+        Some(blog)
     }
     async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted> {
         let blog_id = id.0;
         let prep_query = "DELETE FROM blogs WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
+
+        let mut stmt = self
+            .blogs
+            .prepare(prep_query)
+            .await
+            .expect("Failed to prepare delete command.");
+
+        match stmt.execute([blog_id.clone()]).await {
+            Ok(val) => {
+                debug!("Blog {} was deleted. Unknown usize: {}", &blog_id, val);
+                Some(BlogDeleted(true))
+            }
+            Err(err) => {
+                debug!("Blog {} is not deleted in Turso. Error {}", &blog_id, err);
+                Some(BlogDeleted(false))
+            }
+        }
     }
     async fn update(
         &mut self,
@@ -167,6 +210,26 @@ impl BlogRepo for TursoBlogRepo {
         }
         let prep_update_query = format!("UPDATE blogs SET{}WHERE id = ?1", &affected_col);
         debug!("Executing query {} for id {}", &prep_update_query, &blog_id);
+
+        let mut stmt = self
+            .blogs
+            .prepare(&prep_update_query)
+            .await
+            .expect("Failed to prepare update query.");
+
+        let row = stmt
+            .query([blog_id.clone()])
+            .await
+            .expect("Failed to update blog.")
+            .next()
+            .await
+            .expect("Failed to access update blog.")
+            .expect("Failed to access row blog.");
+
+        let blog =
+            de::from_row::<Blog>(&row).expect("Failed to deserialize blog row to Blog struct.");
+
+        Some(blog)
     }
 }
 
