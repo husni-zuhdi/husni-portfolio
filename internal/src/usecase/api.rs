@@ -1,4 +1,4 @@
-use crate::model::blog::{Blog, BlogMetadata};
+use crate::model::blogs::{Blog, BlogMetadata};
 use crate::port::api::query::ApiQueryPort;
 use crate::repo::api::ApiRepo;
 use async_trait::async_trait;

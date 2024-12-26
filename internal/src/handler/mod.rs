@@ -1,4 +1,4 @@
-pub mod blog;
+pub mod blogs;
 pub mod profile;
 pub mod status;
 pub mod talks;

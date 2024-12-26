@@ -1,4 +1,4 @@
-use crate::model::blog::{
+use crate::model::blogs::{
     Blog, BlogBody, BlogFilename, BlogId, BlogMetadata, BlogName, BlogSource,
 };
 use crate::repo::api::ApiRepo;

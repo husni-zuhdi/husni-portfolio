@@ -1,4 +1,4 @@
-use crate::model::blog::{Blog, BlogEndPage, BlogId, BlogStartPage, BlogStored};
+use crate::model::blogs::{Blog, BlogEndPage, BlogId, BlogStartPage, BlogStored};
 use async_trait::async_trait;
 
 #[async_trait]

@@ -1,5 +1,5 @@
 pub mod axum;
-pub mod blog;
+pub mod blogs;
 pub mod github;
 pub mod templates;
 pub mod version;

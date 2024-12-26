@@ -1,9 +1,9 @@
-use crate::model::blog::{
+use crate::model::blogs::{
     Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
     BlogStartPage, BlogStored,
 };
-use crate::port::blog::{command::BlogCommandPort, query::BlogQueryPort};
-use crate::repo::blog::BlogRepo;
+use crate::port::blogs::{command::BlogCommandPort, query::BlogQueryPort};
+use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
 

@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::usecase::blog::BlogUseCase;
+use crate::usecase::blogs::BlogUseCase;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

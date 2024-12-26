@@ -1,5 +1,5 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use crate::model::blog::{BlogEndPage, BlogId, BlogPagination, BlogStartPage};
+use crate::model::blogs::{BlogEndPage, BlogId, BlogPagination, BlogStartPage};
 use crate::model::{
     axum::AppState,
     templates::{BlogTemplate, BlogsTemplate, BlogsTemplateBlog},

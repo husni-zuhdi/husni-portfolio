@@ -1,12 +1,14 @@
 use crate::api::filesystem::FilesystemApiUseCase;
 use crate::api::github::GithubApiUseCase;
+use crate::config::Config;
 use crate::database::memory::MemoryBlogRepo;
 use crate::database::sqlite::SqliteBlogRepo;
+use crate::database::turso::TursoBlogRepo;
 use crate::model::axum::AppState;
-use crate::port::blog::command::BlogCommandPort;
-use crate::port::blog::query::BlogQueryPort;
+use crate::port::blogs::command::BlogCommandPort;
+use crate::port::blogs::query::BlogQueryPort;
 use crate::repo::api::ApiRepo;
-use crate::{config::Config, usecase::blog::BlogUseCase};
+use crate::usecase::blogs::BlogUseCase;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, info};
@@ -16,11 +18,17 @@ pub async fn state_factory(config: Config) -> AppState {
     // Setup blog use case
     let data_source_is_configured_sqlite =
         config.data_source == "sqlite" && config.database_url != "";
+    let data_source_is_configured_turso =
+        config.data_source == "turso" && config.database_url != "" && config.turso_auth_token != "";
     let github_api_is_enabled =
         !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty();
 
     let mut blog_uc = if data_source_is_configured_sqlite {
         let repo = SqliteBlogRepo::new(config.database_url.clone()).await;
+        BlogUseCase::new(Box::new(repo))
+    } else if data_source_is_configured_turso {
+        let repo =
+            TursoBlogRepo::new(config.database_url.clone(), config.turso_auth_token.clone()).await;
         BlogUseCase::new(Box::new(repo))
     } else {
         let repo = MemoryBlogRepo::default();

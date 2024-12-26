@@ -1,11 +1,17 @@
-use crate::model::blog::{Blog, BlogBody, BlogDeleted, BlogFilename, BlogId, BlogName, BlogSource};
+use crate::model::blogs::{
+    Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
+    BlogStartPage, BlogStored,
+};
 use async_trait::async_trait;
+use dyn_clone::{clone_trait_object, DynClone};
+
+clone_trait_object!(BlogRepo);
 
 #[async_trait]
-pub trait BlogCommandPort {
-    // TODO: instead of manually input
-    // why don't we create a struct to input the blog
-    // and return BlogStored instead?
+pub trait BlogRepo: DynClone {
+    async fn find(&self, id: BlogId) -> Option<Blog>;
+    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Option<Vec<Blog>>;
+    async fn check_id(&self, id: BlogId) -> Option<BlogStored>;
     async fn add(
         &mut self,
         id: BlogId,

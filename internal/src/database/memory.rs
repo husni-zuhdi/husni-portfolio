@@ -1,5 +1,5 @@
-use crate::model::blog::*;
-use crate::repo::blog::BlogRepo;
+use crate::model::blogs::*;
+use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
 use tracing::{debug, error, info, warn};
 
