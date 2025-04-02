@@ -1,8 +1,8 @@
 use crate::model::blogs::*;
 use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
-use libsql::{de, params, Builder, Connection};
-use tracing::{debug, error, info, warn};
+use libsql::{de, Builder, Connection};
+use tracing::{debug, info, warn};
 
 #[derive(Clone)]
 pub struct TursoBlogRepo {
@@ -106,10 +106,10 @@ impl BlogRepo for TursoBlogRepo {
         body: BlogBody,
     ) -> Option<Blog> {
         let blog_id = &id.0;
-        let blog_name = name.0;
-        let blog_filename = filename.0;
+        let blog_name = &name.0;
+        let blog_filename = &filename.0;
         let blog_source = format!("{}", source);
-        let blog_body = body.0;
+        let blog_body = &body.0;
         let prep_add_query =
             "INSERT INTO blogs (id, name, filename, source, body) VALUES (?1, ?2, ?3, ?4, ?5)";
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
@@ -120,8 +120,8 @@ impl BlogRepo for TursoBlogRepo {
             .await
             .expect("Failed to prepare add query.");
 
-        let row = stmt
-            .query([
+        let exe = stmt
+            .execute([
                 blog_id.clone(),
                 blog_name.clone(),
                 blog_filename.clone(),
@@ -129,16 +129,19 @@ impl BlogRepo for TursoBlogRepo {
                 blog_body.clone(),
             ])
             .await
-            .expect("Failed to add blog.")
-            .next()
-            .await
-            .expect("Failed to access add blog.")
-            .expect("Failed to access row blog.");
+            .expect("Failed to add blog.");
+        info!("Add Execution returned: {}", exe);
 
-        let blog =
-            de::from_row::<Blog>(&row).expect("Failed to deserialize blog row to Blog struct.");
+        Some(Blog {
+            id,
+            name,
+            filename,
+            source,
+            body,
+        })
+        // de::from_row::<Blog>(&row).expect("Failed to deserialize blog row to Blog struct.");
 
-        Some(blog)
+        // Some(blog)
     }
     async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted> {
         let blog_id = id.0;
@@ -172,7 +175,7 @@ impl BlogRepo for TursoBlogRepo {
     ) -> Option<Blog> {
         let blog_id = &id.0;
         let mut affected_col = "".to_string();
-        match name {
+        match &name {
             Some(val) => {
                 affected_col = format!("{} name = {} ", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -181,7 +184,7 @@ impl BlogRepo for TursoBlogRepo {
                 debug!("Skipped update name field")
             }
         }
-        match filename {
+        match &filename {
             Some(val) => {
                 affected_col = format!("{} filename = {} ", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -190,7 +193,7 @@ impl BlogRepo for TursoBlogRepo {
                 debug!("Skipped update name field")
             }
         }
-        match source {
+        match &source {
             Some(val) => {
                 affected_col = format!("{} source = {} ", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -199,7 +202,7 @@ impl BlogRepo for TursoBlogRepo {
                 debug!("Skipped update name field")
             }
         }
-        match body {
+        match &body {
             Some(val) => {
                 affected_col = format!("{} body = {} ", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -217,28 +220,53 @@ impl BlogRepo for TursoBlogRepo {
             .await
             .expect("Failed to prepare update query.");
 
-        let row = stmt
-            .query([blog_id.clone()])
+        let exe = stmt
+            .execute([blog_id.clone()])
             .await
-            .expect("Failed to update blog.")
-            .next()
-            .await
-            .expect("Failed to access update blog.")
-            .expect("Failed to access row blog.");
+            .expect("Failed to update blog.");
+        info!("Update Execution returned: {}", exe);
+        // .next()
+        // .await
+        // .expect("Failed to access update blog.")
+        // .expect("Failed to access row blog.");
 
-        let blog =
-            de::from_row::<Blog>(&row).expect("Failed to deserialize blog row to Blog struct.");
+        // let blog =
+        //     de::from_row::<Blog>(&row).expect("Failed to deserialize blog row to Blog struct.");
 
-        Some(blog)
+        // TODO make sure the data is presented in here is correct
+        Some(Blog {
+            id,
+            name: name.unwrap(),
+            filename: filename.unwrap(),
+            source: source.unwrap(),
+            body: body.unwrap(),
+        })
     }
 }
 
 impl TursoBlogRepo {
-    pub async fn new(database_url: String, database_token: String) -> TursoBlogRepo {
-        let db = Builder::new_remote(database_url, database_token)
-            .build()
-            .await
-            .expect("Failed to build turso database.");
+    pub async fn new(
+        mode: String,
+        database_url: String,
+        database_token: Option<String>,
+    ) -> TursoBlogRepo {
+        let db: libsql::Database = match mode.as_str() {
+            "sqlite" => Builder::new_local(database_url)
+                .build()
+                .await
+                .expect("Failed to build SQLITE database."),
+            "turso" => Builder::new_remote(database_url, database_token.unwrap())
+                .build()
+                .await
+                .expect("Failed to build turso database."),
+            &_ => {
+                warn!("Turso Database mode not set. Default to 'sqlite'");
+                Builder::new_remote(database_url, database_token.unwrap())
+                    .build()
+                    .await
+                    .expect("Failed to build turso database.")
+            }
+        };
 
         let conn = db
             .connect()
