@@ -85,7 +85,7 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
     let data = app_state.blog_usecase.lock().await;
 
     // Construct BlogTemplate Struct
-    let result = data.blog_repo.find(BlogId(path.clone())).await;
+    let result = data.blog_repo.find(BlogId { id: path.clone() }).await;
     match result {
         Some(blog_data) => {
             let blog = BlogTemplate {

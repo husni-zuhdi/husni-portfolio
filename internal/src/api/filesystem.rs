@@ -1,6 +1,4 @@
-use crate::model::blogs::{
-    Blog, BlogBody, BlogFilename, BlogId, BlogMetadata, BlogName, BlogSource,
-};
+use crate::model::blogs::{Blog, BlogId, BlogMetadata, BlogSource};
 use crate::repo::api::ApiRepo;
 use crate::utils::capitalize;
 use async_trait::async_trait;
@@ -40,23 +38,23 @@ impl ApiRepo for FilesystemApiUseCase {
         }
     }
     async fn fetch(&self, metadata: BlogMetadata) -> Option<Blog> {
-        let result = Self::process_markdown(metadata.filename.0.clone());
+        let result = Self::process_markdown(metadata.filename.clone());
         match result {
             Ok(body) => {
-                debug!("Blog Body with Id {}: {}", &metadata.id.0, &body);
+                debug!("Blog Body with Id {}: {}", &metadata.id, &body);
 
                 Some(Blog {
                     id: metadata.id,
                     name: metadata.name,
                     source: BlogSource::Filesystem,
                     filename: metadata.filename,
-                    body: BlogBody(body),
+                    body,
                 })
             }
             Err(err) => {
                 error!(
                     "Failed to process markdown to html for Blog Id {}. Error: {}",
-                    &metadata.id.0, err
+                    &metadata.id, err
                 );
                 None
             }
@@ -100,9 +98,9 @@ impl FilesystemApiUseCase {
         debug!("Blog Filename with Id {}: {}", &id, &filename);
 
         BlogMetadata {
-            id: BlogId(id.to_string()),
-            name: BlogName(name),
-            filename: BlogFilename(filename),
+            id: BlogId { id: id.to_string() },
+            name,
+            filename,
         }
     }
     /// Process Markdown

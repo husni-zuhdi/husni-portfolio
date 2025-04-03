@@ -1,6 +1,4 @@
-use crate::model::blogs::{
-    Blog, BlogBody, BlogFilename, BlogId, BlogMetadata, BlogName, BlogSource,
-};
+use crate::model::blogs::{Blog, BlogId, BlogMetadata, BlogSource};
 use crate::model::github::{GithubBranch, GithubOwner, GithubRepository, GithubTree, GithubTrees};
 use crate::repo::api::ApiRepo;
 use crate::utils::capitalize;
@@ -132,9 +130,9 @@ impl GithubApiUseCase {
                         );
 
                         Some(BlogMetadata {
-                            id: BlogId(id),
-                            name: BlogName(blog_name),
-                            filename: BlogFilename(filename),
+                            id: BlogId { id },
+                            name: blog_name,
+                            filename,
                         })
                     } else {
                         debug!("Folder prefix is 000-main-infrastructure. Skip this folder");
@@ -161,8 +159,8 @@ impl GithubApiUseCase {
     /// Fetch Github Content
     /// Take a filename with type BlogFilename (should be url instead?)
     /// Returned Optional octocrab::models::Content
-    async fn fetch_github_content(&self, url: BlogFilename) -> Option<Content> {
-        let github_content = octocrab::instance()._get(url.0.clone()).await;
+    async fn fetch_github_content(&self, url: String) -> Option<Content> {
+        let github_content = octocrab::instance()._get(url.clone()).await;
         let content = match github_content {
             Ok(content) => {
                 let body_bytes = content.into_body().collect().await.unwrap().to_bytes();
@@ -235,7 +233,7 @@ impl GithubApiUseCase {
             self.github_owner, self.github_repo, self.github_branch, &metadata.id, &metadata.name
         );
 
-        let name_formated = metadata.name.0.replace("-", " ");
+        let name_formated = metadata.name.replace("-", " ");
         let name = capitalize(&name_formated);
 
         info!(
@@ -251,10 +249,10 @@ impl GithubApiUseCase {
 
         Some(Blog {
             id: metadata.id,
-            name: BlogName(name),
+            name,
             source: BlogSource::Github,
             filename: metadata.filename,
-            body: BlogBody(body),
+            body,
         })
     }
 }

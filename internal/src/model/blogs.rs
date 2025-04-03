@@ -5,68 +5,19 @@ use std::fmt::Display;
 /// Identifier of Blog
 /// TODO: change it to integer32
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogId(pub String);
+pub struct BlogId {
+    pub id: String,
+}
 
 impl BlogId {
     pub fn as_str(&self) -> &str {
-        self.0.as_str()
+        self.id.as_str()
     }
 }
 
 impl Display for BlogId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-/// BlogName
-/// Name of the Blog
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogName(pub String);
-
-impl BlogName {
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl Display for BlogName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-/// BlogFilename
-/// Filename of the Blog
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogFilename(pub String);
-
-impl BlogFilename {
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl Display for BlogFilename {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-/// BlogBody
-/// HTML body of the Blog
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogBody(pub String);
-
-impl BlogBody {
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl Display for BlogBody {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.id)
     }
 }
 
@@ -114,10 +65,10 @@ impl Display for BlogSource {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Blog {
     pub id: BlogId,
-    pub name: BlogName,
+    pub name: String,
     pub source: BlogSource,
-    pub filename: BlogFilename,
-    pub body: BlogBody,
+    pub filename: String,
+    pub body: String,
 }
 
 /// BlogStartPage
@@ -144,6 +95,6 @@ pub struct BlogPagination {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogMetadata {
     pub id: BlogId,
-    pub name: BlogName,
-    pub filename: BlogFilename,
+    pub name: String,
+    pub filename: String,
 }

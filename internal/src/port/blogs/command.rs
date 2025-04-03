@@ -1,6 +1,4 @@
-use crate::model::blogs::{
-    Blog, BlogBody, BlogDeleted, BlogFilename, BlogId, BlogName, BlogSource,
-};
+use crate::model::blogs::{Blog, BlogDeleted, BlogId, BlogSource};
 use async_trait::async_trait;
 
 #[async_trait]
@@ -11,18 +9,18 @@ pub trait BlogCommandPort {
     async fn add(
         &mut self,
         id: BlogId,
-        name: BlogName,
-        filename: BlogFilename,
+        name: String,
+        filename: String,
         source: BlogSource,
-        body: BlogBody,
+        body: String,
     ) -> Option<Blog>;
     async fn update(
         &mut self,
         id: BlogId,
-        name: Option<BlogName>,
-        filename: Option<BlogFilename>,
+        name: Option<String>,
+        filename: Option<String>,
         source: Option<BlogSource>,
-        body: Option<BlogBody>,
+        body: Option<String>,
     ) -> Option<Blog>;
     async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted>;
 }
