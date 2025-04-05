@@ -1,9 +1,8 @@
-use crate::model::blog::{
-    Blog, BlogBody, BlogDeleted, BlogEndPage, BlogFilename, BlogId, BlogName, BlogSource,
-    BlogStartPage, BlogStored,
+use crate::model::blogs::{
+    Blog, BlogDeleted, BlogEndPage, BlogId, BlogMetadata, BlogSource, BlogStartPage, BlogStored,
 };
-use crate::port::blog::{command::BlogCommandPort, query::BlogQueryPort};
-use crate::repo::blog::BlogRepo;
+use crate::port::blogs::{command::BlogCommandPort, query::BlogQueryPort};
+use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
 
@@ -23,7 +22,11 @@ impl BlogQueryPort for BlogUseCase {
     async fn find(&self, id: BlogId) -> Option<Blog> {
         self.blog_repo.find(id).await
     }
-    async fn find_blogs(&self, start: BlogStartPage, end: BlogEndPage) -> Option<Vec<Blog>> {
+    async fn find_blogs(
+        &self,
+        start: BlogStartPage,
+        end: BlogEndPage,
+    ) -> Option<Vec<BlogMetadata>> {
         self.blog_repo.find_blogs(start, end).await
     }
     async fn check_id(&self, id: BlogId) -> Option<BlogStored> {
@@ -36,20 +39,20 @@ impl BlogCommandPort for BlogUseCase {
     async fn add(
         &mut self,
         id: BlogId,
-        name: BlogName,
-        filename: BlogFilename,
+        name: String,
+        filename: String,
         source: BlogSource,
-        body: BlogBody,
+        body: String,
     ) -> Option<Blog> {
         self.blog_repo.add(id, name, filename, source, body).await
     }
     async fn update(
         &mut self,
         id: BlogId,
-        name: Option<BlogName>,
-        filename: Option<BlogFilename>,
+        name: Option<String>,
+        filename: Option<String>,
         source: Option<BlogSource>,
-        body: Option<BlogBody>,
+        body: Option<String>,
     ) -> Option<Blog> {
         self.blog_repo
             .update(id, name, filename, source, body)

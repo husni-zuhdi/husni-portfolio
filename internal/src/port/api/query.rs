@@ -1,4 +1,4 @@
-use crate::model::blog::{Blog, BlogMetadata};
+use crate::model::blogs::{Blog, BlogMetadata};
 use async_trait::async_trait;
 
 #[async_trait]

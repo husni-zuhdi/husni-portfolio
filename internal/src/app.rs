@@ -30,8 +30,8 @@ pub async fn app() -> () {
     let app = Router::new()
         .route("/", get(handler::profile::get_profile))
         .route("/version", get(handler::version::get_version))
-        .route("/blogs", get(handler::blog::get_blogs))
-        .route("/blogs/:blog_id", get(handler::blog::get_blog))
+        .route("/blogs", get(handler::blogs::get_blogs))
+        .route("/blogs/:blog_id", get(handler::blogs::get_blog))
         .route("/talks", get(handler::talks::get_talks))
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service(
