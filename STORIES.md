@@ -76,7 +76,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 	 - Step:
 		 1. Enable `compression-gzip` feature on `tower_http` rust cargo
 		 2. Add a compression layer on axum router
- - [ ] As an Engineer, I want to implement sqlite database
+ - [x] As an Engineer, I want to implement sqlite database
 	 - We can use `sqlx` with `sqlite`  feature to implement sqlite database
 	 - However, using `sqlite` and `turso` cause a cc linking issue due to these multiple c program have same functions
 	 - So I think we need to stick to `turso` since we can still use `sqlite` with turso
@@ -84,7 +84,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 		 1. Implement `sqlite` database with `sqlx`
 		 2. Test the implementation
 		 3. (During turso implementation) Migrate `sqlx` to `turso` to solve cc linking issue
- - [ ] As an Engineer, I want to implement turso database
+ - [x] As an Engineer, I want to implement turso database
 	 - Register to https://turso.tech/ to get a free database
 	 - Build dev and prod databases
 	 - Implement `turso` and `sqlite`
