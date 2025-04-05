@@ -2,7 +2,7 @@ use crate::api::filesystem::FilesystemApiUseCase;
 use crate::api::github::GithubApiUseCase;
 use crate::config::Config;
 use crate::database::memory::MemoryBlogRepo;
-use crate::database::turso::TursoBlogRepo;
+use crate::database::turso::TursoDatabase;
 use crate::model::axum::AppState;
 use crate::port::blogs::command::BlogCommandPort;
 use crate::port::blogs::query::BlogQueryPort;
@@ -23,7 +23,7 @@ pub async fn state_factory(config: Config) -> AppState {
         !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty();
 
     let mut blog_uc = if data_source_is_configured_sqlite {
-        let repo = TursoBlogRepo::new(
+        let repo = TursoDatabase::new(
             config.data_source.clone(),
             config.database_url.clone(),
             None,
@@ -31,7 +31,7 @@ pub async fn state_factory(config: Config) -> AppState {
         .await;
         BlogUseCase::new(Box::new(repo))
     } else if data_source_is_configured_turso {
-        let repo = TursoBlogRepo::new(
+        let repo = TursoDatabase::new(
             config.data_source.clone(),
             config.database_url.clone(),
             Some(config.turso_auth_token.clone()),
