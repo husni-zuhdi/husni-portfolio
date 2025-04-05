@@ -33,7 +33,14 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 	 - Step:
 		 1. Add a new route to `/talks`
 		 2. Get the talk list from the database or API
-		 3. Present the `TALK_ID`, `TALK_NAME`, and if available `TALK_LINK`
+            - It's harder than I thought. First, our code structure is not easy to modify if we want to add another tables.
+            - What we need to do first is to add **functionality** first by preparing a new `talk` table.
+            - Then we can work on a new database adapters for `memory` and `turso`
+                - [x] Turso
+                - [ ] Memory
+            - Then after all functionality okay, we can build our code to be more easy to modify by separating `blogs` and `talks` database adapters (?).
+                - Database adapter is ready to be tested. Next we will implement the http handler and frontend.
+            3. Present the `TALK_ID`, `TALK_NAME`, and if available `TALK_MEDIA_LINK` and `TALK_ORG_LINK`
  - [x] As an User, I want to access each husni zuhdi talk record/video
 	 - When user in https://husni-zuhdi.com/talks, they can click a `Play` hyperlink button to be redirected to the talk record/video
 	 - The talk record/video will be opened in a new tab
