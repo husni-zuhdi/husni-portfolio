@@ -28,6 +28,19 @@ impl TalkRepo for TursoDatabase {
 
         debug!("Debug Row {:?}", &row);
 
+        let mut media_link: Option<String> = row.get(3).unwrap();
+        if media_link.clone().unwrap().is_empty() {
+            media_link = None;
+        }
+        let mut org_name: Option<String> = row.get(4).unwrap();
+        if org_name.clone().unwrap().is_empty() {
+            org_name = None;
+        }
+        let mut org_link: Option<String> = row.get(5).unwrap();
+        if org_link.clone().unwrap().is_empty() {
+            org_link = None;
+        }
+
         // We ditch Turso deserialize since it cannot submit id and source
         // id and source are Tuple Struct
         // I think libsql deserialize is not robust enough yet
@@ -37,10 +50,9 @@ impl TalkRepo for TursoDatabase {
             },
             name: row.get(1).unwrap(),
             date: row.get(2).unwrap(),
-            // TODO: it's a dummy values. Need to be updated later
-            media_link: None,
-            org_name: None,
-            org_link: None,
+            media_link,
+            org_name,
+            org_link,
         })
     }
     async fn find_talks(&self, start: TalkStartPage, end: TalkEndPage) -> Option<Vec<Talk>> {
@@ -67,7 +79,20 @@ impl TalkRepo for TursoDatabase {
         let mut talks: Vec<Talk> = Vec::new();
 
         while let Some(row) = rows.next().await.unwrap() {
-            info!("Debug Row {:?}", &row);
+            debug!("Debug Row {:?}", &row);
+
+            let mut media_link: Option<String> = row.get(3).unwrap();
+            if media_link.clone().unwrap().is_empty() {
+                media_link = None;
+            }
+            let mut org_name: Option<String> = row.get(4).unwrap();
+            if org_name.clone().unwrap().is_empty() {
+                org_name = None;
+            }
+            let mut org_link: Option<String> = row.get(5).unwrap();
+            if org_link.clone().unwrap().is_empty() {
+                org_link = None;
+            }
 
             // We ditch Turso deserialize since it cannot submit id and source
             // id and source are Tuple Struct
@@ -78,10 +103,9 @@ impl TalkRepo for TursoDatabase {
                 },
                 name: row.get(1).unwrap(),
                 date: row.get(2).unwrap(),
-                // TODO: it's a dummy values. Need to be updated later
-                media_link: None,
-                org_name: None,
-                org_link: None,
+                media_link,
+                org_name,
+                org_link,
             });
         }
 

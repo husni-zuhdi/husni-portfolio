@@ -6,17 +6,23 @@
 {% block content %}
 <h1 class="mb-4 font-semibold uppercase md:justify-start">Talks</h1>
 <hr>
+{% for talk in talks %}
     <h2 class="mb-2 hover:font-bold md:justify-start">
-        <p>2022-07-02 | Cloud Computing 101 at UIN Syarif Hidayatullah Jakarta.</p>
+        <p>
+            {{talk.date}}
+            {% if talk.media_link != "" %}
+                 | <a href="{{talk.media_link}}">{{talk.name}}</a>
+            {% else %}
+                 | {{talk.name}}
+            {% endif %}
+            {% if talk.org_link != "" && talk.org_name != "" %}
+                 | <a href="{{talk.org_link}}">[{{talk.org_name}}]</a>
+            {% else if talk.org_name != "" %}
+                 | {{talk.org_name}}
+            {% else %}
+                
+            {% endif %}
+        </p>
     </h2>
-    <h2 class="mb-2 hover:font-bold md:justify-start">
-        <p>2024-03-09 | How to setup simple Kubernetes cluster with GCE at <a href="https://www.linkedin.com/company/devops-jogja" target="_blank">DevOps Jogja</a>.</p>
-    </h2>
-    <h2 class="mb-2 hover:font-bold md:justify-start">
-        <p>2024-05-24 | <a href="https://youtu.be/nhEOm4O-V98?si=TlOtBSbVFyy9AxQr" target="_blank">Explore CI/CD with Github Action part #1</a> at <a href="https://www.linkedin.com/company/devops-jogja" target="_blank">DevOps Jogja</a>.</p>
-    </h2>
-    <h2 class="mb-2 hover:font-bold md:justify-start">
-        <p>2024-06-07 | <a href="https://youtu.be/13U4BudCPCk?si=skbdyjdKaXamO60O" target="_blank">Explore CI/CD with Github Action part #2</a> at <a href="https://www.linkedin.com/company/devops-jogja" target="_blank">DevOps Jogja</a>.</p>
-    </h2>
-
+{% endfor %}
 {% endblock content %}

@@ -1,4 +1,3 @@
-use crate::api::filesystem::FilesystemApiUseCase;
 use crate::api::github::GithubApiUseCase;
 use crate::config::Config;
 use crate::database::memory::MemoryBlogRepo;
@@ -8,6 +7,7 @@ use crate::port::blogs::command::BlogCommandPort;
 use crate::port::blogs::query::BlogQueryPort;
 use crate::repo::api::ApiRepo;
 use crate::usecase::blogs::BlogUseCase;
+use crate::{api::filesystem::FilesystemApiUseCase, usecase::talks::TalkUseCase};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, info};
@@ -22,14 +22,17 @@ pub async fn state_factory(config: Config) -> AppState {
     let github_api_is_enabled =
         !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty();
 
-    let mut blog_uc = if data_source_is_configured_sqlite {
+    let (mut blog_uc, talk_uc) = if data_source_is_configured_sqlite {
         let repo = TursoDatabase::new(
             config.data_source.clone(),
             config.database_url.clone(),
             None,
         )
         .await;
-        BlogUseCase::new(Box::new(repo))
+        (
+            BlogUseCase::new(Box::new(repo.clone())),
+            Some(TalkUseCase::new(Box::new(repo))),
+        )
     } else if data_source_is_configured_turso {
         let repo = TursoDatabase::new(
             config.data_source.clone(),
@@ -37,10 +40,13 @@ pub async fn state_factory(config: Config) -> AppState {
             Some(config.turso_auth_token.clone()),
         )
         .await;
-        BlogUseCase::new(Box::new(repo))
+        (
+            BlogUseCase::new(Box::new(repo.clone())),
+            Some(TalkUseCase::new(Box::new(repo))),
+        )
     } else {
         let repo = MemoryBlogRepo::default();
-        BlogUseCase::new(Box::new(repo))
+        (BlogUseCase::new(Box::new(repo)), None)
     };
 
     if !config.filesystem_dir.is_empty() {
@@ -59,10 +65,12 @@ pub async fn state_factory(config: Config) -> AppState {
     }
 
     let blog_usecase = Arc::new(Mutex::new(blog_uc));
+    let talk_usecase = Arc::new(Mutex::new(talk_uc));
 
     AppState {
         config,
         blog_usecase,
+        talk_usecase,
     }
 }
 

@@ -6,18 +6,6 @@ use std::collections::HashMap;
 use libsql::{Builder, Connection};
 use tracing::{debug, info, warn};
 
-// Sekarang kita ada TursoBlogRepo yg isinya cuma buat
-// 1. Bikin koneksi
-// 2. Execute sql command ke satu table
-//
-// Kita udah bikin dua repo untuk blogs dan talks
-// Apakah kita mau setup satu connection untuk kedua tables tsb?
-//
-// Kalau implementasi di IAM service nya AB.
-// /database itu setup logic untuk connect ke database termasuk create new connection
-//  dengan provide Client struct
-// /MODULE/dao/DATABASE/DATABASE.go itu tempat setup untuk penggunaan struct Client tadi
-
 #[derive(Clone)]
 pub struct TursoDatabase {
     pub conn: Connection,
