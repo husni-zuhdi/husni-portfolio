@@ -40,7 +40,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
                 - [ ] Memory
             - Then after all functionality okay, we can build our code to be more easy to modify by separating `blogs` and `talks` database adapters (?).
                 - Database adapter is ready to be tested. Next we will implement the http handler and frontend.
-            3. Present the `TALK_ID`, `TALK_NAME`, and if available `TALK_MEDIA_LINK` and `TALK_ORG_LINK`
+         3. Present the `TALK_ID`, `TALK_NAME`, and if available `TALK_MEDIA_LINK` and `TALK_ORG_LINK`
  - [x] As an User, I want to access each husni zuhdi talk record/video
 	 - When user in https://husni-zuhdi.com/talks, they can click a `Play` hyperlink button to be redirected to the talk record/video
 	 - The talk record/video will be opened in a new tab
