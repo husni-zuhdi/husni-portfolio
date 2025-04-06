@@ -24,7 +24,9 @@ impl Display for TalkId {
 pub struct Talk {
     pub id: TalkId,
     pub name: String,
+    pub date: String,
     pub media_link: Option<String>,
+    pub org_name: Option<String>,
     pub org_link: Option<String>,
 }
 

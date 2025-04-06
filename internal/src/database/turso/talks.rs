@@ -36,8 +36,10 @@ impl TalkRepo for TursoDatabase {
                 id: row.get(0).unwrap(),
             },
             name: row.get(1).unwrap(),
+            date: row.get(2).unwrap(),
             // TODO: it's a dummy values. Need to be updated later
             media_link: None,
+            org_name: None,
             org_link: None,
         })
     }
@@ -75,8 +77,10 @@ impl TalkRepo for TursoDatabase {
                     id: row.get(0).unwrap(),
                 },
                 name: row.get(1).unwrap(),
+                date: row.get(2).unwrap(),
                 // TODO: it's a dummy values. Need to be updated later
                 media_link: None,
+                org_name: None,
                 org_link: None,
             });
         }
@@ -87,13 +91,22 @@ impl TalkRepo for TursoDatabase {
         &mut self,
         id: TalkId,
         name: String,
+        date: String,
         media_link: Option<String>,
+        org_name: Option<String>,
         org_link: Option<String>,
     ) -> Option<TalkCommandStatus> {
         let talk_id = &id.id;
         let talk_name = &name;
+        let talk_date = &date;
         let talk_media_link = if let Some(val) = media_link {
             debug!("Media Link is present for talk id {}", &talk_id);
+            val
+        } else {
+            "".to_string()
+        };
+        let talk_org_name = if let Some(val) = org_name {
+            debug!("Organization Name is present for talk id {}", &talk_id);
             val
         } else {
             "".to_string()
@@ -106,7 +119,7 @@ impl TalkRepo for TursoDatabase {
         };
 
         let prep_add_query =
-            "INSERT INTO talks (id, name, media_link, org_link) VALUES (?1, ?2, ?3, ?4)";
+            "INSERT INTO talks (id, name, date, media_link, org_name, org_link) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
         debug!("Executing query {} for id {}", &prep_add_query, &talk_id);
 
         let mut stmt = self
@@ -121,7 +134,9 @@ impl TalkRepo for TursoDatabase {
             .execute((
                 talk_id.clone(),
                 talk_name.clone(),
+                talk_date.clone(),
                 talk_media_link.clone(),
+                talk_org_name.clone(),
                 talk_org_link.clone(),
             ))
             .await
@@ -159,7 +174,9 @@ impl TalkRepo for TursoDatabase {
         &mut self,
         id: TalkId,
         name: Option<String>,
+        date: Option<String>,
         media_link: Option<String>,
+        org_name: Option<String>,
         org_link: Option<String>,
     ) -> Option<TalkCommandStatus> {
         let talk_id = &id.id;
@@ -173,6 +190,15 @@ impl TalkRepo for TursoDatabase {
                 debug!("Skipped update name field")
             }
         }
+        match &date {
+            Some(val) => {
+                affected_col = format!("{} date = {} ,", &affected_col, val);
+                debug!("Affected Column: '{}'", &affected_col)
+            }
+            None => {
+                debug!("Skipped update date field")
+            }
+        }
         match &media_link {
             Some(val) => {
                 affected_col = format!("{} media_link = {} ,", &affected_col, val);
@@ -180,6 +206,15 @@ impl TalkRepo for TursoDatabase {
             }
             None => {
                 debug!("Skipped update media_link field")
+            }
+        }
+        match &org_name {
+            Some(val) => {
+                affected_col = format!("{} org_name = {} ,", &affected_col, val);
+                debug!("Affected Column: '{}'", &affected_col)
+            }
+            None => {
+                debug!("Skipped update org_name field")
             }
         }
         match &org_link {

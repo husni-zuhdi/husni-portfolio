@@ -74,7 +74,9 @@ impl TursoDatabase {
                 r#"CREATE TABLE IF NOT EXISTS talks (
             id INTEGER PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
+            date TEXT NOT NULL,
             media_link TEXT,
+            org_name TEXT,
             org_link TEXT);"#,
             ),
         ]);

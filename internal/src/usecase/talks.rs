@@ -31,19 +31,27 @@ impl TalkCommandPort for TalkUseCase {
         &mut self,
         id: TalkId,
         name: String,
+        date: String,
         media_link: Option<String>,
+        org_name: Option<String>,
         org_link: Option<String>,
     ) -> Option<TalkCommandStatus> {
-        self.talk_repo.add(id, name, media_link, org_link).await
+        self.talk_repo
+            .add(id, name, date, media_link, org_name, org_link)
+            .await
     }
     async fn update(
         &mut self,
         id: TalkId,
         name: Option<String>,
+        date: Option<String>,
         media_link: Option<String>,
+        org_name: Option<String>,
         org_link: Option<String>,
     ) -> Option<TalkCommandStatus> {
-        self.talk_repo.update(id, name, media_link, org_link).await
+        self.talk_repo
+            .update(id, name, date, media_link, org_name, org_link)
+            .await
     }
     async fn delete(&mut self, id: TalkId) -> Option<TalkCommandStatus> {
         self.talk_repo.delete(id).await
