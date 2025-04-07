@@ -3,16 +3,9 @@ use std::fmt::Display;
 
 /// BlogId
 /// Identifier of Blog
-/// TODO: change it to integer32
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogId {
-    pub id: String,
-}
-
-impl BlogId {
-    pub fn as_str(&self) -> &str {
-        self.id.as_str()
-    }
+    pub id: i64,
 }
 
 impl Display for BlogId {
@@ -21,16 +14,19 @@ impl Display for BlogId {
     }
 }
 
-/// BlogDeleted
-/// Blog Deleted or not
+/// BlogCommandStatus
+/// Status of Blog Command Operations:
+/// - Stored
+/// - Updated
+/// - Deleted
+/// I think you should wrap this with Option so you can check if it `None`
+/// then check the value of the status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogDeleted(pub bool);
-
-/// BlogStored
-/// Blog is stored in database or not
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogStored(pub bool);
-
+pub enum BlogCommandStatus {
+    Stored,
+    Updated,
+    Deleted,
+}
 /// BlogType
 /// Type of Blog source
 /// Can be:

@@ -82,9 +82,10 @@ impl FilesystemApiUseCase {
     /// Process Blog Metadata from Blog Filename
     /// Returned BlogMetadata
     fn process_blog_metadata(&self, blog_filename: String) -> BlogMetadata {
-        let (id, name_init) = blog_filename
+        let (id_str, name_init) = blog_filename
             .split_once("-")
             .expect("Failed to split filename into id and name");
+        let id: i64 = id_str.parse().unwrap();
         let name_lower = name_init
             .replace("_", " ")
             .split_once(".")
@@ -98,7 +99,7 @@ impl FilesystemApiUseCase {
         debug!("Blog Filename with Id {}: {}", &id, &filename);
 
         BlogMetadata {
-            id: BlogId { id: id.to_string() },
+            id: BlogId { id },
             name,
             filename,
         }

@@ -1,5 +1,5 @@
 use crate::model::blogs::{
-    Blog, BlogDeleted, BlogEndPage, BlogId, BlogMetadata, BlogSource, BlogStartPage, BlogStored,
+    Blog, BlogCommandStatus, BlogEndPage, BlogId, BlogMetadata, BlogSource, BlogStartPage,
 };
 use crate::port::blogs::{command::BlogCommandPort, query::BlogQueryPort};
 use crate::repo::blogs::BlogRepo;
@@ -29,7 +29,7 @@ impl BlogQueryPort for BlogUseCase {
     ) -> Option<Vec<BlogMetadata>> {
         self.blog_repo.find_blogs(start, end).await
     }
-    async fn check_id(&self, id: BlogId) -> Option<BlogStored> {
+    async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {
         self.blog_repo.check_id(id).await
     }
 }
@@ -43,7 +43,7 @@ impl BlogCommandPort for BlogUseCase {
         filename: String,
         source: BlogSource,
         body: String,
-    ) -> Option<Blog> {
+    ) -> Option<BlogCommandStatus> {
         self.blog_repo.add(id, name, filename, source, body).await
     }
     async fn update(
@@ -53,12 +53,12 @@ impl BlogCommandPort for BlogUseCase {
         filename: Option<String>,
         source: Option<BlogSource>,
         body: Option<String>,
-    ) -> Option<Blog> {
+    ) -> Option<BlogCommandStatus> {
         self.blog_repo
             .update(id, name, filename, source, body)
             .await
     }
-    async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted> {
+    async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
         self.blog_repo.delete(id).await
     }
 }
