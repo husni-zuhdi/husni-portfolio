@@ -3,6 +3,8 @@ use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
 use tracing::{debug, error, info, warn};
 
+// TODO: remove in-memory database
+
 #[derive(Clone)]
 pub struct MemoryBlogRepo {
     pub blogs: Vec<Blog>,

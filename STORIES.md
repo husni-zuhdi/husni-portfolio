@@ -27,7 +27,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 	 - When user access not available pages, they will be presented with 404 not found page
 	 - Step:
 		 1. Set a `fallback` in the axum router to show 404 page
- - [ ] As an User, I want to access husni zuhdi talk list
+ - [x] As an User, I want to access husni zuhdi talk list
 	 - User can access https://husni-zuhdi.com/talks to access husni zuhdi talk list
 	 - Alternative, when user access https://husni-zuhdi.com they can click `Talks` on *Header* and *Bottom* to access husni zuhdi talk list
 	 - Step:
@@ -37,7 +37,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
             - What we need to do first is to add **functionality** first by preparing a new `talk` table.
             - Then we can work on a new database adapters for `memory` and `turso`
                 - [x] Turso
-                - [ ] Memory
+                - [ ] `Memory`. There is no point to implement this I think. We'll skip this feature for now.
             - Then after all functionality okay, we can build our code to be more easy to modify by separating `blogs` and `talks` database adapters (?).
                 - Database adapter is ready to be tested. Next we will implement the http handler and frontend.
          3. Present the `TALK_ID`, `TALK_NAME`, and if available `TALK_MEDIA_LINK` and `TALK_ORG_LINK`
