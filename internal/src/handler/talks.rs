@@ -9,7 +9,7 @@ use crate::model::{
 };
 use axum::debug_handler;
 use axum::extract::{Query, State};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 /// get_talks
 /// Serve talks HTML file
