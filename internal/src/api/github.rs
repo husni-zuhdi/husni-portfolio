@@ -119,10 +119,10 @@ impl GithubApiUseCase {
         let blog_id_is_not_main_infra = &blog_id != &"000".to_string();
 
         if tree_is_dir {
-            match blog_id.parse::<i32>() {
-                Ok(_) => {
+            match blog_id.parse::<i64>() {
+                Ok(id) => {
                     if blog_id_is_not_main_infra {
-                        let id = format!("{}-g", blog_id);
+                        // let id = format!("{}-g", blog_id);
                         // let id = format!("{}", blog_id);
                         info!(
                             "Blog Metadata for Id {} and Name {} is processed",
