@@ -18,38 +18,45 @@ impl BlogRepo for TursoDatabase {
             .await
             .expect("Failed to prepare find query.");
 
-        let row = stmt
+        let res = stmt
             .query([blog_id])
             .await
             .expect("Failed to query blog.")
             .next()
             .await
-            .expect("Failed to access query blog.")
-            .expect("Failed to access row blog");
+            .expect("Failed to access query blog.");
 
-        debug!("Debug Row {:?}", &row);
-        let source_string = row.get::<String>(2).unwrap();
-        let source = match source_string.as_str() {
-            "Filesystem" => BlogSource::Filesystem,
-            "Github" => BlogSource::Github,
-            _ => {
-                error!("Failed to parse blog source. Default to Filesystem");
-                BlogSource::Filesystem
+        match res {
+            Some(row) => {
+                debug!("Debug Row {:?}", &row);
+                let source_string = row.get::<String>(2).unwrap();
+                let source = match source_string.as_str() {
+                    "Filesystem" => BlogSource::Filesystem,
+                    "Github" => BlogSource::Github,
+                    _ => {
+                        error!("Failed to parse blog source. Default to Filesystem");
+                        BlogSource::Filesystem
+                    }
+                };
+
+                // We ditch Turso deserialize since it cannot submit id and source
+                // id and source are Tuple Struct
+                // I think libsql deserialize is not robust enough yet
+                Some(Blog {
+                    id: BlogId {
+                        id: row.get(0).unwrap(),
+                    },
+                    name: row.get(1).unwrap(),
+                    source,
+                    filename: row.get(3).unwrap(),
+                    body: row.get(4).unwrap(),
+                })
             }
-        };
-
-        // We ditch Turso deserialize since it cannot submit id and source
-        // id and source are Tuple Struct
-        // I think libsql deserialize is not robust enough yet
-        Some(Blog {
-            id: BlogId {
-                id: row.get(0).unwrap(),
-            },
-            name: row.get(1).unwrap(),
-            source,
-            filename: row.get(3).unwrap(),
-            body: row.get(4).unwrap(),
-        })
+            None => {
+                debug!("No Blog with Id {} is available", &blog_id);
+                None
+            }
+        }
     }
     async fn find_blogs(
         &self,
@@ -95,7 +102,7 @@ impl BlogRepo for TursoDatabase {
 
         Some(blogs)
     }
-    async fn check_id(&self, id: BlogId) -> Option<BlogStored> {
+    async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {
         let blog_id = id.id;
         let prep_query = "SELECT id FROM blogs WHERE id = ?1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
@@ -118,11 +125,11 @@ impl BlogRepo for TursoDatabase {
             Some(val) => {
                 let id: BlogId = de::from_row(&val).unwrap();
                 info!("Blog {:?} is in Turso/SQLite.", &id);
-                Some(BlogStored(true))
+                Some(BlogCommandStatus::Stored)
             }
             None => {
                 info!("Blog {} is not in Turso/SQLite.", &blog_id);
-                Some(BlogStored(false))
+                None
             }
         }
     }
@@ -133,7 +140,7 @@ impl BlogRepo for TursoDatabase {
         filename: String,
         source: BlogSource,
         body: String,
-    ) -> Option<Blog> {
+    ) -> Option<BlogCommandStatus> {
         let blog_id = &id.id;
         let blog_name = &name;
         let blog_filename = &filename;
@@ -161,15 +168,9 @@ impl BlogRepo for TursoDatabase {
             .expect("Failed to add blog.");
         debug!("Add Execution returned: {}", exe);
 
-        Some(Blog {
-            id,
-            name,
-            filename,
-            source,
-            body,
-        })
+        Some(BlogCommandStatus::Stored)
     }
-    async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted> {
+    async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
         let blog_id = id.id;
         let prep_query = "DELETE FROM blogs WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
@@ -186,11 +187,11 @@ impl BlogRepo for TursoDatabase {
                     "Blog {} was deleted. Execution returned : {}",
                     &blog_id, val
                 );
-                Some(BlogDeleted(true))
+                Some(BlogCommandStatus::Deleted)
             }
             Err(err) => {
                 debug!("Blog {} is not deleted in Turso. Error {}", &blog_id, err);
-                Some(BlogDeleted(false))
+                None
             }
         }
     }
@@ -201,7 +202,7 @@ impl BlogRepo for TursoDatabase {
         filename: Option<String>,
         source: Option<BlogSource>,
         body: Option<String>,
-    ) -> Option<Blog> {
+    ) -> Option<BlogCommandStatus> {
         let blog_id = &id.id;
         let mut affected_col = "".to_string();
         match &name {
@@ -258,13 +259,6 @@ impl BlogRepo for TursoDatabase {
             .expect("Failed to update blog.");
         debug!("Update Execution returned: {}", exe);
 
-        // TODO make sure the data is presented in here is correct and consistent
-        Some(Blog {
-            id,
-            name: name.unwrap(),
-            filename: filename.unwrap(),
-            source: source.unwrap(),
-            body: body.unwrap(),
-        })
+        Some(BlogCommandStatus::Updated)
     }
 }

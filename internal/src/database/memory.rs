@@ -70,16 +70,16 @@ impl BlogRepo for MemoryBlogRepo {
             Some(blogs)
         }
     }
-    async fn check_id(&self, id: BlogId) -> Option<BlogStored> {
+    async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {
         let result = self.blogs.iter().filter(|blog| &blog.id == &id).next();
         match result {
             Some(blog) => {
                 info!("Blog {} is in Memory.", &blog.id);
-                Some(BlogStored(true))
+                Some(BlogCommandStatus::Stored)
             }
             None => {
                 info!("Blog {} is not in Memory.", &id);
-                Some(BlogStored(false))
+                None
             }
         }
     }
@@ -90,7 +90,7 @@ impl BlogRepo for MemoryBlogRepo {
         filename: String,
         source: BlogSource,
         body: String,
-    ) -> Option<Blog> {
+    ) -> Option<BlogCommandStatus> {
         let result = Blog {
             id,
             name,
@@ -101,16 +101,16 @@ impl BlogRepo for MemoryBlogRepo {
         self.blogs.push(result.clone());
         info!("Blog {} added.", &result.id);
         debug!("Blog HTML {}.", &result.body);
-        Some(result)
+        Some(BlogCommandStatus::Stored)
     }
-    async fn delete(&mut self, id: BlogId) -> Option<BlogDeleted> {
+    async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
         let result = self.blogs.iter().position(|blog| &blog.id == &id);
         match result {
             Some(val) => {
                 info!("Deleting Blog with Id {}", &val);
                 self.blogs.remove(val);
                 info!("Deleted Blog with Id {}", &val);
-                Some(BlogDeleted(true))
+                Some(BlogCommandStatus::Deleted)
             }
             None => {
                 error!("Failed to delete Blog with Id {}. Blog not found.", &id);
@@ -125,7 +125,7 @@ impl BlogRepo for MemoryBlogRepo {
         filename: Option<String>,
         source: Option<BlogSource>,
         body: Option<String>,
-    ) -> Option<Blog> {
+    ) -> Option<BlogCommandStatus> {
         let result: Option<&mut Blog> = self.blogs.iter_mut().filter(|blog| &blog.id == &id).next();
 
         match result {
@@ -164,7 +164,7 @@ impl BlogRepo for MemoryBlogRepo {
                     }
                     None => (),
                 }
-                Some(blog.clone())
+                Some(BlogCommandStatus::Updated)
             }
             None => {
                 error!("Failed to update Blog with Id {}. Blog not found.", &id);
