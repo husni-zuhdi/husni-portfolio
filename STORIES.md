@@ -2,7 +2,8 @@
 
 Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about finishing a (personal) programming project, I want to implement stories. The aim of this doc is to give us a well-defined and focused **scope**.
 
-## User Stories
+## Persona Stories
+### User Stories
  - [x] As an User, I want to access husni zuhdi portfolio
 	 - User can access https://husni-zuhdi.com to access husni zuhdi portfolio
 	 - Step:
@@ -52,8 +53,26 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 	 - Step:
 		 1. Setup an initial tailwindcss config to be use on this project
 		 2. Generate one css file to be used across all pages (for simplicity)
+ - [ ] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
+    - We can improve our web speed by introducing in-memory caching on server-side.
+    - Currently, `/blogs` took around 500ms to load while `/talks` took around 300ms.
+    - `/blogs/BLOG_ID` took around 200-300ms to load depend on the images and another files.
+    - I see some discussion in the Warframe Developer Discord channel about warframe-rs. They are using [moka](https://github.com/moka-rs/moka) for their API. I think we can explore this crate.
+    - Step:
+        1. Learn about [moka](https://github.com/moka-rs/moka) crate.
+        2. Try to implement it (maybe on) `handler` module.
+        3. If it works and can improve our website loading time. Let's be bulish lol.
+        4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
 
-## Engineering Stories
+### Admin Story
+ - [ ] As an Admin, I want to have an access to edit blogs.
+    - We can explore it by creating `/admin` page and working on how to edit a `talks` (since it's easiest than `blogs`).
+    - Then we can work on the `blogs` feature.
+ - [ ] As an Admin, I want to have a safe way to access my admin pages.
+    - I think we can use authentication like `google` that match our google account only.
+    - It's the frist time we play with authentication service. So excited! lol
+
+### Engineering Stories
  - [x] As an Engineer, I want to implement HTML templating
 	 - We use `askama` for HTML templating on rust
 	 - For the API server, we use `axum`
@@ -91,3 +110,18 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 	 - Step:
 		 1. Learn how to use turso [1](https://docs.turso.tech/introduction)
 		 2. Implement turso database
+ - [ ] As an Engineer, I want to fix the blogs turso implementation.
+    - During the `talks` page revamp, we find a way to improve our code structure.
+    - I want to bring what I find to `blogs` feature.
+    - It simplify hexagonal arch structure and provide better way to extend features.
+    - Step:
+        1. Update `blogs` implementation to match with the `talks`.
+        2. Fix any bug/error during the update process.
+ - [ ] As an Engineer, I want to migrate my blogs data from github to fully database(s).
+    - This might introduce a BREAKING CHANGES since we won't support Github blogs pulling.
+    - We already move our current blogs data to turso dev database.
+    - Let's move it to the release database.
+    - Step:
+        1. Populate `release` turso database with the latest data.
+        2. Remove (or disable) the github api feature.
+        3. Fully use the database in the future.
