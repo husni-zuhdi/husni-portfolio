@@ -1,23 +1,19 @@
+use crate::database::turso::TursoDatabase;
 use crate::model::blogs::*;
 use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
-use libsql::{de, Builder, Connection};
-use tracing::{debug, error, info, warn};
-
-#[derive(Clone)]
-pub struct TursoBlogRepo {
-    pub blogs: Connection,
-}
+use libsql::de;
+use tracing::{debug, error, info};
 
 #[async_trait]
-impl BlogRepo for TursoBlogRepo {
+impl BlogRepo for TursoDatabase {
     async fn find(&self, id: BlogId) -> Option<Blog> {
         let blog_id = id.id;
         let prep_query = "SELECT * FROM blogs WHERE id = ?1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
         let mut stmt = self
-            .blogs
+            .conn
             .prepare(prep_query)
             .await
             .expect("Failed to prepare find query.");
@@ -31,7 +27,7 @@ impl BlogRepo for TursoBlogRepo {
             .expect("Failed to access query blog.")
             .expect("Failed to access row blog");
 
-        info!("Debug Row {:?}", &row);
+        debug!("Debug Row {:?}", &row);
         let source_string = row.get::<String>(2).unwrap();
         let source = match source_string.as_str() {
             "Filesystem" => BlogSource::Filesystem,
@@ -70,7 +66,7 @@ impl BlogRepo for TursoBlogRepo {
         );
 
         let mut stmt = self
-            .blogs
+            .conn
             .prepare(prep_query)
             .await
             .expect("Failed to prepare find query.");
@@ -83,7 +79,7 @@ impl BlogRepo for TursoBlogRepo {
         let mut blogs: Vec<BlogMetadata> = Vec::new();
 
         while let Some(row) = rows.next().await.unwrap() {
-            info!("Debug Row {:?}", &row);
+            debug!("Debug Row {:?}", &row);
 
             // We ditch Turso deserialize since it cannot submit id and source
             // id and source are Tuple Struct
@@ -105,7 +101,7 @@ impl BlogRepo for TursoBlogRepo {
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
         let mut stmt = self
-            .blogs
+            .conn
             .prepare(prep_query)
             .await
             .expect("Failed to prepare find query.");
@@ -148,22 +144,22 @@ impl BlogRepo for TursoBlogRepo {
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
 
         let mut stmt = self
-            .blogs
+            .conn
             .prepare(prep_add_query)
             .await
             .expect("Failed to prepare add query.");
 
         let exe = stmt
-            .execute([
+            .execute((
                 blog_id.clone(),
                 blog_name.clone(),
                 blog_filename.clone(),
                 blog_source.clone(),
                 blog_body.clone(),
-            ])
+            ))
             .await
             .expect("Failed to add blog.");
-        info!("Add Execution returned: {}", exe);
+        debug!("Add Execution returned: {}", exe);
 
         Some(Blog {
             id,
@@ -179,7 +175,7 @@ impl BlogRepo for TursoBlogRepo {
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
         let mut stmt = self
-            .blogs
+            .conn
             .prepare(prep_query)
             .await
             .expect("Failed to prepare delete command.");
@@ -210,7 +206,7 @@ impl BlogRepo for TursoBlogRepo {
         let mut affected_col = "".to_string();
         match &name {
             Some(val) => {
-                affected_col = format!("{} name = {} ", &affected_col, val);
+                affected_col = format!("{} name = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -219,36 +215,39 @@ impl BlogRepo for TursoBlogRepo {
         }
         match &filename {
             Some(val) => {
-                affected_col = format!("{} filename = {} ", &affected_col, val);
+                affected_col = format!("{} filename = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
-                debug!("Skipped update name field")
+                debug!("Skipped update filename field")
             }
         }
         match &source {
             Some(val) => {
-                affected_col = format!("{} source = {} ", &affected_col, val);
+                affected_col = format!("{} source = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
-                debug!("Skipped update name field")
+                debug!("Skipped update source field")
             }
         }
         match &body {
             Some(val) => {
-                affected_col = format!("{} body = {} ", &affected_col, val);
+                affected_col = format!("{} body = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
-                debug!("Skipped update name field")
+                debug!("Skipped update body field")
             }
         }
+
+        // Trimming the last ','
+        affected_col = affected_col.as_str()[0..affected_col.len() - 1].to_string();
         let prep_update_query = format!("UPDATE blogs SET{}WHERE id = ?1", &affected_col);
         debug!("Executing query {} for id {}", &prep_update_query, &blog_id);
 
         let mut stmt = self
-            .blogs
+            .conn
             .prepare(&prep_update_query)
             .await
             .expect("Failed to prepare update query.");
@@ -257,7 +256,7 @@ impl BlogRepo for TursoBlogRepo {
             .execute([blog_id.clone()])
             .await
             .expect("Failed to update blog.");
-        info!("Update Execution returned: {}", exe);
+        debug!("Update Execution returned: {}", exe);
 
         // TODO make sure the data is presented in here is correct and consistent
         Some(Blog {
@@ -267,51 +266,5 @@ impl BlogRepo for TursoBlogRepo {
             source: source.unwrap(),
             body: body.unwrap(),
         })
-    }
-}
-
-impl TursoBlogRepo {
-    pub async fn new(
-        mode: String,
-        database_url: String,
-        database_token: Option<String>,
-    ) -> TursoBlogRepo {
-        let db: libsql::Database = match mode.as_str() {
-            "sqlite" => Builder::new_local(database_url)
-                .build()
-                .await
-                .expect("Failed to build SQLITE database."),
-            "turso" => Builder::new_remote(database_url, database_token.unwrap())
-                .build()
-                .await
-                .expect("Failed to build turso database."),
-            &_ => {
-                warn!("Turso Database mode not set. Default to 'sqlite'");
-                Builder::new_remote(database_url, database_token.unwrap())
-                    .build()
-                    .await
-                    .expect("Failed to build turso database.")
-            }
-        };
-
-        let conn = db
-            .connect()
-            .expect("Failed to setup connection to turso database.");
-
-        // Check blogs table is created or not
-        let migration_command = r#"
-        CREATE TABLE IF NOT EXISTS blogs (
-            id TEXT PRIMARY KEY NOT NULL,
-            name TEXT NOT NULL,
-            source TEXT NOT NULL,
-            filename TEXT NOT NULL,
-            body TEXT NOT NULL
-        )"#;
-        let _migration = conn
-            .execute(migration_command, ())
-            .await
-            .expect("Failed to migrate blogs table.");
-
-        TursoBlogRepo { blogs: conn }
     }
 }

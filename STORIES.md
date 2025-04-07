@@ -27,13 +27,20 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 	 - When user access not available pages, they will be presented with 404 not found page
 	 - Step:
 		 1. Set a `fallback` in the axum router to show 404 page
- - [ ] As an User, I want to access husni zuhdi talk list
+ - [x] As an User, I want to access husni zuhdi talk list
 	 - User can access https://husni-zuhdi.com/talks to access husni zuhdi talk list
 	 - Alternative, when user access https://husni-zuhdi.com they can click `Talks` on *Header* and *Bottom* to access husni zuhdi talk list
 	 - Step:
 		 1. Add a new route to `/talks`
 		 2. Get the talk list from the database or API
-		 3. Present the `TALK_ID`, `TALK_NAME`, and if available `TALK_LINK`
+            - It's harder than I thought. First, our code structure is not easy to modify if we want to add another tables.
+            - What we need to do first is to add **functionality** first by preparing a new `talk` table.
+            - Then we can work on a new database adapters for `memory` and `turso`
+                - [x] Turso
+                - [ ] `Memory`. There is no point to implement this I think. We'll skip this feature for now.
+            - Then after all functionality okay, we can build our code to be more easy to modify by separating `blogs` and `talks` database adapters (?).
+                - Database adapter is ready to be tested. Next we will implement the http handler and frontend.
+         3. Present the `TALK_ID`, `TALK_NAME`, and if available `TALK_MEDIA_LINK` and `TALK_ORG_LINK`
  - [x] As an User, I want to access each husni zuhdi talk record/video
 	 - When user in https://husni-zuhdi.com/talks, they can click a `Play` hyperlink button to be redirected to the talk record/video
 	 - The talk record/video will be opened in a new tab
@@ -69,7 +76,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 	 - Step:
 		 1. Enable `compression-gzip` feature on `tower_http` rust cargo
 		 2. Add a compression layer on axum router
- - [ ] As an Engineer, I want to implement sqlite database
+ - [x] As an Engineer, I want to implement sqlite database
 	 - We can use `sqlx` with `sqlite`  feature to implement sqlite database
 	 - However, using `sqlite` and `turso` cause a cc linking issue due to these multiple c program have same functions
 	 - So I think we need to stick to `turso` since we can still use `sqlite` with turso
@@ -77,7 +84,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 		 1. Implement `sqlite` database with `sqlx`
 		 2. Test the implementation
 		 3. (During turso implementation) Migrate `sqlx` to `turso` to solve cc linking issue
- - [ ] As an Engineer, I want to implement turso database
+ - [x] As an Engineer, I want to implement turso database
 	 - Register to https://turso.tech/ to get a free database
 	 - Build dev and prod databases
 	 - Implement `turso` and `sqlite`

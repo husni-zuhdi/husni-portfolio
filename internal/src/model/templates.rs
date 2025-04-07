@@ -36,7 +36,19 @@ pub struct VersionTemplate<'a> {
 
 #[derive(Template, Debug)]
 #[template(path = "talks.html")]
-pub struct TalksTemplate;
+pub struct TalksTemplate<'a> {
+    pub talks: &'a Vec<TalkTemplate<'a>>,
+}
+
+#[derive(Debug)]
+pub struct TalkTemplate<'a> {
+    pub id: &'a i64,
+    pub name: &'a str,
+    pub date: &'a str,
+    pub media_link: &'a str,
+    pub org_name: &'a str,
+    pub org_link: &'a str,
+}
 
 #[derive(Template, Debug)]
 #[template(path = "404_not_found.html")]
