@@ -110,7 +110,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 	 - Step:
 		 1. Learn how to use turso [1](https://docs.turso.tech/introduction)
 		 2. Implement turso database
- - [ ] As an Engineer, I want to fix the blogs turso implementation.
+ - [x] As an Engineer, I want to fix the blogs turso implementation.
     - During the `talks` page revamp, we find a way to improve our code structure.
     - I want to bring what I find to `blogs` feature.
     - It simplify hexagonal arch structure and provide better way to extend features.
