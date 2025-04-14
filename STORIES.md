@@ -63,6 +63,10 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         2. Try to implement it (maybe on) `handler` module.
         3. If it works and can improve our website loading time. Let's be bulish lol.
         4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
+- [ ] As an User, I want to filter blogs based on tags
+    - I can implement it by adding tags and update the `get_blogs` function with tags filter.
+    - Steps:
+        1. Implement tags in database -> function.
 
 ### Admin Story
  - [ ] As an Admin, I want to have an access to edit blogs.
