@@ -7,4 +7,14 @@
     <div>
         {{body|safe}}
     </div>
+    <h2>Tags:</h2>
+    <p>
+    {% for tag in tags %}
+        <button>
+            <!-- TODO: make tags clickable -->
+            <!-- <a href="/blogs?tags={{tag}}" class="rounded-md px-3 py-2 text-sm font-small hover:bg-gray-700 hover:text-white">{{tag}}</a> -->
+            {{tag}}
+        </button>
+    {% endfor %}
+    </p>
 {% endblock content %}

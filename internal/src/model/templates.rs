@@ -23,6 +23,7 @@ pub struct BlogTemplate<'a> {
     pub name: &'a str,
     pub filename: &'a str,
     pub body: &'a str,
+    pub tags: &'a Vec<&'a str>,
 }
 
 #[derive(Template, Debug)]

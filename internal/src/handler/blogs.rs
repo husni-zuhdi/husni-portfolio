@@ -107,11 +107,15 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
         .await;
     match result {
         Some(blog_data) => {
+            let tags_string = blog_data.tags.unwrap();
+
+            let tags = tags_string.iter().map(|tag| tag.as_str()).collect();
             let blog = BlogTemplate {
                 id: &id.clone().unwrap(),
                 name: &blog_data.name.unwrap().as_str(),
                 filename: &blog_data.filename.unwrap().as_str(),
                 body: &blog_data.body.unwrap().as_str(),
+                tags: &tags,
             }
             .render();
 

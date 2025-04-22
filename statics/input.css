@@ -45,4 +45,7 @@
     td {
         @apply px-3 py-1;
     }
+    button {
+        @apply bg-gray-200;
+    }
 }
