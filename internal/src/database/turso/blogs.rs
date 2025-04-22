@@ -39,6 +39,13 @@ impl BlogRepo for TursoDatabase {
                     }
                 };
 
+                let tags: Vec<String> = row
+                    .get::<String>(5)
+                    .unwrap_or("".to_string())
+                    .split(",")
+                    .map(|tag| tag.to_string())
+                    .collect();
+
                 // We ditch Turso deserialize since it cannot submit id and source
                 // id and source are Tuple Struct
                 // I think libsql deserialize is not robust enough yet
@@ -46,10 +53,11 @@ impl BlogRepo for TursoDatabase {
                     id: BlogId {
                         id: row.get(0).unwrap(),
                     },
-                    name: row.get(1).unwrap(),
-                    source,
-                    filename: row.get(3).unwrap(),
-                    body: row.get(4).unwrap(),
+                    name: Some(row.get(1).unwrap()),
+                    source: Some(source),
+                    filename: Some(row.get(3).unwrap()),
+                    body: Some(row.get(4).unwrap()),
+                    tags: Some(tags),
                 })
             }
             None => {
@@ -133,21 +141,15 @@ impl BlogRepo for TursoDatabase {
             }
         }
     }
-    async fn add(
-        &mut self,
-        id: BlogId,
-        name: String,
-        filename: String,
-        source: BlogSource,
-        body: String,
-    ) -> Option<BlogCommandStatus> {
-        let blog_id = &id.id;
-        let blog_name = &name;
-        let blog_filename = &filename;
-        let blog_source = format!("{}", source);
-        let blog_body = &body;
+    async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
+        let blog_id = &blog.id.id;
+        let blog_name = &blog.name.unwrap();
+        let blog_filename = &blog.filename.unwrap();
+        let blog_source = format!("{}", blog.source.unwrap());
+        let blog_body = &blog.body.unwrap();
+        let blog_tags: &String = &blog.tags.unwrap().join(",");
         let prep_add_query =
-            "INSERT INTO blogs (id, name, filename, source, body) VALUES (?1, ?2, ?3, ?4, ?5)";
+            "INSERT INTO blogs (id, name, filename, source, body, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
 
         let mut stmt = self
@@ -163,6 +165,7 @@ impl BlogRepo for TursoDatabase {
                 blog_filename.clone(),
                 blog_source.clone(),
                 blog_body.clone(),
+                blog_tags.clone(),
             ))
             .await
             .expect("Failed to add blog.");
@@ -195,17 +198,10 @@ impl BlogRepo for TursoDatabase {
             }
         }
     }
-    async fn update(
-        &mut self,
-        id: BlogId,
-        name: Option<String>,
-        filename: Option<String>,
-        source: Option<BlogSource>,
-        body: Option<String>,
-    ) -> Option<BlogCommandStatus> {
-        let blog_id = &id.id;
+    async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
+        let blog_id = &blog.id.id;
         let mut affected_col = "".to_string();
-        match &name {
+        match &blog.name {
             Some(val) => {
                 affected_col = format!("{} name = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -214,7 +210,7 @@ impl BlogRepo for TursoDatabase {
                 debug!("Skipped update name field")
             }
         }
-        match &filename {
+        match &blog.filename {
             Some(val) => {
                 affected_col = format!("{} filename = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -223,7 +219,7 @@ impl BlogRepo for TursoDatabase {
                 debug!("Skipped update filename field")
             }
         }
-        match &source {
+        match &blog.source {
             Some(val) => {
                 affected_col = format!("{} source = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -232,13 +228,23 @@ impl BlogRepo for TursoDatabase {
                 debug!("Skipped update source field")
             }
         }
-        match &body {
+        match &blog.body {
             Some(val) => {
                 affected_col = format!("{} body = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
                 debug!("Skipped update body field")
+            }
+        }
+        match &blog.tags {
+            Some(val) => {
+                let updated_tags = val.join(",");
+                affected_col = format!("{} tags = {} ,", &affected_col, updated_tags);
+                debug!("Affected Column: '{}'", &affected_col)
+            }
+            None => {
+                debug!("Skipped update tags field")
             }
         }
 

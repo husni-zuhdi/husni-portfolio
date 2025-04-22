@@ -27,6 +27,7 @@ pub enum BlogCommandStatus {
     Updated,
     Deleted,
 }
+
 /// BlogType
 /// Type of Blog source
 /// Can be:
@@ -58,13 +59,15 @@ impl Display for BlogSource {
 /// - source: Blog source
 /// - filename: Blog Filename or Source
 /// - body: Blog HTML body
+/// - tags: Blog tags
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Blog {
     pub id: BlogId,
-    pub name: String,
-    pub source: BlogSource,
-    pub filename: String,
-    pub body: String,
+    pub name: Option<String>,
+    pub source: Option<BlogSource>,
+    pub filename: Option<String>,
+    pub body: Option<String>,
+    pub tags: Option<Vec<String>>,
 }
 
 /// BlogStartPage

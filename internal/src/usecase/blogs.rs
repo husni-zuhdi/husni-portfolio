@@ -1,5 +1,5 @@
 use crate::model::blogs::{
-    Blog, BlogCommandStatus, BlogEndPage, BlogId, BlogMetadata, BlogSource, BlogStartPage,
+    Blog, BlogCommandStatus, BlogEndPage, BlogId, BlogMetadata, BlogStartPage,
 };
 use crate::port::blogs::{command::BlogCommandPort, query::BlogQueryPort};
 use crate::repo::blogs::BlogRepo;
@@ -36,27 +36,11 @@ impl BlogQueryPort for BlogUseCase {
 
 #[async_trait]
 impl BlogCommandPort for BlogUseCase {
-    async fn add(
-        &mut self,
-        id: BlogId,
-        name: String,
-        filename: String,
-        source: BlogSource,
-        body: String,
-    ) -> Option<BlogCommandStatus> {
-        self.blog_repo.add(id, name, filename, source, body).await
+    async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
+        self.blog_repo.add(blog).await
     }
-    async fn update(
-        &mut self,
-        id: BlogId,
-        name: Option<String>,
-        filename: Option<String>,
-        source: Option<BlogSource>,
-        body: Option<String>,
-    ) -> Option<BlogCommandStatus> {
-        self.blog_repo
-            .update(id, name, filename, source, body)
-            .await
+    async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
+        self.blog_repo.update(blog).await
     }
     async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
         self.blog_repo.delete(id).await

@@ -55,7 +55,8 @@ impl TursoDatabase {
             name TEXT NOT NULL,
             source TEXT NOT NULL,
             filename TEXT NOT NULL,
-            body TEXT NOT NULL);"#,
+            body TEXT NOT NULL,
+            tags TEXT);"#,
             ),
             (
                 "Talks Migration",

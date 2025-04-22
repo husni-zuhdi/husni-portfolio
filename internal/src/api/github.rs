@@ -249,10 +249,12 @@ impl GithubApiUseCase {
 
         Some(Blog {
             id: metadata.id,
-            name,
-            source: BlogSource::Github,
-            filename: metadata.filename,
-            body,
+            name: Some(name),
+            source: Some(BlogSource::Github),
+            filename: Some(metadata.filename),
+            body: Some(body),
+            // Set empty tags for non-database
+            tags: Some(vec!["".to_string()]),
         })
     }
 }

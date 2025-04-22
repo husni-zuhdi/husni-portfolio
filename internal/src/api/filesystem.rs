@@ -45,10 +45,12 @@ impl ApiRepo for FilesystemApiUseCase {
 
                 Some(Blog {
                     id: metadata.id,
-                    name: metadata.name,
-                    source: BlogSource::Filesystem,
-                    filename: metadata.filename,
-                    body,
+                    name: Some(metadata.name),
+                    source: Some(BlogSource::Filesystem),
+                    filename: Some(metadata.filename),
+                    body: Some(body),
+                    // Set empty tags for non-database
+                    tags: Some(vec!["".to_string()]),
                 })
             }
             Err(err) => {

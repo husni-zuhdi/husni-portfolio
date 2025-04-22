@@ -109,9 +109,9 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
         Some(blog_data) => {
             let blog = BlogTemplate {
                 id: &id.clone().unwrap(),
-                name: &blog_data.name.as_str(),
-                filename: &blog_data.filename.as_str(),
-                body: &blog_data.body.as_str(),
+                name: &blog_data.name.unwrap().as_str(),
+                filename: &blog_data.filename.unwrap().as_str(),
+                body: &blog_data.body.unwrap().as_str(),
             }
             .render();
 
