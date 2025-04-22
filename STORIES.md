@@ -66,7 +66,16 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 - [ ] As an User, I want to filter blogs based on tags
     - I can implement it by adding tags and update the `get_blogs` function with tags filter.
     - Steps:
-        1. Implement tags in database -> function.
+        1. Add `BlogTags` on `Blog` model.
+            - I think... it's counterproductive to update all `port`, `repo`, and `usecase` everytime we update the `model`.
+            - It's time to improve our code base. I propose to update the code architecture on `add` and `update`.
+            - `add` and `update` will receive `Blog` struct instead of individual fileds.
+            - `Blog` struct should take Option fileds to accomodate partial fields `update`.
+            - Except for Blog id (since we need it for all of the operation).
+        2. Implement new Blog model on the database adapter.
+        3. Update the database schema.
+        4. Update the `get_blog` handler and frontend to show tags.
+        5. Update the `get_blogs` handler to add filter function based on URL parameter.
 
 ### Admin Story
  - [ ] As an Admin, I want to have an access to edit blogs.
