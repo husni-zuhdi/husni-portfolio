@@ -73,19 +73,20 @@ pub struct Blog {
 /// BlogStartPage
 /// Start page of Blog Pagination
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogStartPage(pub i32);
+pub struct BlogStartPage(pub i64);
 
 /// BlogEndPage
 /// End page of Blog Pagination
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogEndPage(pub i32);
+pub struct BlogEndPage(pub i64);
 
-/// BlogPagination
-/// Axum Query struct for Blog Pagination
+/// BlogsParams
+/// Axum Query struct for `/blogs` query parameters
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogPagination {
+pub struct BlogsParams {
     pub start: Option<BlogStartPage>,
     pub end: Option<BlogEndPage>,
+    pub tags: Option<String>,
 }
 
 /// BlogMetadata

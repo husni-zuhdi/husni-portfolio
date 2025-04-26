@@ -1,9 +1,10 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use crate::model::blogs::{BlogEndPage, BlogId, BlogPagination, BlogStartPage};
+use crate::model::blogs::{BlogEndPage, BlogId, BlogStartPage, BlogsParams};
 use crate::model::{
     axum::AppState,
     templates::{BlogMetadataTemplate, BlogTemplate, BlogsTemplate},
 };
+use crate::utils::remove_whitespace;
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
@@ -16,25 +17,36 @@ use tracing::{debug, error, info, warn};
 #[debug_handler]
 pub async fn get_blogs(
     State(app_state): State<AppState>,
-    pagination: Query<BlogPagination>,
+    params: Query<BlogsParams>,
 ) -> Html<String> {
     // Locking Mutex
     let data = app_state.blog_usecase.lock().await;
 
     // Setup Pagination
-    debug!("Pagination {:?}", &pagination);
-    let start = match pagination.0.start {
+    debug!("Query Parameters {:?}", &params);
+    let start = match params.0.start {
         Some(val) => val,
         None => {
             debug!("Set default start to 0");
             BlogStartPage(0)
         }
     };
-    let end = match pagination.0.end {
+    let end = match params.0.end {
         Some(val) => val,
         None => {
             debug!("Set default end to 10");
             BlogEndPage(10)
+        }
+    };
+    // TODO: implement tags on handler and database adapter
+    let tags: Vec<String> = match params.0.tags {
+        Some(val) => remove_whitespace(&val)
+            .split(",")
+            .map(|tag| tag.to_string())
+            .collect(),
+        None => {
+            debug!("Set default tags to empty");
+            vec!["".to_string()]
         }
     };
 

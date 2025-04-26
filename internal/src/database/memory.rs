@@ -26,32 +26,58 @@ impl BlogRepo for MemoryBlogRepo {
             }
         }
     }
-    async fn find_blogs(
-        &self,
-        start: BlogStartPage,
-        end: BlogEndPage,
-    ) -> Option<Vec<BlogMetadata>> {
+    async fn find_blogs(&self, query_params: BlogsParams) -> Option<Vec<BlogMetadata>> {
+        let start = query_params.start.unwrap();
+        let end = query_params.end.unwrap();
+        let tags: Vec<String> = query_params
+            .tags
+            .unwrap()
+            .split(",")
+            .map(|tag| tag.to_string())
+            .collect();
+
         let start_seq = if start.0 as usize > self.blogs.len() {
             warn!("BlogStartPage is greater than Blogs count. Will reset to 0.");
-            0
+            0_i64
         } else {
-            start.0 as usize
+            start.0
         };
 
         let end_seq = if (end.0 as usize > self.blogs.len()) && self.blogs.len() > 10 {
             warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
-            10
+            10_i64
         } else if (end.0 as usize > self.blogs.len()) && self.blogs.len() < 10 {
             warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
-            self.blogs.len()
+            self.blogs.len() as i64
         } else if start.0 as usize > end.0 as usize {
             warn!("BlogStartPage is greater than BlogEndPage. Will reset to 10.");
-            self.blogs.len()
+            self.blogs.len() as i64
         } else {
-            end.0 as usize
+            end.0
         };
 
-        let result = &self.blogs[start_seq..end_seq];
+        // TODO: Double check this implementation
+        let result: &Vec<&Blog> = &self
+            .blogs
+            .iter()
+            .filter(|blog| &blog.id.id >= &start_seq && &blog.id.id < &end_seq)
+            .filter(|blog| {
+                let mut are_tags_matched = true;
+                for tag in &tags {
+                    match &blog.tags {
+                        Some(blog_tags) => {
+                            if !blog_tags.contains(tag) {
+                                debug!("Tag: {} is not available in blog {}", &tag, &blog.id.id);
+                                are_tags_matched = are_tags_matched && false;
+                            }
+                        }
+                        None => continue,
+                    }
+                }
+                are_tags_matched
+            })
+            .collect();
+        // let result = &self.blogs[start_seq..end_seq];
         if result.is_empty() {
             info!(
                 "Blogs started at {} and ended at {} were not found. Return None",
@@ -59,15 +85,17 @@ impl BlogRepo for MemoryBlogRepo {
             );
             None
         } else {
-            let mut blogs: Vec<BlogMetadata> = Vec::new();
-            for blog in result {
-                blogs.push(BlogMetadata {
-                    id: blog.id.clone(),
-                    name: blog.name.clone().unwrap(),
-                    filename: blog.filename.clone().unwrap(),
-                })
-            }
-            Some(blogs)
+            debug!("Vector of BlogMetadata is created.");
+            Some(
+                result
+                    .iter()
+                    .map(|blog| BlogMetadata {
+                        id: blog.id.clone(),
+                        name: blog.name.clone().unwrap(),
+                        filename: blog.filename.clone().unwrap(),
+                    })
+                    .collect(),
+            )
         }
     }
     async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {

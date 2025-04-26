@@ -66,11 +66,11 @@ impl BlogRepo for TursoDatabase {
             }
         }
     }
-    async fn find_blogs(
-        &self,
-        start: BlogStartPage,
-        end: BlogEndPage,
-    ) -> Option<Vec<BlogMetadata>> {
+    async fn find_blogs(&self, query_params: BlogsParams) -> Option<Vec<BlogMetadata>> {
+        let start = query_params.start.unwrap();
+        let end = query_params.end.unwrap();
+        let tags = query_params.tags.unwrap();
+
         let start_seq = start.0;
         let end_seq = end.0;
         let limit = end_seq - start_seq;

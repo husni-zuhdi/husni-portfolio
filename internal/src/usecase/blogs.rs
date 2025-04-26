@@ -1,6 +1,4 @@
-use crate::model::blogs::{
-    Blog, BlogCommandStatus, BlogEndPage, BlogId, BlogMetadata, BlogStartPage,
-};
+use crate::model::blogs::{Blog, BlogCommandStatus, BlogId, BlogMetadata, BlogsParams};
 use crate::port::blogs::{command::BlogCommandPort, query::BlogQueryPort};
 use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
@@ -22,12 +20,8 @@ impl BlogQueryPort for BlogUseCase {
     async fn find(&self, id: BlogId) -> Option<Blog> {
         self.blog_repo.find(id).await
     }
-    async fn find_blogs(
-        &self,
-        start: BlogStartPage,
-        end: BlogEndPage,
-    ) -> Option<Vec<BlogMetadata>> {
-        self.blog_repo.find_blogs(start, end).await
+    async fn find_blogs(&self, query_params: BlogsParams) -> Option<Vec<BlogMetadata>> {
+        self.blog_repo.find_blogs(query_params).await
     }
     async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {
         self.blog_repo.check_id(id).await
