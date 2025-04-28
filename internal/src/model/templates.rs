@@ -9,9 +9,6 @@ pub struct ProfileTemplate;
 pub struct BlogsTemplate {
     pub blogs: Vec<BlogMetadataTemplate>,
 }
-// pub struct BlogsTemplate<'a> {
-//     pub blogs: &'a Vec<BlogMetadataTemplate<'a>>,
-// }
 
 #[derive(Debug)]
 pub struct BlogMetadataTemplate {
@@ -19,45 +16,40 @@ pub struct BlogMetadataTemplate {
     pub name: String,
     pub tags: Vec<String>,
 }
-// pub struct BlogMetadataTemplate<'a> {
-//     pub id: &'a i64,
-//     pub name: &'a str,
-//     pub tags: &'a Vec<&'a str>,
-// }
 
 #[derive(Template, Debug)]
 #[template(path = "blog.html")]
-pub struct BlogTemplate<'a> {
-    pub id: &'a i64,
-    pub name: &'a str,
-    pub filename: &'a str,
-    pub body: &'a str,
-    pub tags: &'a Vec<&'a str>,
+pub struct BlogTemplate {
+    pub id: i64,
+    pub name: String,
+    pub filename: String,
+    pub body: String,
+    pub tags: Vec<String>,
 }
 
 #[derive(Template, Debug)]
 #[template(path = "version.html")]
-pub struct VersionTemplate<'a> {
-    pub version: &'a str,
-    pub environment: &'a str,
-    pub build_hash: &'a str,
-    pub build_date: &'a str,
+pub struct VersionTemplate {
+    pub version: String,
+    pub environment: String,
+    pub build_hash: String,
+    pub build_date: String,
 }
 
 #[derive(Template, Debug)]
 #[template(path = "talks.html")]
-pub struct TalksTemplate<'a> {
-    pub talks: &'a Vec<TalkTemplate<'a>>,
+pub struct TalksTemplate {
+    pub talks: Vec<TalkTemplate>,
 }
 
 #[derive(Debug)]
-pub struct TalkTemplate<'a> {
-    pub id: &'a i64,
-    pub name: &'a str,
-    pub date: &'a str,
-    pub media_link: &'a str,
-    pub org_name: &'a str,
-    pub org_link: &'a str,
+pub struct TalkTemplate {
+    pub id: i64,
+    pub name: String,
+    pub date: String,
+    pub media_link: String,
+    pub org_name: String,
+    pub org_link: String,
 }
 
 #[derive(Template, Debug)]
