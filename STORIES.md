@@ -73,6 +73,15 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
             - `Blog` struct should take Option fileds to accomodate partial fields `update`.
             - Except for Blog id (since we need it for all of the operation).
         2. Implement new Blog model on the database adapter.
+            - We found an issue to implement tags in turso.
+            - The query is become a bit complicated and I need to find a way to address this.
+            - Initally, I want to use something simple like `LIKE` statement to filter tags in the `blogs` table.
+            - There is a common pitfall with `LIKE` statment. Example: if I want to find blog with tag `cloud` only, it will return blog with tags `cloud` and `cloud-run`.
+            - From this stackoverflow article, I think we can implement blog_tag_mapping on the database [link](http://stackoverflow.com/questions/51128832/what-is-the-best-way-to-design-a-tag-based-data-table-with-sqlite).
+            - I will try to implement those in our database.
+            - Another benefit is we don't need to update the current schema but the `find_blogs` query become more complex.
+            - Okay it's done. I found out that we don't need a lifetime to render askama templates.
+            - I'll delete all of the lifetime since they made my head explode (smoothbrain problem).
         3. Update the database schema.
         4. Update the `get_blog` handler and frontend to show tags.
         5. Update the `get_blogs` handler to add filter function based on URL parameter.
