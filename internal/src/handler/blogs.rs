@@ -38,20 +38,23 @@ pub async fn get_blogs(
             BlogEndPage(10)
         }
     };
-    // TODO: implement tags on handler and database adapter
-    let tags: Vec<String> = match params.0.tags {
-        Some(val) => remove_whitespace(&val)
-            .split(",")
-            .map(|tag| tag.to_string())
-            .collect(),
+    let tags: String = match params.0.tags {
+        Some(val) => remove_whitespace(&val),
         None => {
             debug!("Set default tags to empty");
-            vec!["".to_string()]
+            "".to_string()
         }
     };
 
+    let query_params = BlogsParams {
+        start: Some(start.clone()),
+        end: Some(end.clone()),
+        tags: Some(tags),
+    };
+
     // Construct BlogsTemplate Struct
-    let result = data.blog_repo.find_blogs(start.clone(), end.clone()).await;
+    // TODO: implement tags on handler and database adapter
+    let result = data.blog_repo.find_blogs(query_params).await;
     match result {
         Some(blogs_data) => {
             let blogs: Vec<BlogMetadataTemplate> = blogs_data
@@ -59,14 +62,15 @@ pub async fn get_blogs(
                 .map(|blog| {
                     debug!("Construct BlogsTemplateBlog for Blog Id {}", &blog.id);
                     BlogMetadataTemplate {
-                        id: &blog.id.id,
-                        name: &blog.name.as_str(),
+                        id: blog.id.id,
+                        name: blog.name.clone(),
+                        tags: blog.tags.clone(),
                     }
                 })
                 .collect();
             debug!("BlogsTemplate blogs : {:?}", &blogs);
 
-            let blogs_res = BlogsTemplate { blogs: &blogs }.render();
+            let blogs_res = BlogsTemplate { blogs }.render();
             match blogs_res {
                 Ok(res) => {
                     info!("Blogs askama template rendered.");

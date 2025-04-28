@@ -97,4 +97,11 @@ pub struct BlogMetadata {
     pub id: BlogId,
     pub name: String,
     pub filename: String,
+    pub tags: Vec<String>,
+}
+
+impl BlogMetadata {
+    pub fn get_ref_tags(&self) -> Vec<&str> {
+        self.tags.iter().map(|t| t.as_ref()).collect()
+    }
 }

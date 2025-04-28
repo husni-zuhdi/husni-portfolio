@@ -93,6 +93,7 @@ impl BlogRepo for MemoryBlogRepo {
                         id: blog.id.clone(),
                         name: blog.name.clone().unwrap(),
                         filename: blog.filename.clone().unwrap(),
+                        tags: blog.tags.clone().unwrap(),
                     })
                     .collect(),
             )

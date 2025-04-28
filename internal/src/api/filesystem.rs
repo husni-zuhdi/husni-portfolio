@@ -104,6 +104,8 @@ impl FilesystemApiUseCase {
             id: BlogId { id },
             name,
             filename,
+            // TODO: remove the empty tags
+            tags: vec!["".to_string()],
         }
     }
     /// Process Markdown

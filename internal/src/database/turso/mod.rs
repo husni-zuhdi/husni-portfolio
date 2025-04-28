@@ -51,22 +51,37 @@ impl TursoDatabase {
             (
                 "Blogs Migration",
                 r#"CREATE TABLE IF NOT EXISTS blogs (
-            id INTEGER PRIMARY KEY NOT NULL,
-            name TEXT NOT NULL,
-            source TEXT NOT NULL,
-            filename TEXT NOT NULL,
-            body TEXT NOT NULL,
-            tags TEXT);"#,
+                    id INTEGER PRIMARY KEY NOT NULL,
+                    name TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    filename TEXT NOT NULL,
+                    body TEXT NOT NULL
+                    );"#,
             ),
             (
                 "Talks Migration",
                 r#"CREATE TABLE IF NOT EXISTS talks (
-            id INTEGER PRIMARY KEY NOT NULL,
-            name TEXT NOT NULL,
-            date TEXT NOT NULL,
-            media_link TEXT,
-            org_name TEXT,
-            org_link TEXT);"#,
+                    id INTEGER PRIMARY KEY NOT NULL,
+                    name TEXT NOT NULL,
+                    date TEXT NOT NULL,
+                    media_link TEXT,
+                    org_name TEXT,
+                    org_link TEXT
+                    );"#,
+            ),
+            (
+                "2025-04-28 Tags Migration",
+                r#"CREATE TABLE IF NOT EXISTS tags (
+                    id INTEGER PRIMARY KEY NOT NULL,
+                    name TEXT NOT NULL
+                    );"#,
+            ),
+            (
+                "2025-04-28 Blog Tag Mapping Migration",
+                r#"CREATE TABLE IF NOT EXISTS blog_tag_mapping(
+                    blog_ref INTEGER NOT NULL,
+                    tag_ref INTEGER NOT NULL
+                    );"#,
             ),
         ]);
 

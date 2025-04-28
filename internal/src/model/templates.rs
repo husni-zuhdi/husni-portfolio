@@ -6,15 +6,24 @@ pub struct ProfileTemplate;
 
 #[derive(Template, Debug)]
 #[template(path = "blogs.html")]
-pub struct BlogsTemplate<'a> {
-    pub blogs: &'a Vec<BlogMetadataTemplate<'a>>,
+pub struct BlogsTemplate {
+    pub blogs: Vec<BlogMetadataTemplate>,
 }
+// pub struct BlogsTemplate<'a> {
+//     pub blogs: &'a Vec<BlogMetadataTemplate<'a>>,
+// }
 
 #[derive(Debug)]
-pub struct BlogMetadataTemplate<'a> {
-    pub id: &'a i64,
-    pub name: &'a str,
+pub struct BlogMetadataTemplate {
+    pub id: i64,
+    pub name: String,
+    pub tags: Vec<String>,
 }
+// pub struct BlogMetadataTemplate<'a> {
+//     pub id: &'a i64,
+//     pub name: &'a str,
+//     pub tags: &'a Vec<&'a str>,
+// }
 
 #[derive(Template, Debug)]
 #[template(path = "blog.html")]

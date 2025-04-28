@@ -9,6 +9,13 @@
 {% for blog in blogs %}
     <h2 class="mb-2 hover:font-bold md:justify-start">
         <a href="/blogs/{{blog.id}}" target="_blank">{{blog.name}}</a>
+        {% for tag in blog.tags %}
+            <button>
+                <!-- TODO: make tags clickable -->
+                <!-- <a href="/blogs?tags={{tag}}" class="rounded-md px-3 py-2 text-sm font-small hover:bg-gray-700 hover:text-white">{{tag}}</a> -->
+                {{tag}}
+            </button>
+        {% endfor %}
     </h2>
 {% endfor %}
 

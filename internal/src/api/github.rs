@@ -133,6 +133,8 @@ impl GithubApiUseCase {
                             id: BlogId { id },
                             name: blog_name,
                             filename,
+                            // TODO: remove the empty tags
+                            tags: vec!["".to_string()],
                         })
                     } else {
                         debug!("Folder prefix is 000-main-infrastructure. Skip this folder");
