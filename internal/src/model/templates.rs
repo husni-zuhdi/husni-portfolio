@@ -8,6 +8,7 @@ pub struct ProfileTemplate;
 #[template(path = "blogs.html")]
 pub struct BlogsTemplate {
     pub blogs: Vec<BlogMetadataTemplate>,
+    pub active_tags: Vec<String>,
 }
 
 #[derive(Debug)]

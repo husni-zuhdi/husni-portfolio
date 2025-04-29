@@ -49,11 +49,10 @@ pub async fn get_blogs(
     let query_params = BlogsParams {
         start: Some(start.clone()),
         end: Some(end.clone()),
-        tags: Some(tags),
+        tags: Some(tags.clone()),
     };
 
     // Construct BlogsTemplate Struct
-    // TODO: implement tags on handler and database adapter
     let result = data.blog_repo.find_blogs(query_params).await;
     match result {
         Some(blogs_data) => {
@@ -70,7 +69,9 @@ pub async fn get_blogs(
                 .collect();
             debug!("BlogsTemplate blogs : {:?}", &blogs);
 
-            let blogs_res = BlogsTemplate { blogs }.render();
+            let active_tags: Vec<String> = tags.clone().split(",").map(|t| t.to_string()).collect();
+
+            let blogs_res = BlogsTemplate { blogs, active_tags }.render();
             match blogs_res {
                 Ok(res) => {
                     info!("Blogs askama template rendered.");
