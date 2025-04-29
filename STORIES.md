@@ -2,32 +2,46 @@
 
 Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about finishing a (personal) programming project, I want to implement stories. The aim of this doc is to give us a well-defined and focused **scope**.
 
-## Persona Stories
-### User Stories
- - [x] As an User, I want to access husni zuhdi portfolio
-	 - User can access https://husni-zuhdi.com to access husni zuhdi portfolio
-	 - Step:
-		 1. Start a rust project to render HTML templates
-		 2. Fill the home/portfolio page with designated information such us description, experience, etc
-		 3. Build a docker container for the rust project
-		 4. Deploy the container in the Cloud
- - [x] As an User, I want to access husni zuhdi blog list
-	 - User can access https://husni-zuhdi.com/blogs to access husni zuhdi blog list
-	 - Alternative, when user access https://husni-zuhdi.com they can click `Blogs` on *Header* and *Bottom* to access husni zuhdi blog list
-	 - Step:
-		 1. Add a new route to `/blogs`
-		 2. Get the blog list from the database or another API
-		 3. Present the `BLOG_ID` and `BLOG_NAME`
- - [x] As an User, I want to access husni zuhdi blog reading
-	 - User can access https://husni-zuhdi.com/blogs/BLOG_ID to access husni zuhdi blog with blog Id = `BLOG_ID`
-	 - Alternative, when user access https://husni-zuhdi.com/blogs they can click the `BLOG_NAME` hyperlink to access husni zuhdi blog with name `BLOG_NAME`
-	 - Step:
-		 1. Add new routes for each `BLOG_ID` similar to  `/blogs/BLOG_ID`
-		 2. When user directed to blog, render the `BLOG_NAME` and `BLOG_BODY` from the database
- - [x] As an User, I want to see not found page when I access a not available pages
-	 - When user access not available pages, they will be presented with 404 not found page
-	 - Step:
-		 1. Set a `fallback` in the axum router to show 404 page
+## WIP
+### User stories
+- [ ] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
+    - We can improve our web speed by introducing in-memory caching on server-side.
+    - Currently, `/blogs` took around 500ms to load while `/talks` took around 300ms.
+    - `/blogs/BLOG_ID` took around 200-300ms to load depend on the images and another files.
+    - I see some discussion in the Warframe Developer Discord channel about warframe-rs. They are using [moka](https://github.com/moka-rs/moka) for their API. I think we can explore this crate.
+    - Step:
+        1. Learn about [moka](https://github.com/moka-rs/moka) crate.
+        2. Try to implement it (maybe on) `handler` module.
+        3. If it works and can improve our website loading time. Let's be bulish lol.
+        4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
+- [ ] As an User, I want to see another blog tags when I already clicked a tag.
+    - Reffer to above story step 5
+
+### Admin stories
+- [ ] As an Admin, I want to have an access to edit blogs.
+    - We can explore it by creating `/admin` page and working on how to edit a `talks` (since it's easiest than `blogs`).
+    - Then we can work on the `blogs` feature.
+- [ ] As an Admin, I want to have a safe way to access my admin pages.
+    - I think we can use authentication like `google` that match our google account only.
+    - It's the frist time we play with authentication service. So excited! lol
+
+### Engineering stories
+- [ ] As an Engineer, I want to migrate my blogs data from github to fully database(s).
+    - This might introduce a BREAKING CHANGES since we won't support Github blogs pulling.
+    - We already move our current blogs data to turso dev database.
+    - Let's move it to the release database.
+    - Step:
+        1. Populate `release` turso database with the latest data.
+        2. Remove (or disable) the github api feature.
+        3. Fully use the database in the future.
+- [ ] As an Engineer, I want to finish my tech debt to properly implement `tags` and `blog_tag_mapping` tables on `blogs` databse adapter
+    - As the title said, fix it please when you have time.
+    - We need to fix this during/before we build our admin pages.
+- [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
+    - We can use [git-cliff](https://git-cliff.org/) but we need to upgrade the rust version to 1.8.3 or newer
+
+## 0.2.2 2025-04-29
+### User stories
  - [x] As an User, I want to access husni zuhdi talk list
 	 - User can access https://husni-zuhdi.com/talks to access husni zuhdi talk list
 	 - Alternative, when user access https://husni-zuhdi.com they can click `Talks` on *Header* and *Bottom* to access husni zuhdi talk list
@@ -42,27 +56,11 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
             - Then after all functionality okay, we can build our code to be more easy to modify by separating `blogs` and `talks` database adapters (?).
                 - Database adapter is ready to be tested. Next we will implement the http handler and frontend.
          3. Present the `TALK_ID`, `TALK_NAME`, and if available `TALK_MEDIA_LINK` and `TALK_ORG_LINK`
- - [x] As an User, I want to access each husni zuhdi talk record/video
+- [x] As an User, I want to access each husni zuhdi talk record/video
 	 - When user in https://husni-zuhdi.com/talks, they can click a `Play` hyperlink button to be redirected to the talk record/video
 	 - The talk record/video will be opened in a new tab
 	 - Step:
 		 1. In the talk list page, User can access each talk record/video (if available) by clicking the `TALK_LINK`
- - [x] As an User, I want to see a decent looking website
-	 - Implement simple styling with tailwind css
-	 - We are inspired with [Carson Gross](https://bigsky.software/cv/) CV website
-	 - Step:
-		 1. Setup an initial tailwindcss config to be use on this project
-		 2. Generate one css file to be used across all pages (for simplicity)
- - [ ] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
-    - We can improve our web speed by introducing in-memory caching on server-side.
-    - Currently, `/blogs` took around 500ms to load while `/talks` took around 300ms.
-    - `/blogs/BLOG_ID` took around 200-300ms to load depend on the images and another files.
-    - I see some discussion in the Warframe Developer Discord channel about warframe-rs. They are using [moka](https://github.com/moka-rs/moka) for their API. I think we can explore this crate.
-    - Step:
-        1. Learn about [moka](https://github.com/moka-rs/moka) crate.
-        2. Try to implement it (maybe on) `handler` module.
-        3. If it works and can improve our website loading time. Let's be bulish lol.
-        4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
 - [x] As an User, I want to filter blogs based on tags
     - I can implement it by adding tags and update the `get_blogs` function with tags filter.
     - Steps:
@@ -95,35 +93,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
                 - If the tag is in the `active_tags` list:
                     - Change the button color
                     - Override anchor to point to `/blogs` without any parameters
-- [ ] As an User, I want to see another blog tags when I already clicked a tag.
-    - Reffer to above story step 5
-
-### Admin Story
- - [ ] As an Admin, I want to have an access to edit blogs.
-    - We can explore it by creating `/admin` page and working on how to edit a `talks` (since it's easiest than `blogs`).
-    - Then we can work on the `blogs` feature.
- - [ ] As an Admin, I want to have a safe way to access my admin pages.
-    - I think we can use authentication like `google` that match our google account only.
-    - It's the frist time we play with authentication service. So excited! lol
-
-### Engineering Stories
- - [x] As an Engineer, I want to implement HTML templating
-	 - We use `askama` for HTML templating on rust
-	 - For the API server, we use `axum`
-	 - Step:
-		 1. Learn how to use `axum` and `askama`
-		 2. Implement it on this project
- - [x] As an Engineer, I want to push husni zuhdi portfolio docker image to Artifact Registry
-	 - Push a test docker image with `gcloud` command
-	 - Then setup a github action to push docker image to Artifact Registry automatically when a new tag available
-	 - Step:
-		 1. Push the test docker image to Artifact Registry with `gcloud` command
-		 2. Create a simple push image github action to push a new image when we create a new tag
- - [x] As an Engineer, I want to deploy husni zuhdi portfolio in Cloud Run
-	 - Test it first by deploying manually with `gcloud` cli then we can build a terrafrom workflow
-	 - Step:
-		 1. Deploy the husni zuhdi portfolio container with `gcloud` cli
-		 2. Deploy the husni zuhdi portfolio container with terraform workflow
+### Engineering stories
  - [x] As an Engineer, I want to implement compression middleware
 	 - We can use `tower_http` as middleware to enable gzip compression [1](https://docs.rs/tower-http/0.6.2/tower_http/compression/index.html)
 	 - Step:
@@ -151,14 +121,55 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - Step:
         1. Update `blogs` implementation to match with the `talks`.
         2. Fix any bug/error during the update process.
- - [ ] As an Engineer, I want to migrate my blogs data from github to fully database(s).
-    - This might introduce a BREAKING CHANGES since we won't support Github blogs pulling.
-    - We already move our current blogs data to turso dev database.
-    - Let's move it to the release database.
-    - Step:
-        1. Populate `release` turso database with the latest data.
-        2. Remove (or disable) the github api feature.
-        3. Fully use the database in the future.
-- [ ] As an Engineer, I want to finish my tech debt to properly implement `tags` and `blog_tag_mapping` tables on `blogs` databse adapter
-    - As the title said, fix it please when you have time.
-    - We need to fix this during/before we build our admin pages.
+
+## 0.2.1 and below
+### User Stories
+ - [x] As an User, I want to access husni zuhdi portfolio
+	 - User can access https://husni-zuhdi.com to access husni zuhdi portfolio
+	 - Step:
+		 1. Start a rust project to render HTML templates
+		 2. Fill the home/portfolio page with designated information such us description, experience, etc
+		 3. Build a docker container for the rust project
+		 4. Deploy the container in the Cloud
+ - [x] As an User, I want to access husni zuhdi blog list
+	 - User can access https://husni-zuhdi.com/blogs to access husni zuhdi blog list
+	 - Alternative, when user access https://husni-zuhdi.com they can click `Blogs` on *Header* and *Bottom* to access husni zuhdi blog list
+	 - Step:
+		 1. Add a new route to `/blogs`
+		 2. Get the blog list from the database or another API
+		 3. Present the `BLOG_ID` and `BLOG_NAME`
+ - [x] As an User, I want to access husni zuhdi blog reading
+	 - User can access https://husni-zuhdi.com/blogs/BLOG_ID to access husni zuhdi blog with blog Id = `BLOG_ID`
+	 - Alternative, when user access https://husni-zuhdi.com/blogs they can click the `BLOG_NAME` hyperlink to access husni zuhdi blog with name `BLOG_NAME`
+	 - Step:
+		 1. Add new routes for each `BLOG_ID` similar to  `/blogs/BLOG_ID`
+		 2. When user directed to blog, render the `BLOG_NAME` and `BLOG_BODY` from the database
+ - [x] As an User, I want to see not found page when I access a not available pages
+	 - When user access not available pages, they will be presented with 404 not found page
+	 - Step:
+		 1. Set a `fallback` in the axum router to show 404 page
+ - [x] As an User, I want to see a decent looking website
+	 - Implement simple styling with tailwind css
+	 - We are inspired with [Carson Gross](https://bigsky.software/cv/) CV website
+	 - Step:
+		 1. Setup an initial tailwindcss config to be use on this project
+		 2. Generate one css file to be used across all pages (for simplicity)
+
+### Engineering Stories
+ - [x] As an Engineer, I want to implement HTML templating
+	 - We use `askama` for HTML templating on rust
+	 - For the API server, we use `axum`
+	 - Step:
+		 1. Learn how to use `axum` and `askama`
+		 2. Implement it on this project
+ - [x] As an Engineer, I want to push husni zuhdi portfolio docker image to Artifact Registry
+	 - Push a test docker image with `gcloud` command
+	 - Then setup a github action to push docker image to Artifact Registry automatically when a new tag available
+	 - Step:
+		 1. Push the test docker image to Artifact Registry with `gcloud` command
+		 2. Create a simple push image github action to push a new image when we create a new tag
+ - [x] As an Engineer, I want to deploy husni zuhdi portfolio in Cloud Run
+	 - Test it first by deploying manually with `gcloud` cli then we can build a terrafrom workflow
+	 - Step:
+		 1. Deploy the husni zuhdi portfolio container with `gcloud` cli
+		 2. Deploy the husni zuhdi portfolio container with terraform workflow
