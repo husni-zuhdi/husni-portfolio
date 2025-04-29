@@ -85,6 +85,15 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         3. Update the database schema.
         4. Update the `get_blog` handler and frontend to show tags.
         5. Update the `get_blogs` handler to add filter function based on URL parameter.
+            - We finished the implementation of tag fe but found an issue on UX.
+            - [ ] If we click a tag, the other tags in from a same blog disepear.
+                - Still thinking about it
+            - [ ] If we click a tag, the current active tag cannot be clicked to revert the condition.
+                - In the `BlogsTemplate` I can add a field to track `active_tags`.
+                - In the html template, loop the tags and check if it in the `active_tags`.
+                - If the tag is in the `active_tags` list:
+                    - Change the button color
+                    - Override anchor to point to `/blogs` without any parameters
 
 ### Admin Story
  - [ ] As an Admin, I want to have an access to edit blogs.
