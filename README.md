@@ -10,7 +10,9 @@ My Portfolio webiste
 * [Taskfile](https://taskfile.dev/)
 * [TailwindCSS](https://tailwindcss.com/)
 
-## How to use
+## How to develop
+
+Please follow conventional commit style.
 
 ```
 # Run hot reloading
@@ -18,5 +20,12 @@ task run
 
 # Run unit test
 task test
+
+# Build docker image
+task docker-build
 ```
 
+## How to use
+1. Build the docker image.
+2. Push to your docker registry.
+3. Set your container service (cloud-run, k8s, fargate, linode, docker swarm, etc) to use this image and set the environment varaibles in the [env.example](./env.example) file.
