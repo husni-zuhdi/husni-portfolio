@@ -56,19 +56,22 @@ impl BlogRepo for MemoryBlogRepo {
             end.0
         };
 
-        // TODO: Double check this implementation
         let result: &Vec<&Blog> = &self
             .blogs
             .iter()
             .filter(|blog| &blog.id.id >= &start_seq && &blog.id.id < &end_seq)
             .filter(|blog| {
+                // Basically we need an OR operation to determine which tags
+                // To be displayed. It's an OR operation because I want to show
+                // multiple tags instead of find specific articles with the
+                // matched tags
                 let mut are_tags_matched = true;
                 for tag in &tags {
                     match &blog.tags {
                         Some(blog_tags) => {
                             if !blog_tags.contains(tag) {
                                 debug!("Tag: {} is not available in blog {}", &tag, &blog.id.id);
-                                are_tags_matched = are_tags_matched && false;
+                                are_tags_matched = are_tags_matched || false;
                             }
                         }
                         None => continue,
