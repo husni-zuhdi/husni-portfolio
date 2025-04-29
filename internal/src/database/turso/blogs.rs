@@ -9,7 +9,22 @@ use tracing::{debug, error, info};
 impl BlogRepo for TursoDatabase {
     async fn find(&self, id: BlogId) -> Option<Blog> {
         let blog_id = id.id;
-        let prep_query = "SELECT * FROM blogs WHERE id = ?1 ORDER BY id";
+        // let prep_query = "SELECT * FROM blogs WHERE id = ?1 ORDER BY id";
+        let prep_query = r#"
+            SELECT 
+                blogs.id AS id,
+                blogs.name AS name, 
+                blogs.source AS source, 
+                blogs.filename AS filename, 
+                blogs.body AS body, 
+                group_concat(tags.name, ',') AS tags
+            FROM blog_tag_mapping 
+            JOIN blogs ON blog_ref = blogs.id
+            JOIN tags ON tag_ref = tags.id
+            WHERE blogs.id=?1
+            GROUP BY blogs.name
+            ORDER BY blogs.id;
+        "#;
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
         let mut stmt = self
@@ -39,6 +54,13 @@ impl BlogRepo for TursoDatabase {
                     }
                 };
 
+                let tags: Vec<String> = row
+                    .get::<String>(5)
+                    .unwrap_or("".to_string())
+                    .split(",")
+                    .map(|tag| tag.to_string())
+                    .collect();
+
                 // We ditch Turso deserialize since it cannot submit id and source
                 // id and source are Tuple Struct
                 // I think libsql deserialize is not robust enough yet
@@ -46,10 +68,11 @@ impl BlogRepo for TursoDatabase {
                     id: BlogId {
                         id: row.get(0).unwrap(),
                     },
-                    name: row.get(1).unwrap(),
-                    source,
-                    filename: row.get(3).unwrap(),
-                    body: row.get(4).unwrap(),
+                    name: Some(row.get(1).unwrap()),
+                    source: Some(source),
+                    filename: Some(row.get(3).unwrap()),
+                    body: Some(row.get(4).unwrap()),
+                    tags: Some(tags),
                 })
             }
             None => {
@@ -58,15 +81,45 @@ impl BlogRepo for TursoDatabase {
             }
         }
     }
-    async fn find_blogs(
-        &self,
-        start: BlogStartPage,
-        end: BlogEndPage,
-    ) -> Option<Vec<BlogMetadata>> {
+    async fn find_blogs(&self, query_params: BlogsParams) -> Option<Vec<BlogMetadata>> {
+        let start = query_params.start.unwrap();
+        let end = query_params.end.unwrap();
+        let tags = query_params.tags.unwrap();
+
         let start_seq = start.0;
         let end_seq = end.0;
         let limit = end_seq - start_seq;
-        let prep_query = "SELECT * FROM blogs ORDER BY id LIMIT ?1 OFFSET ?2";
+        // let mut prep_query = "SELECT * FROM blogs ORDER BY id {} LIMIT ?1 OFFSET ?2";
+
+        let tag_names: Vec<String> = tags
+            .split(",")
+            .map(|tag| format!(" tags.name='{}' ", tag))
+            .collect();
+        let tag_names_joined = tag_names.join("OR");
+        // let tags_query = format!("WHERE {}", tag_names_joined);
+        let tags_query = if &tags == "" {
+            String::new()
+        } else {
+            format!("WHERE {}", tag_names_joined)
+        };
+        let prep_query = format!(
+            r#"
+            SELECT 
+                blogs.id AS id,
+                blogs.name AS name, 
+                blogs.filename AS filename, 
+                group_concat(tags.name, ',') AS tags
+            FROM blog_tag_mapping 
+            JOIN blogs ON blog_ref = blogs.id
+            JOIN tags ON tag_ref = tags.id
+            {}
+            GROUP BY blogs.name
+            ORDER BY blogs.id
+            LIMIT ?1
+            OFFSET ?2;
+        "#,
+            tags_query
+        );
         debug!(
             "Executing query {} for start {}, end {}, limit {}",
             &prep_query, &start_seq, &end_seq, &limit
@@ -74,7 +127,7 @@ impl BlogRepo for TursoDatabase {
 
         let mut stmt = self
             .conn
-            .prepare(prep_query)
+            .prepare(&prep_query)
             .await
             .expect("Failed to prepare find query.");
 
@@ -88,6 +141,13 @@ impl BlogRepo for TursoDatabase {
         while let Some(row) = rows.next().await.unwrap() {
             debug!("Debug Row {:?}", &row);
 
+            let tags: Vec<String> = row
+                .get::<String>(3)
+                .unwrap_or("".to_string())
+                .split(",")
+                .map(|tag| tag.to_string())
+                .collect();
+
             // We ditch Turso deserialize since it cannot submit id and source
             // id and source are Tuple Struct
             // I think libsql deserialize is not robust enough yet
@@ -96,7 +156,8 @@ impl BlogRepo for TursoDatabase {
                     id: row.get(0).unwrap(),
                 },
                 name: row.get(1).unwrap(),
-                filename: row.get(3).unwrap(),
+                filename: row.get(2).unwrap(),
+                tags,
             });
         }
 
@@ -133,21 +194,17 @@ impl BlogRepo for TursoDatabase {
             }
         }
     }
-    async fn add(
-        &mut self,
-        id: BlogId,
-        name: String,
-        filename: String,
-        source: BlogSource,
-        body: String,
-    ) -> Option<BlogCommandStatus> {
-        let blog_id = &id.id;
-        let blog_name = &name;
-        let blog_filename = &filename;
-        let blog_source = format!("{}", source);
-        let blog_body = &body;
+    async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
+        // TODO: Update the tags implementation on here
+        // We need to add a blog_tag_mapping table
+        let blog_id = &blog.id.id;
+        let blog_name = &blog.name.unwrap();
+        let blog_filename = &blog.filename.unwrap();
+        let blog_source = format!("{}", blog.source.unwrap());
+        let blog_body = &blog.body.unwrap();
+        let blog_tags: &String = &blog.tags.unwrap().join(",");
         let prep_add_query =
-            "INSERT INTO blogs (id, name, filename, source, body) VALUES (?1, ?2, ?3, ?4, ?5)";
+            "INSERT INTO blogs (id, name, filename, source, body, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
 
         let mut stmt = self
@@ -163,6 +220,7 @@ impl BlogRepo for TursoDatabase {
                 blog_filename.clone(),
                 blog_source.clone(),
                 blog_body.clone(),
+                blog_tags.clone(),
             ))
             .await
             .expect("Failed to add blog.");
@@ -171,6 +229,8 @@ impl BlogRepo for TursoDatabase {
         Some(BlogCommandStatus::Stored)
     }
     async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
+        // TODO: Update the tags implementation on here
+        // We need to delete a blog_tag_mapping table
         let blog_id = id.id;
         let prep_query = "DELETE FROM blogs WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
@@ -195,17 +255,12 @@ impl BlogRepo for TursoDatabase {
             }
         }
     }
-    async fn update(
-        &mut self,
-        id: BlogId,
-        name: Option<String>,
-        filename: Option<String>,
-        source: Option<BlogSource>,
-        body: Option<String>,
-    ) -> Option<BlogCommandStatus> {
-        let blog_id = &id.id;
+    async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
+        // TODO: Update the tags implementation on here
+        // We need to update blog_tag_mapping table
+        let blog_id = &blog.id.id;
         let mut affected_col = "".to_string();
-        match &name {
+        match &blog.name {
             Some(val) => {
                 affected_col = format!("{} name = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -214,7 +269,7 @@ impl BlogRepo for TursoDatabase {
                 debug!("Skipped update name field")
             }
         }
-        match &filename {
+        match &blog.filename {
             Some(val) => {
                 affected_col = format!("{} filename = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -223,7 +278,7 @@ impl BlogRepo for TursoDatabase {
                 debug!("Skipped update filename field")
             }
         }
-        match &source {
+        match &blog.source {
             Some(val) => {
                 affected_col = format!("{} source = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
@@ -232,13 +287,23 @@ impl BlogRepo for TursoDatabase {
                 debug!("Skipped update source field")
             }
         }
-        match &body {
+        match &blog.body {
             Some(val) => {
                 affected_col = format!("{} body = {} ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
                 debug!("Skipped update body field")
+            }
+        }
+        match &blog.tags {
+            Some(val) => {
+                let updated_tags = val.join(",");
+                affected_col = format!("{} tags = {} ,", &affected_col, updated_tags);
+                debug!("Affected Column: '{}'", &affected_col)
+            }
+            None => {
+                debug!("Skipped update tags field")
             }
         }
 

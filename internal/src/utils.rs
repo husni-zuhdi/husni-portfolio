@@ -10,6 +10,13 @@ pub fn capitalize(s: &str) -> String {
     }
 }
 
+/// remove_whitespace
+/// Take borrow of str and remove whitespace
+/// return cleaned String
+pub fn remove_whitespace(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

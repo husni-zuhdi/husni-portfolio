@@ -9,6 +9,20 @@
 {% for blog in blogs %}
     <h2 class="mb-2 hover:font-bold md:justify-start">
         <a href="/blogs/{{blog.id}}" target="_blank">{{blog.name}}</a>
+        {% for tag in blog.tags %}
+            {% if tag == "" %}
+               <!-- No tag to render  -->
+               <!-- Skip this tag -->
+            {% else if active_tags.contains(tag) %}
+                <button class="bg-gray-700 rounded-md px-3 py-1 hover:bg-gray-200">
+                    <a href="/blogs" class="text-sm font-small text-white hover:text-blue-900">{{tag}}</a>
+                </button>
+            {% else %}
+                <button class="bg-gray-200 rounded-md px-3 py-1 hover:bg-gray-700">
+                    <a href="/blogs?tags={{tag}}" class="text-sm font-small hover:text-white">{{tag}}</a>
+                </button>
+            {% endif %}
+        {% endfor %}
     </h2>
 {% endfor %}
 

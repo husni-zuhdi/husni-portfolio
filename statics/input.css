@@ -10,7 +10,7 @@
         @apply mb-2 mt-4 text-xl font-semibold md:justify-start;
     }
     h3 {
-        @apply mb-2 mt-4 text-xl md:justify-start;
+        @apply mb-2 mt-4 text-lg md:justify-start;
     }
     p {
         @apply py-2;

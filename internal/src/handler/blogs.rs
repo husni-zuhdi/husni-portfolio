@@ -1,9 +1,10 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use crate::model::blogs::{BlogEndPage, BlogId, BlogPagination, BlogStartPage};
+use crate::model::blogs::{BlogEndPage, BlogId, BlogStartPage, BlogsParams};
 use crate::model::{
     axum::AppState,
     templates::{BlogMetadataTemplate, BlogTemplate, BlogsTemplate},
 };
+use crate::utils::remove_whitespace;
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
@@ -16,30 +17,43 @@ use tracing::{debug, error, info, warn};
 #[debug_handler]
 pub async fn get_blogs(
     State(app_state): State<AppState>,
-    pagination: Query<BlogPagination>,
+    params: Query<BlogsParams>,
 ) -> Html<String> {
     // Locking Mutex
     let data = app_state.blog_usecase.lock().await;
 
     // Setup Pagination
-    debug!("Pagination {:?}", &pagination);
-    let start = match pagination.0.start {
+    debug!("Query Parameters {:?}", &params);
+    let start = match params.0.start {
         Some(val) => val,
         None => {
             debug!("Set default start to 0");
             BlogStartPage(0)
         }
     };
-    let end = match pagination.0.end {
+    let end = match params.0.end {
         Some(val) => val,
         None => {
             debug!("Set default end to 10");
             BlogEndPage(10)
         }
     };
+    let tags: String = match params.0.tags {
+        Some(val) => remove_whitespace(&val),
+        None => {
+            debug!("Set default tags to empty");
+            "".to_string()
+        }
+    };
+
+    let query_params = BlogsParams {
+        start: Some(start.clone()),
+        end: Some(end.clone()),
+        tags: Some(tags.clone()),
+    };
 
     // Construct BlogsTemplate Struct
-    let result = data.blog_repo.find_blogs(start.clone(), end.clone()).await;
+    let result = data.blog_repo.find_blogs(query_params).await;
     match result {
         Some(blogs_data) => {
             let blogs: Vec<BlogMetadataTemplate> = blogs_data
@@ -47,14 +61,17 @@ pub async fn get_blogs(
                 .map(|blog| {
                     debug!("Construct BlogsTemplateBlog for Blog Id {}", &blog.id);
                     BlogMetadataTemplate {
-                        id: &blog.id.id,
-                        name: &blog.name.as_str(),
+                        id: blog.id.id,
+                        name: blog.name.clone(),
+                        tags: blog.tags.clone(),
                     }
                 })
                 .collect();
             debug!("BlogsTemplate blogs : {:?}", &blogs);
 
-            let blogs_res = BlogsTemplate { blogs: &blogs }.render();
+            let active_tags: Vec<String> = tags.clone().split(",").map(|t| t.to_string()).collect();
+
+            let blogs_res = BlogsTemplate { blogs, active_tags }.render();
             match blogs_res {
                 Ok(res) => {
                     info!("Blogs askama template rendered.");
@@ -108,10 +125,11 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
     match result {
         Some(blog_data) => {
             let blog = BlogTemplate {
-                id: &id.clone().unwrap(),
-                name: &blog_data.name.as_str(),
-                filename: &blog_data.filename.as_str(),
-                body: &blog_data.body.as_str(),
+                id: id.clone().unwrap(),
+                name: blog_data.name.unwrap(),
+                filename: blog_data.filename.unwrap(),
+                body: blog_data.body.unwrap(),
+                tags: blog_data.tags.unwrap(),
             }
             .render();
 

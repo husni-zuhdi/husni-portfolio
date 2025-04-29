@@ -38,7 +38,7 @@ pub async fn get_talks(
             };
 
             // Construct TalksTemplate Struct
-            let empty_value = "";
+            let empty_value = "".to_string();
             let result = data.talk_repo.find_talks(start.clone(), end.clone()).await;
             match result {
                 Some(talks_data) => {
@@ -48,30 +48,30 @@ pub async fn get_talks(
                             debug!("Construct TalkTemplate for Talk Id {}", &talk.id);
                             debug!("TalkTemplate {:?}", &talk);
                             let media_link = match &talk.media_link {
-                                Some(val) => val.as_str(),
-                                None => empty_value,
+                                Some(val) => val.clone(),
+                                None => empty_value.clone(),
                             };
                             let org_name = match &talk.org_name {
-                                Some(val) => val.as_str(),
-                                None => empty_value,
+                                Some(val) => val.clone(),
+                                None => empty_value.clone(),
                             };
                             let org_link = match &talk.org_link {
-                                Some(val) => val.as_str(),
-                                None => empty_value,
+                                Some(val) => val.clone(),
+                                None => empty_value.clone(),
                             };
                             TalkTemplate {
-                                id: &talk.id.id,
-                                name: &talk.name.as_str(),
-                                date: &talk.date.as_str(),
-                                media_link: &media_link,
-                                org_name: &org_name,
-                                org_link: &org_link,
+                                id: talk.id.id,
+                                name: talk.name.clone(),
+                                date: talk.date.clone(),
+                                media_link,
+                                org_name,
+                                org_link,
                             }
                         })
                         .collect();
                     debug!("TalksTemplate talks : {:?}", &talks);
 
-                    let talks_res = TalksTemplate { talks: &talks }.render();
+                    let talks_res = TalksTemplate { talks }.render();
                     match talks_res {
                         Ok(res) => {
                             info!("Talks askama template rendered.");

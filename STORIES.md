@@ -63,10 +63,40 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         2. Try to implement it (maybe on) `handler` module.
         3. If it works and can improve our website loading time. Let's be bulish lol.
         4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
-- [ ] As an User, I want to filter blogs based on tags
+- [x] As an User, I want to filter blogs based on tags
     - I can implement it by adding tags and update the `get_blogs` function with tags filter.
     - Steps:
-        1. Implement tags in database -> function.
+        1. Add `BlogTags` on `Blog` model.
+            - I think... it's counterproductive to update all `port`, `repo`, and `usecase` everytime we update the `model`.
+            - It's time to improve our code base. I propose to update the code architecture on `add` and `update`.
+            - `add` and `update` will receive `Blog` struct instead of individual fileds.
+            - `Blog` struct should take Option fileds to accomodate partial fields `update`.
+            - Except for Blog id (since we need it for all of the operation).
+        2. Implement new Blog model on the database adapter.
+            - We found an issue to implement tags in turso.
+            - The query is become a bit complicated and I need to find a way to address this.
+            - Initally, I want to use something simple like `LIKE` statement to filter tags in the `blogs` table.
+            - There is a common pitfall with `LIKE` statment. Example: if I want to find blog with tag `cloud` only, it will return blog with tags `cloud` and `cloud-run`.
+            - From this stackoverflow article, I think we can implement blog_tag_mapping on the database [link](http://stackoverflow.com/questions/51128832/what-is-the-best-way-to-design-a-tag-based-data-table-with-sqlite).
+            - I will try to implement those in our database.
+            - Another benefit is we don't need to update the current schema but the `find_blogs` query become more complex.
+            - Okay it's done. I found out that we don't need a lifetime to render askama templates.
+            - I'll delete all of the lifetime since they made my head explode (smoothbrain problem).
+        3. Update the database schema.
+        4. Update the `get_blog` handler and frontend to show tags.
+        5. Update the `get_blogs` handler to add filter function based on URL parameter.
+            - We finished the implementation of tag fe but found an issue on UX.
+            - [ ] If we click a tag, the other tags in from a same blog disepear.
+                - Still thinking about it
+                - I don't think we need to fix it immediately. We'll track it in another story
+            - [x] If we click a tag, the current active tag cannot be clicked to revert the condition.
+                - In the `BlogsTemplate` I can add a field to track `active_tags`.
+                - In the html template, loop the tags and check if it in the `active_tags`.
+                - If the tag is in the `active_tags` list:
+                    - Change the button color
+                    - Override anchor to point to `/blogs` without any parameters
+- [ ] As an User, I want to see another blog tags when I already clicked a tag.
+    - Reffer to above story step 5
 
 ### Admin Story
  - [ ] As an Admin, I want to have an access to edit blogs.
@@ -129,3 +159,6 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         1. Populate `release` turso database with the latest data.
         2. Remove (or disable) the github api feature.
         3. Fully use the database in the future.
+- [ ] As an Engineer, I want to finish my tech debt to properly implement `tags` and `blog_tag_mapping` tables on `blogs` databse adapter
+    - As the title said, fix it please when you have time.
+    - We need to fix this during/before we build our admin pages.

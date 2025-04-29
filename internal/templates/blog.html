@@ -7,4 +7,16 @@
     <div>
         {{body|safe}}
     </div>
+    <div>
+    {% for tag in tags %}
+        {% if tag == "" %}
+           <!-- No tag to render  -->
+           <!-- Skip this tag -->
+        {% else %}
+            <button class="bg-gray-200 rounded-md px-3 py-1 hover:bg-gray-700">
+                <a href="/blogs?tags={{tag}}" class="text-sm font-small hover:text-white">{{tag}}</a>
+            </button>
+        {% endif %}
+    {% endfor %}
+    </div>
 {% endblock content %}

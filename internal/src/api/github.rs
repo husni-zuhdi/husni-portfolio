@@ -133,6 +133,8 @@ impl GithubApiUseCase {
                             id: BlogId { id },
                             name: blog_name,
                             filename,
+                            // TODO: remove the empty tags
+                            tags: vec!["".to_string()],
                         })
                     } else {
                         debug!("Folder prefix is 000-main-infrastructure. Skip this folder");
@@ -249,10 +251,12 @@ impl GithubApiUseCase {
 
         Some(Blog {
             id: metadata.id,
-            name,
-            source: BlogSource::Github,
-            filename: metadata.filename,
-            body,
+            name: Some(name),
+            source: Some(BlogSource::Github),
+            filename: Some(metadata.filename),
+            body: Some(body),
+            // Set empty tags for non-database
+            tags: Some(vec!["".to_string()]),
         })
     }
 }

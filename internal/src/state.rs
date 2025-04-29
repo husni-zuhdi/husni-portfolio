@@ -88,9 +88,7 @@ async fn populate_blog(api_uc: Box<dyn ApiRepo + Send + Sync>, blog_uc: &mut Blo
             debug!("Finished to fetch Blog {}.", &metadata.id);
 
             debug!("Start to store Blog {}.", &metadata.id);
-            let _ = blog_uc
-                .add(blog.id, blog.name, blog.filename, blog.source, blog.body)
-                .await;
+            let _ = blog_uc.add(blog).await;
             debug!("Finished to store Blog {}.", &metadata.id);
         }
     }

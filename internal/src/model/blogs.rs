@@ -27,6 +27,7 @@ pub enum BlogCommandStatus {
     Updated,
     Deleted,
 }
+
 /// BlogType
 /// Type of Blog source
 /// Can be:
@@ -58,31 +59,34 @@ impl Display for BlogSource {
 /// - source: Blog source
 /// - filename: Blog Filename or Source
 /// - body: Blog HTML body
+/// - tags: Blog tags
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Blog {
     pub id: BlogId,
-    pub name: String,
-    pub source: BlogSource,
-    pub filename: String,
-    pub body: String,
+    pub name: Option<String>,
+    pub source: Option<BlogSource>,
+    pub filename: Option<String>,
+    pub body: Option<String>,
+    pub tags: Option<Vec<String>>,
 }
 
 /// BlogStartPage
 /// Start page of Blog Pagination
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogStartPage(pub i32);
+pub struct BlogStartPage(pub i64);
 
 /// BlogEndPage
 /// End page of Blog Pagination
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogEndPage(pub i32);
+pub struct BlogEndPage(pub i64);
 
-/// BlogPagination
-/// Axum Query struct for Blog Pagination
+/// BlogsParams
+/// Axum Query struct for `/blogs` query parameters
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogPagination {
+pub struct BlogsParams {
     pub start: Option<BlogStartPage>,
     pub end: Option<BlogEndPage>,
+    pub tags: Option<String>,
 }
 
 /// BlogMetadata
@@ -93,4 +97,11 @@ pub struct BlogMetadata {
     pub id: BlogId,
     pub name: String,
     pub filename: String,
+    pub tags: Vec<String>,
+}
+
+impl BlogMetadata {
+    pub fn get_ref_tags(&self) -> Vec<&str> {
+        self.tags.iter().map(|t| t.as_ref()).collect()
+    }
 }
