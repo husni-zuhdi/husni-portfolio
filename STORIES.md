@@ -159,3 +159,6 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         1. Populate `release` turso database with the latest data.
         2. Remove (or disable) the github api feature.
         3. Fully use the database in the future.
+- [ ] As an Engineer, I want to finish my tech debt to properly implement `tags` and `blog_tag_mapping` tables on `blogs` databse adapter
+    - As the title said, fix it please when you have time.
+    - We need to fix this during/before we build our admin pages.
