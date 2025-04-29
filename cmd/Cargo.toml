@@ -1,10 +1,10 @@
 [package]
 name = "cmd"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-internal = { path = "../internal", version = "0.2.1"}
+internal = { path = "../internal", version = "0.3.0"}
 tokio = { version = "1.0", features = ["full"] }

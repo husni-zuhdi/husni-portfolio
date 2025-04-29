@@ -518,7 +518,7 @@ dependencies = [
 
 [[package]]
 name = "cmd"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "internal",
  "tokio",
@@ -1283,7 +1283,7 @@ dependencies = [
 
 [[package]]
 name = "internal"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "askama",
