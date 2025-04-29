@@ -63,7 +63,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         2. Try to implement it (maybe on) `handler` module.
         3. If it works and can improve our website loading time. Let's be bulish lol.
         4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
-- [ ] As an User, I want to filter blogs based on tags
+- [x] As an User, I want to filter blogs based on tags
     - I can implement it by adding tags and update the `get_blogs` function with tags filter.
     - Steps:
         1. Add `BlogTags` on `Blog` model.
@@ -88,12 +88,15 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
             - We finished the implementation of tag fe but found an issue on UX.
             - [ ] If we click a tag, the other tags in from a same blog disepear.
                 - Still thinking about it
-            - [ ] If we click a tag, the current active tag cannot be clicked to revert the condition.
+                - I don't think we need to fix it immediately. We'll track it in another story
+            - [x] If we click a tag, the current active tag cannot be clicked to revert the condition.
                 - In the `BlogsTemplate` I can add a field to track `active_tags`.
                 - In the html template, loop the tags and check if it in the `active_tags`.
                 - If the tag is in the `active_tags` list:
                     - Change the button color
                     - Override anchor to point to `/blogs` without any parameters
+- [ ] As an User, I want to see another blog tags when I already clicked a tag.
+    - Reffer to above story step 5
 
 ### Admin Story
  - [ ] As an Admin, I want to have an access to edit blogs.
