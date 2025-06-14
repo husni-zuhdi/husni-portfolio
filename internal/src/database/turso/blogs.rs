@@ -104,17 +104,24 @@ impl BlogRepo for TursoDatabase {
         };
         let prep_query = format!(
             r#"
+            WITH blogs_with_tags AS (
+                SELECT blog_ref AS blog_id
+                FROM blog_tag_mapping
+                JOIN tags ON tag_ref=tags.id
+                {}
+                GROUP BY blog_ref
+            )
             SELECT 
-                blogs.id AS id,
-                blogs.name AS name, 
-                blogs.filename AS filename, 
+                blog_ref AS id,
+                blogs.name,
+                blogs.filename,
                 group_concat(tags.name, ',') AS tags
-            FROM blog_tag_mapping 
-            JOIN blogs ON blog_ref = blogs.id
-            JOIN tags ON tag_ref = tags.id
-            {}
-            GROUP BY blogs.name
-            ORDER BY blogs.id
+            FROM blog_tag_mapping
+            JOIN blogs_with_tags AS bwt ON blog_ref=bwt.blog_id
+            JOIN tags ON tag_ref=tags.id
+            JOIN blogs ON blog_ref=blogs.id
+            GROUP BY blog_ref
+            ORDER BY blog_ref
             LIMIT ?1
             OFFSET ?2;
         "#,
