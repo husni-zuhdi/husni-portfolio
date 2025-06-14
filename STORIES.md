@@ -2,7 +2,16 @@
 
 Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about finishing a (personal) programming project, I want to implement stories. The aim of this doc is to give us a well-defined and focused **scope**.
 
-## WIP
+# Goals
+1. To make a website to show my online presence.
+2. To make a cool project.
+
+## Work in Progress
+### User stories
+### Admin stories
+### Engineering stories
+
+## TODO
 ### User stories
 - [ ] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
     - We can improve our web speed by introducing in-memory caching on server-side.
@@ -16,6 +25,19 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
 - [ ] As an User, I want to see another blog tags when I already clicked a tag.
     - Reffer to above story step 5
+- [ ] As an User, I want to see whole code snippet without it's breaking the website in mobile.
+    - This issue appear when you want to read blogs in mobile. The code snippet can be longer than the mobile screen widht.
+    - What I think we can do are:
+        1. Dynamically change the font size
+        2. Add a limit on how long paragraph can go.
+        3. In a code snippet, make it so we can horizontally scroll the snippet.
+- [ ] As an User, I need to zoom images to have a better view.
+    - I can see images in mobile and I need to zoom it manually.
+    - I think creating a zoom feature by clicking an image should do.
+- [ ] As an User, I want to know the personality of the website creator.
+    - Is it true? Does someone can know my personal based on my website?
+    - As a website creator, I just want to make something cool. I don't care what others think of me.
+    - I just want to make something that worth my time and effort!
 
 ### Admin stories
 - [ ] As an Admin, I want to have an access to edit blogs.
@@ -26,14 +48,6 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - It's the frist time we play with authentication service. So excited! lol
 
 ### Engineering stories
-- [ ] As an Engineer, I want to migrate my blogs data from github to fully database(s).
-    - This might introduce a BREAKING CHANGES since we won't support Github blogs pulling.
-    - We already move our current blogs data to turso dev database.
-    - Let's move it to the release database.
-    - Step:
-        1. Populate `release` turso database with the latest data.
-        2. Remove (or disable) the github api feature.
-        3. Fully use the database in the future.
 - [ ] As an Engineer, I want to finish my tech debt to properly implement `tags` and `blog_tag_mapping` tables on `blogs` databse adapter
     - As the title said, fix it please when you have time.
     - We need to fix this during/before we build our admin pages.
@@ -121,6 +135,14 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - Step:
         1. Update `blogs` implementation to match with the `talks`.
         2. Fix any bug/error during the update process.
+- [x] As an Engineer, I want to migrate my blogs data from github to fully database(s).
+    - This might introduce a BREAKING CHANGES since we won't support Github blogs pulling.
+    - We already move our current blogs data to turso dev database.
+    - Let's move it to the release database.
+    - Step:
+        1. Populate `release` turso database with the latest data.
+        2. Remove (or disable) the github api feature.
+        3. Fully use the database in the future.
 
 ## 0.2.1 and below
 ### User Stories
