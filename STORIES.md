@@ -6,9 +6,9 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 1. To make a website to show my online presence.
 2. To make a cool project.
 
-## Work in Progress
+## Work in Progress 0.2.3
 ### User stories
-- [x] As an User, I want to see another blog tags when I already clicked a tag.
+- [x] [As an User, I want to see another blog tags when I already clicked a tag](https://github.com/husni-zuhdi/husni-portfolio/pull/31)
     - Reffer to above story step 5.
     - Fixed the find_blogs query for turso database by separating query into two steps.
     - First is to find blog id with tags.
