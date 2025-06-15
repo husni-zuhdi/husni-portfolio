@@ -777,10 +777,6 @@ td {
   margin-inline-end: 3rem;
 }
 
-.me-3 {
-  margin-inline-end: 0.75rem;
-}
-
 .me-6 {
   margin-inline-end: 1.5rem;
 }
@@ -1228,14 +1224,6 @@ td {
   height: 1rem;
 }
 
-.\[\&\>svg\]\:h-5>svg {
-  height: 1.25rem;
-}
-
 .\[\&\>svg\]\:w-4>svg {
   width: 1rem;
-}
-
-.\[\&\>svg\]\:w-5>svg {
-  width: 1.25rem;
 }
