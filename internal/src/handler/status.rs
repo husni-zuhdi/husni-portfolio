@@ -1,4 +1,4 @@
-use crate::model::templates::{InternalServerErrorTemplate, NotFoundTemplate};
+use crate::model::templates::{IamATeapotTemplate, InternalServerErrorTemplate, NotFoundTemplate};
 use askama::Template;
 use axum::response::Html;
 use tracing::{error, info};
@@ -14,6 +14,22 @@ pub async fn get_404_not_found() -> Html<String> {
         }
         Err(err) => {
             error!("Failed to render 404_not_found.html. {}", err);
+            get_500_internal_server_error()
+        }
+    }
+}
+
+/// get_418_i_am_a_teapot
+/// Serve 418 I am a teapot HTML file
+pub async fn get_418_i_am_a_teapot() -> Html<String> {
+    let not_found = IamATeapotTemplate.render();
+    match not_found {
+        Ok(res) => {
+            info!("NotFound askama template rendered.");
+            Html(res)
+        }
+        Err(err) => {
+            error!("Failed to render 418_i_am_a_teapot.html. {}", err);
             get_500_internal_server_error()
         }
     }

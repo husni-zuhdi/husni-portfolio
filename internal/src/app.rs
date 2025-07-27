@@ -33,6 +33,7 @@ pub async fn app() -> () {
         .route("/blogs", get(handler::blogs::get_blogs))
         .route("/blogs/:blog_id", get(handler::blogs::get_blog))
         .route("/talks", get(handler::talks::get_talks))
+        .route("/etc/passwd", get(handler::status::get_418_i_am_a_teapot))
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service(
             "/statics/styles.css",
