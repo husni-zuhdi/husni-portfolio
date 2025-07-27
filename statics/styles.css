@@ -943,6 +943,10 @@ td {
   background-color: rgb(22 163 74 / var(--tw-bg-opacity));
 }
 
+.p-0 {
+  padding: 0px;
+}
+
 .p-2 {
   padding: 0.5rem;
 }

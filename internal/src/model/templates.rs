@@ -58,5 +58,9 @@ pub struct TalkTemplate {
 pub struct NotFoundTemplate;
 
 #[derive(Template, Debug)]
+#[template(path = "418_i_am_a_teapot.html")]
+pub struct IamATeapotTemplate;
+
+#[derive(Template, Debug)]
 #[template(path = "500_internal_server_error.html")]
 pub struct InternalServerErrorTemplate;
