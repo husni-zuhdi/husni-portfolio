@@ -15,6 +15,13 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - Second is to get tags and blogs from those blog ids.
 
 ### Admin stories
+- [ ] As an Admin, I want to have an access to edit blogs.
+    - We can explore it by creating `/admin` page and working on how to edit a `talks` (since it's easiest than `blogs`).
+    - Then we can work on the `blogs` feature.
+    - At 2025-07-30 I start to work on Talk Admin page. We finally use HTMX in this project.
+    - So far we tackle the edit button. Next we need to setup PUT endpoint.
+    - There is an opportunity to improve the codebase readability.
+
 ### Engineering stories
 
 ## TODO
