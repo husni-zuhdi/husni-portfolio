@@ -207,7 +207,7 @@ impl TalkRepo for TursoDatabase {
         let mut affected_col = "".to_string();
         match &name {
             Some(val) => {
-                affected_col = format!("{} name = {} ,", &affected_col, val);
+                affected_col = format!("{} name = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -216,7 +216,7 @@ impl TalkRepo for TursoDatabase {
         }
         match &date {
             Some(val) => {
-                affected_col = format!("{} date = {} ,", &affected_col, val);
+                affected_col = format!("{} date = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -225,7 +225,7 @@ impl TalkRepo for TursoDatabase {
         }
         match &media_link {
             Some(val) => {
-                affected_col = format!("{} media_link = {} ,", &affected_col, val);
+                affected_col = format!("{} media_link = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -234,7 +234,7 @@ impl TalkRepo for TursoDatabase {
         }
         match &org_name {
             Some(val) => {
-                affected_col = format!("{} org_name = {} ,", &affected_col, val);
+                affected_col = format!("{} org_name = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -243,7 +243,7 @@ impl TalkRepo for TursoDatabase {
         }
         match &org_link {
             Some(val) => {
-                affected_col = format!("{} org_link = {} ,", &affected_col, val);
+                affected_col = format!("{} org_link = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {

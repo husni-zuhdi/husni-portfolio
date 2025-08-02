@@ -269,7 +269,7 @@ impl BlogRepo for TursoDatabase {
         let mut affected_col = "".to_string();
         match &blog.name {
             Some(val) => {
-                affected_col = format!("{} name = {} ,", &affected_col, val);
+                affected_col = format!("{} name = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -278,7 +278,7 @@ impl BlogRepo for TursoDatabase {
         }
         match &blog.filename {
             Some(val) => {
-                affected_col = format!("{} filename = {} ,", &affected_col, val);
+                affected_col = format!("{} filename = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -287,7 +287,7 @@ impl BlogRepo for TursoDatabase {
         }
         match &blog.source {
             Some(val) => {
-                affected_col = format!("{} source = {} ,", &affected_col, val);
+                affected_col = format!("{} source = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -296,7 +296,7 @@ impl BlogRepo for TursoDatabase {
         }
         match &blog.body {
             Some(val) => {
-                affected_col = format!("{} body = {} ,", &affected_col, val);
+                affected_col = format!("{} body = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -306,7 +306,7 @@ impl BlogRepo for TursoDatabase {
         match &blog.tags {
             Some(val) => {
                 let updated_tags = val.join(",");
-                affected_col = format!("{} tags = {} ,", &affected_col, updated_tags);
+                affected_col = format!("{} tags = '{}' ,", &affected_col, updated_tags);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
