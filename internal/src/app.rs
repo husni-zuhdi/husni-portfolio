@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::handler;
 use crate::state::state_factory;
 use axum::{
-    routing::{get, get_service},
+    routing::{get, get_service, put},
     Router,
 };
 use tower::ServiceBuilder;
@@ -42,6 +42,10 @@ pub async fn app() -> () {
         .route(
             "/admin/talks/:talk_id/edit",
             get(handler::admin::talks::get_edit_admin_talk),
+        )
+        .route(
+            "/admin/talks/:talk_id/edit",
+            put(handler::admin::talks::put_edit_admin_talk),
         )
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service(

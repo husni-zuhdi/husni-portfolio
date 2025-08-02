@@ -1,8 +1,11 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use askama::Template;
 use axum::response::Html;
+use urlencoding::decode;
 
-use crate::model::talks::{Talk, TalkEndPage, TalkId, TalkPagination, TalkStartPage};
+use crate::model::talks::{
+    Talk, TalkCommandStatus, TalkEndPage, TalkId, TalkPagination, TalkStartPage,
+};
 use crate::model::{
     axum::AppState,
     templates_admin::{
@@ -10,8 +13,8 @@ use crate::model::{
     },
 };
 use axum::debug_handler;
-use axum::extract::{Path, Query, State};
-use tracing::{debug, error, info, warn};
+use axum::extract::{Path, Query, Request, State};
+use tracing::{debug, error, field, info, warn};
 
 /// get_admin_talks
 /// Serve talks HTML file
@@ -216,6 +219,121 @@ pub async fn get_edit_admin_talk(
                         }
                         Err(err) => {
                             error!("Failed to render admin/get_edit_talk.html. {}", err);
+                            return get_500_internal_server_error();
+                        }
+                    }
+                }
+                None => {
+                    info!("Failed to find Talk with Id {}.", &path);
+                    return get_404_not_found().await;
+                }
+            }
+        }
+        None => get_404_not_found().await,
+    }
+}
+
+/// put_edit_admin_talk
+/// Serve PUT edit talk HTML file
+#[debug_handler]
+pub async fn put_edit_admin_talk(
+    Path(path): Path<String>,
+    State(app_state): State<AppState>,
+    body: String,
+) -> Html<String> {
+    match app_state.talk_usecase.lock().await.clone() {
+        Some(mut data) => {
+            // Sanitize `path`
+            let id = path.parse::<i64>();
+            match &id {
+                Ok(val) => {
+                    debug!("Successfully parse path {} into {} i64", &path, &val);
+                }
+                Err(err) => {
+                    warn!("Failed to parse path {} to i64. Err: {}", &path, err);
+                    return get_404_not_found().await;
+                }
+            };
+
+            let mut talk_id = 0_i64;
+            let mut talk_name = String::new();
+            let mut talk_media_link = String::new();
+            let mut talk_date = String::new();
+            let mut talk_org_name = String::new();
+            let mut talk_org_link = String::new();
+            let req_fields: Vec<&str> = body.split("&").collect();
+            for req_field in req_fields {
+                let (key, value) = req_field.split_once("=").unwrap();
+                let value_decode = decode(value).unwrap();
+                debug!("Request field key/value {:?}/{:?}", key, value_decode);
+                match key {
+                    "talk_id" => {
+                        talk_id = value_decode
+                            .parse::<i64>()
+                            .expect("Failed to parse path from request body")
+                    }
+                    "talk_name" => talk_name = value_decode.to_string(),
+                    "talk_media_link" => talk_media_link = value_decode.to_string(),
+                    "talk_date" => talk_date = value_decode.to_string(),
+                    "talk_org_name" => talk_org_name = value_decode.to_string(),
+                    "talk_org_link" => talk_org_link = value_decode.to_string(),
+                    _ => continue,
+                }
+            }
+
+            let result = data
+                .talk_repo
+                .update(
+                    TalkId { id: talk_id },
+                    Some(talk_name),
+                    Some(talk_date),
+                    Some(talk_media_link),
+                    Some(talk_org_name),
+                    Some(talk_org_link),
+                )
+                .await;
+
+            match result {
+                Some(talk_command_status) => {
+                    if talk_command_status != TalkCommandStatus::Updated {
+                        error!("Failed to edit Talk with Id {}", &path);
+                        return get_500_internal_server_error();
+                    }
+                }
+                None => {
+                    info!("Failed to edit Talk with Id {}.", &path);
+                    return get_404_not_found().await;
+                }
+            }
+
+            let get_result = data.talk_repo.find(TalkId { id: talk_id }).await;
+
+            match get_result {
+                Some(talk_data) => {
+                    debug!("Construct AdminTalkTemplate for Talk Id {}", &talk_data.id);
+                    debug!("AdminTalkTemplate {:?}", &talk_data);
+                    let (media_link, org_name, org_link) = sanitize_talk(&talk_data);
+
+                    let edit_talk = AdminGetTalkTemplate {
+                        talk: AdminTalkTemplate {
+                            id: id.clone().unwrap(),
+                            name: talk_data.name.clone(),
+                            date: talk_data.date.clone(),
+                            media_link,
+                            org_name,
+                            org_link,
+                        },
+                    }
+                    .render();
+                    debug!("AdminGetTalkTemplate : {:?}", &edit_talk);
+
+                    match edit_talk {
+                        Ok(res) => {
+                            info!("Talks askama template rendered.");
+                            return Html(res);
+                        }
+                        Err(err) => {
+                            error!("Failed to render admin/get_talk.html. {}", err);
                             return get_500_internal_server_error();
                         }
                     }
