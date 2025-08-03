@@ -1,28 +1,30 @@
 <form hx-put="/admin/talks/{{talk.id}}/edit" hx-target="this" hx-swap="outerHTML">
     <div>
         <label for=talk_id>Talk ID :</label>
-        <input type="text" id="talk_id" name="talk_id" value="{{talk.id}}"><br>
+        <input type="text" id="talk_id" name="talk_id" value="{{talk.id}}" class="readonly" readonly>
     </div>
-    <div>
+    <div class="admin_edit">
         <label for=talk_name>Name :</label>
         <input type="text" id="talk_name" name="talk_name" value="{{talk.name}}"><br>
     </div>
-    <div>
+    <div class="admin_edit">
         <label for=talk_date>Date :</label>
-        <input type="text" id="talk_date" name="talk_date" value="{{talk.date}}"><br>
+        <input type="date" id="talk_date" name="talk_date" value="{{talk.date}}"><br>
     </div>
-    <div>
+    <div class="admin_edit">
         <label for=talk_media_link>Media Link :</label>
-        <input type="text" id="talk_media_link" name="talk_media_link" value="{{talk.media_link}}"><br>
+        <input type="url" id="talk_media_link" name="talk_media_link" value="{{talk.media_link}}"><br>
     </div>
-    <div>
+    <div class="admin_edit">
         <label for=talk_org_name>Organization Name :</label>
         <input type="text" id="talk_org_name" name="talk_org_name" value="{{talk.org_name}}"><br>
     </div>
-    <div>
+    <div class="admin_edit">
         <label for=talk_org_link>Organization Link :</label>
-        <input type="text" id="talk_org_link" name="talk_org_link" value="{{talk.org_link}}"><br>
+        <input type="url" id="talk_org_link" name="talk_org_link" value="{{talk.org_link}}"><br>
     </div>
-    <button class="btn" type="submit">Submit</button>
-    <button class="btn" hx-get="/admin/talks/{{talk.id}}">Cancel</button>
+    <div class="admin_edit">
+        <button class="btn_blue" type="submit">Submit</button>
+        <button class="btn_red" hx-get="/admin/talks/{{talk.id}}">Cancel</button>
+    </div>
 </form>

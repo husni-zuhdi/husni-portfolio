@@ -10,6 +10,12 @@
     <h2 class="mb-2 hover:font-bold md:justify-start">
         <div hx-target="this" hx-swap="outerHTML">
             <p>
+                <button hx-get="/admin/talks/{{talk.id}}/edit" class="btn_blue">
+                    Edit
+                </button>
+                <button hx-get="/admin/talks/{{talk.id}}/delete" class="btn_red">
+                    Delete
+                </button>
                 {{talk.date}}
                 {% if talk.media_link != "" %}
                      | <a href="{{talk.media_link}}">{{talk.name}}</a>
@@ -24,9 +30,6 @@
                     
                 {% endif %}
             </p>
-            <button hx-get="/admin/talks/{{talk.id}}/edit" class="btn primary">
-                Click To Edit
-            </button>
         </div>
     </h2>
 {% endfor %}
