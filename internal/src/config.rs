@@ -52,7 +52,7 @@ impl Default for Config {
 impl Config {
     /// Parse optional environment variable to setup the envar and set default
     fn parse_optional_envar(envar: &str, default: &str) -> String {
-        match env::var(&envar) {
+        match env::var(envar) {
             Err(e) => {
                 warn!(
                     "Failed to load {} environment variable. Set default to '{}'. Error {}",

@@ -12,7 +12,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
 
 /// Run the axum web application
-pub async fn app() -> () {
+pub async fn app() {
     // Setup Config
     let config = Config::from_envar();
     let endpoint = format!("{}:{}", &config.svc_endpoint, &config.svc_port);

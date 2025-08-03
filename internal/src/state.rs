@@ -16,9 +16,10 @@ use tracing::{debug, info};
 pub async fn state_factory(config: Config) -> AppState {
     // Setup blog use case
     let data_source_is_configured_sqlite =
-        config.data_source == "sqlite" && config.database_url != "";
-    let data_source_is_configured_turso =
-        config.data_source == "turso" && config.database_url != "" && config.turso_auth_token != "";
+        config.data_source == "sqlite" && !config.database_url.is_empty();
+    let data_source_is_configured_turso = config.data_source == "turso"
+        && !config.database_url.is_empty()
+        && !config.turso_auth_token.is_empty();
     let github_api_is_enabled =
         !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty();
 
@@ -77,10 +78,7 @@ pub async fn state_factory(config: Config) -> AppState {
 async fn populate_blog(api_uc: Box<dyn ApiRepo + Send + Sync>, blog_uc: &mut BlogUseCase) {
     let blogs_metadata = api_uc.list_metadata().await.unwrap();
     for metadata in blogs_metadata {
-        let blog_is_not_stored = match blog_uc.check_id(metadata.id.clone()).await {
-            Some(_) => false,
-            None => true,
-        };
+        let blog_is_not_stored = blog_uc.check_id(metadata.id.clone()).await.is_none();
         if blog_is_not_stored {
             info!("Start to populate Blog {}.", &metadata.id);
             debug!("Start to fetch Blog {}.", &metadata.id);

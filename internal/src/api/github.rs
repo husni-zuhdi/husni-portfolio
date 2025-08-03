@@ -22,13 +22,13 @@ pub struct GithubApiUseCase {
 #[async_trait]
 impl ApiRepo for GithubApiUseCase {
     async fn list_metadata(&self) -> Option<Vec<BlogMetadata>> {
-        let trees_result = Self::fetch_github_trees(&self).await;
+        let trees_result = Self::fetch_github_trees(self).await;
 
         let mut blogs_metadata: Vec<BlogMetadata> = Vec::new();
         match trees_result {
             Some(github_trees) => {
                 for tree in github_trees.trees {
-                    let blog_metadata = Self::process_github_metadata(&self, tree.clone()).await;
+                    let blog_metadata = Self::process_github_metadata(self, tree.clone()).await;
                     match blog_metadata {
                         Some(metadata) => blogs_metadata.push(metadata),
                         None => {
@@ -44,10 +44,10 @@ impl ApiRepo for GithubApiUseCase {
         Some(blogs_metadata)
     }
     async fn fetch(&self, metadata: BlogMetadata) -> Option<Blog> {
-        let result = Self::fetch_github_content(&self, metadata.filename.clone()).await;
+        let result = Self::fetch_github_content(self, metadata.filename.clone()).await;
 
         match result {
-            Some(content) => Self::process_github_content(&self, content, metadata),
+            Some(content) => Self::process_github_content(self, content, metadata),
             None => {
                 error!(
                     "Failed to get Blog content with Blog ID {} and Name {}: File Not Found",
@@ -116,7 +116,7 @@ impl GithubApiUseCase {
         // Main Infrastructure is the base-level step to replicate
         // all infrastructure from `husni-blog-resource`
         // Ref: https://github.com/husni-zuhdi/husni-blog-resources/tree/main/000-main-infrastructure
-        let blog_id_is_not_main_infra = &blog_id != &"000".to_string();
+        let blog_id_is_not_main_infra = blog_id != "000".to_string();
 
         if tree_is_dir {
             match blog_id.parse::<i64>() {

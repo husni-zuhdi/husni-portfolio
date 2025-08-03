@@ -21,10 +21,10 @@ impl ApiRepo for FilesystemApiUseCase {
                 let metadatas = value
                     .filter_map(|blog_path| {
                         let blog_path_buf = blog_path.expect("Failed to get blog DirEntry").path();
-                        Self::process_blog_path(&self, blog_path_buf)
+                        Self::process_blog_path(self, blog_path_buf)
                     })
                     // Collect Blog Metadata
-                    .map(|blog_filename| Self::process_blog_metadata(&self, blog_filename))
+                    .map(|blog_filename| Self::process_blog_metadata(self, blog_filename))
                     .collect();
                 Some(metadatas)
             }
