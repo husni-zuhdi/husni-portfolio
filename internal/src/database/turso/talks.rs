@@ -6,6 +6,27 @@ use tracing::{debug, info};
 
 #[async_trait]
 impl TalkRepo for TursoDatabase {
+    async fn get_new_id(&self) -> Option<TalkId> {
+        let prep_query = "SELECT COUNT(id) AS lenght FROM talks";
+        debug!("Executing lenght query {}", &prep_query);
+
+        let row = self
+            .conn
+            .query(prep_query, ())
+            .await
+            .expect("Failed to query length Talk id.")
+            .next()
+            .await
+            .expect("Failed to access query length Talk id.")
+            .expect("Failed to access row length Talk id");
+
+        debug!("Debug Row {:?}", &row);
+
+        let lenght_id: Option<i64> = row.get(0).unwrap();
+        let new_id = lenght_id.unwrap() + 1;
+
+        Some(TalkId { id: new_id })
+    }
     async fn find(&self, id: TalkId) -> Option<Talk> {
         let talk_id = id.id;
         let prep_query = "SELECT * FROM talks WHERE id = ?1 ORDER BY id";
