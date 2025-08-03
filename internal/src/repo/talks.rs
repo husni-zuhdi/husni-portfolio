@@ -8,6 +8,7 @@ clone_trait_object!(TalkRepo);
 pub trait TalkRepo: DynClone {
     async fn find(&self, id: TalkId) -> Option<Talk>;
     async fn find_talks(&self, start: TalkStartPage, end: TalkEndPage) -> Option<Vec<Talk>>;
+    async fn get_new_id(&self) -> Option<TalkId>;
     async fn add(
         &mut self,
         id: TalkId,
