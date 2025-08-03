@@ -45,4 +45,28 @@
     td {
         @apply px-3 py-1;
     }
+    button {
+        @apply rounded-md border-solid border-2 border-gray-500 px-3 py-1 bg-gray-200 hover:bg-gray-700 text-black hover:text-white;
+    }
+    input {
+        @apply rounded-md border-solid border-2 border-gray-500 px-3 py-1;
+    }
+}
+
+@layer components {
+    .btn_red {
+        @apply bg-red-200 hover:bg-red-700;
+    }
+    .btn_blue {
+        @apply bg-blue-200 hover:bg-blue-700;
+    }
+    .readonly {
+        @apply bg-gray-200;
+    }
+}
+
+@layer utilities {
+    .admin_edit {
+        @apply py-1;
+    }
 }
