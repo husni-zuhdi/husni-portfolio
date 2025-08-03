@@ -4,16 +4,22 @@
 {% block description %}"Husni Naufal Zuhdi Admin Talks"{% endblock %}
 
 {% block content %}
-<h1 class="mb-4 font-semibold uppercase md:justify-start">Talks</h1>
+<div>
+    <h1 class="mb-4 font-semibold uppercase md:justify-start">
+        Talks
+    </h1>
+</div>
 <hr>
-{% for talk in talks %}
+
+<div id="talks_target">
+    {% for talk in talks %}
     <h2 class="mb-2 hover:font-bold md:justify-start">
-        <div hx-target="this" hx-swap="outerHTML">
+        <div id="talk_{{talk.id}}_target">
             <p>
-                <button hx-get="/admin/talks/{{talk.id}}/edit" class="btn_blue">
+                <button hx-get="/admin/talks/{{talk.id}}/edit" hx-target="#talk_{{talk.id}}_target" hx-swap="innerHTML" class="btn_blue">
                     Edit
                 </button>
-                <button hx-get="/admin/talks/{{talk.id}}/delete" class="btn_red">
+                <button hx-get="/admin/talks/{{talk.id}}/delete" hx-target="#talk_{{talk.id}}_target" hx-swap="innerHTML" class="btn_red">
                     Delete
                 </button>
                 {{talk.date}}
@@ -32,5 +38,11 @@
             </p>
         </div>
     </h2>
-{% endfor %}
+    {% endfor %}
+    <h2 class="mb-2 hover:font-bold md:justify-start">
+        <button hx-get="/admin/talks/add" hx-target="#talks_target" hx-swap="innerHTML" class="btn_green">
+            Add
+        </button>
+    </h2>
+</div>
 {% endblock content %}
