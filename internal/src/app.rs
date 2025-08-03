@@ -1,8 +1,9 @@
 use crate::config::Config;
-use crate::handler;
+use crate::handler::{profile, status, version};
+use crate::routes;
 use crate::state::state_factory;
 use axum::{
-    routing::{get, get_service, put},
+    routing::{get, get_service},
     Router,
 };
 use tower::ServiceBuilder;
@@ -28,25 +29,12 @@ pub async fn app() -> () {
 
     // Axum Application
     let app = Router::new()
-        .route("/", get(handler::profile::get_profile))
-        .route("/version", get(handler::version::get_version))
-        .route("/blogs", get(handler::blogs::get_blogs))
-        .route("/blogs/:blog_id", get(handler::blogs::get_blog))
-        .route("/talks", get(handler::talks::get_talks))
-        .route("/etc/passwd", get(handler::status::get_418_i_am_a_teapot))
-        .route("/admin/talks", get(handler::admin::talks::get_admin_talks))
-        .route(
-            "/admin/talks/:talk_id",
-            get(handler::admin::talks::get_admin_talk),
-        )
-        .route(
-            "/admin/talks/:talk_id/edit",
-            get(handler::admin::talks::get_edit_admin_talk),
-        )
-        .route(
-            "/admin/talks/:talk_id/edit",
-            put(handler::admin::talks::put_edit_admin_talk),
-        )
+        .route("/", get(profile::get_profile))
+        .route("/version", get(version::get_version))
+        .route("/etc/passwd", get(status::get_418_i_am_a_teapot))
+        .nest("/blogs", routes::blogs_route())
+        .nest("/talks", routes::talks_route())
+        .nest("/admin/talks", routes::admin_talks_route())
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service(
             "/statics/styles.css",
@@ -54,7 +42,7 @@ pub async fn app() -> () {
         )
         .with_state(app_state)
         .layer(ServiceBuilder::new().layer(CompressionLayer::new()))
-        .fallback(get(handler::status::get_404_not_found));
+        .fallback(get(status::get_404_not_found));
 
     // Start Axum Application
     let listener = tokio::net::TcpListener::bind(endpoint).await.unwrap();
