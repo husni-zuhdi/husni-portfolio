@@ -57,6 +57,12 @@
     .btn_red {
         @apply bg-red-200 hover:bg-red-700;
     }
+    .btn_yellow {
+        @apply bg-yellow-200 hover:bg-yellow-700;
+    }
+    .btn_green {
+        @apply bg-green-200 hover:bg-green-700;
+    }
     .btn_blue {
         @apply bg-blue-200 hover:bg-blue-700;
     }
