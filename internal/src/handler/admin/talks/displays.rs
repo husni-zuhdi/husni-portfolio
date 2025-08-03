@@ -1,25 +1,26 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
+use crate::port::talks::query::TalkQueryPort;
 use askama::Template;
 use axum::response::Html;
-use urlencoding::decode;
 
-use crate::model::talks::{
-    Talk, TalkCommandStatus, TalkEndPage, TalkId, TalkPagination, TalkStartPage,
-};
+use crate::model::talks::{Talk, TalkEndPage, TalkId, TalkPagination, TalkStartPage};
 use crate::model::{
     axum::AppState,
     templates_admin::{
-        AdminGetEditTalkTemplate, AdminGetTalkTemplate, AdminTalkTemplate, AdminTalksTemplate,
+        AdminGetAddTalkTemplate, AdminGetDeleteTalkTemplate, AdminGetEditTalkTemplate,
+        AdminGetTalkTemplate, AdminGetTalksTemplate, AdminTalkTemplate, AdminTalksTemplate,
     },
 };
 use axum::debug_handler;
-use axum::extract::{Path, Query, Request, State};
-use tracing::{debug, error, field, info, warn};
+use axum::extract::{Path, Query, State};
+use tracing::{debug, error, info, warn};
 
-/// get_admin_talks
-/// Serve talks HTML file
+/// get_base_admin_talks
+/// Serve GET (base) admin talks HTML file
+/// Under endpoint /admin/talks
+/// It's the base of Admin Talks feature
 #[debug_handler]
-pub async fn get_admin_talks(
+pub async fn get_base_admin_talks(
     State(app_state): State<AppState>,
     pagination: Query<TalkPagination>,
 ) -> Html<String> {
@@ -27,20 +28,7 @@ pub async fn get_admin_talks(
         Some(data) => {
             // Setup Pagination
             debug!("Pagination {:?}", &pagination);
-            let start = match pagination.0.start {
-                Some(val) => val,
-                None => {
-                    debug!("Set default start to 0");
-                    TalkStartPage(0)
-                }
-            };
-            let end = match pagination.0.end {
-                Some(val) => val,
-                None => {
-                    debug!("Set default end to 10");
-                    TalkEndPage(10)
-                }
-            };
+            let (start, end) = setup_pagination(pagination);
 
             // Construct TalksTemplate Struct
             let result = data.talk_repo.find_talks(start.clone(), end.clone()).await;
@@ -51,7 +39,7 @@ pub async fn get_admin_talks(
                         .map(|talk| {
                             debug!("Construct AdminTalkTemplate for Talk Id {}", &talk.id);
                             debug!("AdminTalkTemplate {:?}", &talk);
-                            let (media_link, org_name, org_link) = sanitize_talk(&talk);
+                            let (media_link, org_name, org_link) = sanitize_talk_media_org(&talk);
 
                             AdminTalkTemplate {
                                 id: talk.id.id,
@@ -86,16 +74,74 @@ pub async fn get_admin_talks(
                 }
             }
         }
-        None => {
-            // No Talks in Memory yet and I don't think it's worth to be implement
-            // Andd I also think to remove the memory database at all
-            get_404_not_found().await
+        None => get_404_not_found().await,
+    }
+}
+
+/// get_admin_talks
+/// Serve get_talks HTML file and return point for /admin/talks/add cancel button
+/// Return lite version of get_base_admin_talks with talks data only
+#[debug_handler]
+pub async fn get_admin_talks(
+    State(app_state): State<AppState>,
+    pagination: Query<TalkPagination>,
+) -> Html<String> {
+    match app_state.talk_usecase.lock().await.clone() {
+        Some(data) => {
+            debug!("Pagination {:?}", &pagination);
+            let (start, end) = setup_pagination(pagination);
+
+            // Construct TalksTemplate Struct
+            let result = data.talk_repo.find_talks(start.clone(), end.clone()).await;
+            match result {
+                Some(talks_data) => {
+                    let talks: Vec<AdminTalkTemplate> = talks_data
+                        .iter()
+                        .map(|talk| {
+                            debug!("Construct AdminTalkTemplate for Talk Id {}", &talk.id);
+                            debug!("AdminTalkTemplate {:?}", &talk);
+                            let (media_link, org_name, org_link) = sanitize_talk_media_org(&talk);
+
+                            AdminTalkTemplate {
+                                id: talk.id.id,
+                                name: talk.name.clone(),
+                                date: talk.date.clone(),
+                                media_link,
+                                org_name,
+                                org_link,
+                            }
+                        })
+                        .collect();
+                    debug!("AdminTalksTemplate talks : {:?}", &talks);
+
+                    let talks_res = AdminGetTalksTemplate { talks }.render();
+                    match talks_res {
+                        Ok(res) => {
+                            info!("Talks askama template rendered.");
+                            Html(res)
+                        }
+                        Err(err) => {
+                            error!("Failed to render admin/get_talks.html. {}", err);
+                            get_500_internal_server_error()
+                        }
+                    }
+                }
+                None => {
+                    error!(
+                        "Failed to find talks with Talk Id started at {} and ended at {}.",
+                        &start.0, &end.0
+                    );
+                    get_500_internal_server_error()
+                }
+            }
         }
+        None => get_404_not_found().await,
     }
 }
 
 /// get_admin_talk
-/// Serve GET edit talk HTML file
+/// Serve GET talk HTML file and return point for several cancelation endpoints
+/// Returned single talk
 #[debug_handler]
 pub async fn get_admin_talk(
     Path(path): Path<String>,
@@ -126,9 +172,9 @@ pub async fn get_admin_talk(
                 Some(talk_data) => {
                     debug!("Construct AdminTalkTemplate for Talk Id {}", &talk_data.id);
                     debug!("AdminTalkTemplate {:?}", &talk_data);
-                    let (media_link, org_name, org_link) = sanitize_talk(&talk_data);
+                    let (media_link, org_name, org_link) = sanitize_talk_media_org(&talk_data);
 
-                    let edit_talk = AdminGetTalkTemplate {
+                    let talk = AdminGetTalkTemplate {
                         talk: AdminTalkTemplate {
                             id: id.clone().unwrap(),
                             name: talk_data.name.clone(),
@@ -139,9 +185,9 @@ pub async fn get_admin_talk(
                         },
                     }
                     .render();
-                    debug!("AdminGetTalkTemplate : {:?}", &edit_talk);
+                    debug!("AdminGetTalkTemplate : {:?}", &talk);
 
-                    match edit_talk {
+                    match talk {
                         Ok(res) => {
                             info!("Talks askama template rendered.");
                             return Html(res);
@@ -162,8 +208,51 @@ pub async fn get_admin_talk(
     }
 }
 
+/// get_add_admin_talk
+/// Serve GET add talk HTML file in a form format.
+#[debug_handler]
+pub async fn get_add_admin_talk(State(app_state): State<AppState>) -> Html<String> {
+    match app_state.talk_usecase.lock().await.clone() {
+        Some(data) => {
+            // Calculate new Talk Id
+            let result = data.get_new_id().await;
+
+            match result {
+                Some(talk_id) => {
+                    debug!(
+                        "Construct AdminGetAddTalkTemplate for Talk Id {}",
+                        &talk_id.id
+                    );
+                    let add_talk = AdminGetAddTalkTemplate {
+                        id: talk_id.id,
+                        date: chrono::Local::now().format("%Y-%m-%d").to_string(),
+                    }
+                    .render();
+                    debug!("AdminGetAddTalkTemplate : {:?}", &add_talk);
+
+                    match add_talk {
+                        Ok(res) => {
+                            info!("Talks askama template rendered.");
+                            return Html(res);
+                        }
+                        Err(err) => {
+                            error!("Failed to render admin/get_add_talk.html. {}", err);
+                            return get_500_internal_server_error();
+                        }
+                    }
+                }
+                None => {
+                    info!("Failed to add Talk.");
+                    return get_404_not_found().await;
+                }
+            }
+        }
+        None => get_404_not_found().await,
+    }
+}
+
 /// get_edit_admin_talk
-/// Serve GET edit talk HTML file
+/// Serve GET edit talk HTML file to edit a talk
 #[debug_handler]
 pub async fn get_edit_admin_talk(
     Path(path): Path<String>,
@@ -197,7 +286,7 @@ pub async fn get_edit_admin_talk(
                         &talk_data.id
                     );
                     debug!("Talk {:?}", &talk_data);
-                    let (media_link, org_name, org_link) = sanitize_talk(&talk_data);
+                    let (media_link, org_name, org_link) = sanitize_talk_media_org(&talk_data);
 
                     let edit_talk = AdminGetEditTalkTemplate {
                         talk: AdminTalkTemplate {
@@ -233,16 +322,15 @@ pub async fn get_edit_admin_talk(
     }
 }
 
-/// put_edit_admin_talk
-/// Serve PUT edit talk HTML file
+/// get_delete_admin_talk
+/// Serve GET delete talk HTML file to delete a talk
 #[debug_handler]
-pub async fn put_edit_admin_talk(
+pub async fn get_delete_admin_talk(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
-    body: String,
 ) -> Html<String> {
     match app_state.talk_usecase.lock().await.clone() {
-        Some(mut data) => {
+        Some(data) => {
             // Sanitize `path`
             let id = path.parse::<i64>();
             match &id {
@@ -255,85 +343,31 @@ pub async fn put_edit_admin_talk(
                 }
             };
 
-            let mut talk_id = 0_i64;
-            let mut talk_name = String::new();
-            let mut talk_media_link = String::new();
-            let mut talk_date = String::new();
-            let mut talk_org_name = String::new();
-            let mut talk_org_link = String::new();
-            let req_fields: Vec<&str> = body.split("&").collect();
-            for req_field in req_fields {
-                let (key, value) = req_field.split_once("=").unwrap();
-                let value_decode = decode(value).unwrap();
-                debug!("Request field key/value {:?}/{:?}", key, value_decode);
-                match key {
-                    "talk_id" => {
-                        talk_id = value_decode
-                            .parse::<i64>()
-                            .expect("Failed to parse path from request body")
-                    }
-                    "talk_name" => talk_name = value_decode.to_string(),
-                    "talk_media_link" => talk_media_link = value_decode.to_string(),
-                    "talk_date" => talk_date = value_decode.to_string(),
-                    "talk_org_name" => talk_org_name = value_decode.to_string(),
-                    "talk_org_link" => talk_org_link = value_decode.to_string(),
-                    _ => continue,
-                }
-            }
-
             let result = data
                 .talk_repo
-                .update(
-                    TalkId { id: talk_id },
-                    Some(talk_name),
-                    Some(talk_date),
-                    Some(talk_media_link),
-                    Some(talk_org_name),
-                    Some(talk_org_link),
-                )
+                .find(TalkId {
+                    id: id.clone().unwrap(),
+                })
                 .await;
 
             match result {
-                Some(talk_command_status) => {
-                    if talk_command_status != TalkCommandStatus::Updated {
-                        error!("Failed to edit Talk with Id {}", &path);
-                        return get_500_internal_server_error();
-                    }
-                }
-                None => {
-                    info!("Failed to edit Talk with Id {}.", &path);
-                    return get_404_not_found().await;
-                }
-            }
-
-            let get_result = data.talk_repo.find(TalkId { id: talk_id }).await;
-
-            match get_result {
                 Some(talk_data) => {
-                    debug!("Construct AdminTalkTemplate for Talk Id {}", &talk_data.id);
-                    debug!("AdminTalkTemplate {:?}", &talk_data);
-                    let (media_link, org_name, org_link) = sanitize_talk(&talk_data);
+                    debug!(
+                        "Construct AdminGetDeleteTalkTemplate for Talk Id {}",
+                        &talk_data.id
+                    );
+                    debug!("Talk {:?}", &talk_data);
 
-                    let edit_talk = AdminGetTalkTemplate {
-                        talk: AdminTalkTemplate {
-                            id: id.clone().unwrap(),
-                            name: talk_data.name.clone(),
-                            date: talk_data.date.clone(),
-                            media_link,
-                            org_name,
-                            org_link,
-                        },
-                    }
-                    .render();
-                    debug!("AdminGetTalkTemplate : {:?}", &edit_talk);
+                    let delete_talk = AdminGetDeleteTalkTemplate { id: id.unwrap() }.render();
+                    debug!("AdminGetDeleteTalkTemplate : {:?}", &delete_talk);
 
-                    match edit_talk {
+                    match delete_talk {
                         Ok(res) => {
                             info!("Talks askama template rendered.");
                             return Html(res);
                         }
                         Err(err) => {
-                            error!("Failed to render admin/get_talk.html. {}", err);
+                            error!("Failed to render admin/get_delete_talk.html. {}", err);
                             return get_500_internal_server_error();
                         }
                     }
@@ -348,8 +382,27 @@ pub async fn put_edit_admin_talk(
     }
 }
 
-/// sanitize part of Talk fields
-fn sanitize_talk(talk_data: &Talk) -> (String, String, String) {
+/// Initiate pagination check. Set default if not manually requested
+fn setup_pagination(pagination: Query<TalkPagination>) -> (TalkStartPage, TalkEndPage) {
+    let start = match pagination.0.start {
+        Some(val) => val,
+        None => {
+            debug!("Set default start to 0");
+            TalkStartPage(0)
+        }
+    };
+    let end = match pagination.0.end {
+        Some(val) => val,
+        None => {
+            debug!("Set default end to 10");
+            TalkEndPage(10)
+        }
+    };
+    (start, end)
+}
+
+/// sanitize media and org part of Talk fields
+fn sanitize_talk_media_org(talk_data: &Talk) -> (String, String, String) {
     let empty_value = "".to_string();
 
     let media_link = match &talk_data.media_link {
