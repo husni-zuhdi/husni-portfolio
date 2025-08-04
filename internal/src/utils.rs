@@ -24,9 +24,17 @@ mod test {
 
     #[test]
     fn test_capitalize() {
-        let test = "lorem ipsum dolor sit amet".to_string();
+        let test = "lorem ipsum dolor sit amet";
         let expected = "Lorem ipsum dolor sit amet".to_string();
-        let result = capitalize(test.as_str());
+        let result = capitalize(test);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_remove_whitespace() {
+        let test = "kubernetes, jenkins, grafana, ec2";
+        let expected = "kubernetes,jenkins,grafana,ec2".to_string();
+        let result = remove_whitespace(test);
         assert_eq!(result, expected);
     }
 }
