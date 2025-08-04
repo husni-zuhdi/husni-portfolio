@@ -54,6 +54,12 @@
 }
 
 @layer components {
+    .active_tag {
+        @apply bg-gray-700 hover:bg-gray-200 text-white hover:text-black;
+    }
+    .inactive_tag {
+        @apply bg-gray-200 hover:bg-gray-700 text-black hover:text-white;
+    }
     .btn_red {
         @apply bg-red-200 hover:bg-red-700;
     }
