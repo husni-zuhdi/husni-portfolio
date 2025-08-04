@@ -1,36 +1,62 @@
 use crate::handler::{
-    admin::talks::{displays, operations},
+    admin::blogs::displays as bd,
+    admin::talks::{displays as td, operations as to},
     blogs::{get_blog, get_blogs},
     talks::get_talks,
 };
+use crate::handler::{profile, status, version};
 use crate::model::axum::AppState;
+use axum::routing::get_service;
 use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use tower::ServiceBuilder;
+use tower_http::compression::CompressionLayer;
+use tower_http::services::{ServeDir, ServeFile};
 
-pub fn blogs_route() -> Router<AppState> {
+pub fn main_route(app_state: AppState) -> Router {
+    Router::new()
+        .route("/", get(profile::get_profile))
+        .route("/version", get(version::get_version))
+        .route("/etc/passwd", get(status::get_418_i_am_a_teapot))
+        .nest("/blogs", blogs_route())
+        .nest("/talks", talks_route())
+        .nest("/admin/talks", admin_talks_route())
+        .nest("/admin/blogs", admin_blogs_route())
+        .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
+        .nest_service(
+            "/statics/styles.css",
+            get_service(ServeFile::new("./statics/styles.css")),
+        )
+        .with_state(app_state)
+        .layer(ServiceBuilder::new().layer(CompressionLayer::new()))
+        .fallback(get(status::get_404_not_found))
+}
+
+fn blogs_route() -> Router<AppState> {
     Router::new()
         .route("/", get(get_blogs))
         .route("/:blog_id", get(get_blog))
 }
 
-pub fn talks_route() -> Router<AppState> {
+fn talks_route() -> Router<AppState> {
     Router::new().route("/", get(get_talks))
 }
 
-pub fn admin_talks_route() -> Router<AppState> {
+fn admin_talks_route() -> Router<AppState> {
     Router::new()
-        .route("/", get(displays::get_base_admin_talks))
-        .route("/get", get(displays::get_admin_talks))
-        .route("/add", get(displays::get_add_admin_talk))
-        .route("/add", post(operations::post_add_admin_talk))
-        .route("/:talk_id", get(displays::get_admin_talk))
-        .route("/:talk_id/edit", get(displays::get_edit_admin_talk))
-        .route("/:talk_id/edit", put(operations::put_edit_admin_talk))
-        .route("/:talk_id/delete", get(displays::get_delete_admin_talk))
-        .route(
-            "/:talk_id/delete",
-            delete(operations::delete_delete_admin_talk),
-        )
+        .route("/", get(td::get_base_admin_talks))
+        .route("/get", get(td::get_admin_talks))
+        .route("/add", get(td::get_add_admin_talk))
+        .route("/add", post(to::post_add_admin_talk))
+        .route("/:talk_id", get(td::get_admin_talk))
+        .route("/:talk_id/edit", get(td::get_edit_admin_talk))
+        .route("/:talk_id/edit", put(to::put_edit_admin_talk))
+        .route("/:talk_id/delete", get(td::get_delete_admin_talk))
+        .route("/:talk_id/delete", delete(to::delete_delete_admin_talk))
+}
+
+fn admin_blogs_route() -> Router<AppState> {
+    Router::new().route("/", get(bd::get_base_admin_blogs))
 }
