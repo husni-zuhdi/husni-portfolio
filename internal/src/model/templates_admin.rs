@@ -1,38 +1,38 @@
 use askama::Template;
 
 #[derive(Template, Debug)]
-#[template(path = "admin/talks.html")]
+#[template(path = "admin/talks/talks.html")]
 pub struct AdminTalksTemplate {
     pub talks: Vec<AdminTalkTemplate>,
 }
 
 #[derive(Template, Debug)]
-#[template(path = "admin/get_add_talk.html")]
+#[template(path = "admin/talks/get_add_talk.html")]
 pub struct AdminGetAddTalkTemplate {
     pub id: i64,
     pub date: String,
 }
 
 #[derive(Template, Debug)]
-#[template(path = "admin/get_edit_talk.html")]
+#[template(path = "admin/talks/get_edit_talk.html")]
 pub struct AdminGetEditTalkTemplate {
     pub talk: AdminTalkTemplate,
 }
 
 #[derive(Template, Debug)]
-#[template(path = "admin/get_delete_talk.html")]
+#[template(path = "admin/talks/get_delete_talk.html")]
 pub struct AdminGetDeleteTalkTemplate {
     pub id: i64,
 }
 
 #[derive(Template, Debug)]
-#[template(path = "admin/get_talk.html")]
+#[template(path = "admin/talks/get_talk.html")]
 pub struct AdminGetTalkTemplate {
     pub talk: AdminTalkTemplate,
 }
 
 #[derive(Template, Debug)]
-#[template(path = "admin/get_talks.html")]
+#[template(path = "admin/talks/get_talks.html")]
 pub struct AdminGetTalksTemplate {
     pub talks: Vec<AdminTalkTemplate>,
 }
