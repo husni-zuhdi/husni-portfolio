@@ -1,5 +1,7 @@
 use askama::Template;
 
+use crate::model::templates::BlogMetadataTemplate;
+
 #[derive(Template, Debug)]
 #[template(path = "admin/talks/talks.html")]
 pub struct AdminTalksTemplate {
@@ -45,4 +47,11 @@ pub struct AdminTalkTemplate {
     pub media_link: String,
     pub org_name: String,
     pub org_link: String,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/blogs.html")]
+pub struct AdminBlogsTemplate {
+    pub blogs: Vec<BlogMetadataTemplate>,
+    pub active_tags: Vec<String>,
 }
