@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Blogs{% endblock %}
+{% block description %}"Husni Naufal Zuhdi Admin Blogs"{% endblock %}
+
+{% block content %}
+<div>
+    <h1 class="mb-4 font-semibold uppercase md:justify-start">
+        Blogs
+    </h1>
+</div>
+<hr>
+
+<div id="blogs_target">
+    {% for blog in blogs %}
+        <h2 class="mb-2 hover:font-bold md:justify-start">
+            <div id="blog_{{blog.id}}_target">
+                <button hx-get="/admin/blogs/{{blog.id}}/edit" hx-target="#blog_{{blog.id}}_target" hx-swap="innerHTML" class="btn_blue">
+                    Edit
+                </button>
+                <button hx-get="/admin/blogs/{{blog.id}}/delete" hx-target="#blog_{{blog.id}}_target" hx-swap="innerHTML" class="btn_red">
+                    Delete
+                </button>
+                {{blog.name}}
+                {% for tag in blog.tags %}
+                    {% if tag == "" %}
+                       <!-- No tag to render  -->
+                       <!-- Skip this tag -->
+                    {% else %}
+                        <button class="inactive_tag">
+                            {{tag}}
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </h2>
+    {% endfor %}
+    <h2 class="mb-2 hover:font-bold md:justify-start">
+        <button hx-get="/admin/blogs/add" hx-target="#blogs_target" hx-swap="innerHTML" class="btn_green">
+            Add
+        </button>
+    </h2>
+</div>
+{% endblock content %}

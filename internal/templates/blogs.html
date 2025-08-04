@@ -4,26 +4,36 @@
 {% block description %}"Husni Naufal Zuhdi Blogs"{% endblock %}
 
 {% block content %}
-<h1 class="mb-4 font-semibold uppercase md:justify-start">Blogs</h1>
+<div>
+    <h1 class="mb-4 font-semibold uppercase md:justify-start">
+        Blogs
+    </h1>
+</div>
 <hr>
-{% for blog in blogs %}
-    <h2 class="mb-2 hover:font-bold md:justify-start">
-        <a href="/blogs/{{blog.id}}" target="_blank">{{blog.name}}</a>
-        {% for tag in blog.tags %}
-            {% if tag == "" %}
-               <!-- No tag to render  -->
-               <!-- Skip this tag -->
-            {% else if active_tags.contains(tag) %}
-                <button class="bg-gray-700 rounded-md px-3 py-1 hover:bg-gray-200">
-                    <a href="/blogs" class="text-sm font-small text-white hover:text-blue-900">{{tag}}</a>
-                </button>
-            {% else %}
-                <button class="bg-gray-200 rounded-md px-3 py-1 hover:bg-gray-700">
-                    <a href="/blogs?tags={{tag}}" class="text-sm font-small hover:text-white">{{tag}}</a>
-                </button>
-            {% endif %}
-        {% endfor %}
-    </h2>
-{% endfor %}
 
+<div id="blogs_target">
+    {% for blog in blogs %}
+        <h2 class="mb-2 hover:font-bold md:justify-start">
+            <div id="blog_{{blog.id}}_target">
+                <a href="/blogs/{{blog.id}}">{{blog.name}}</a>
+                {% for tag in blog.tags %}
+                    {% if tag == "" %}
+                       <!-- No tag to render  -->
+                       <!-- Skip this tag -->
+                    {% else if active_tags.contains(tag) %}
+                        <button class="active_tag">
+                            <!-- <a href="/blogs" class="text-white hover:text-blue-900">{{tag}}</a> -->
+                            <a href="/blogs" class="active_tag">{{tag}}</a>
+                        </button>
+                    {% else %}
+                        <button class="inactive_tag">
+                            <!-- <a href="/blogs?tags={{tag}}" class="hover:text-white">{{tag}}</a> -->
+                            <a href="/blogs?tags={{tag}}" class="inactive_tag">{{tag}}</a>
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </h2>
+    {% endfor %}
+</div>
 {% endblock content %}
