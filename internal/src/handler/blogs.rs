@@ -59,7 +59,7 @@ pub async fn get_blogs(
             let blogs: Vec<BlogMetadataTemplate> = blogs_data
                 .iter()
                 .map(|blog| {
-                    debug!("Construct BlogsTemplateBlog for Blog Id {}", &blog.id);
+                    debug!("Construct BlogMetadataTemplate for Blog Id {}", &blog.id);
                     BlogMetadataTemplate {
                         id: blog.id.id,
                         name: blog.name.clone(),
@@ -78,7 +78,7 @@ pub async fn get_blogs(
                     Html(res)
                 }
                 Err(err) => {
-                    error!("Failed to render get_blogs.html. {}", err);
+                    error!("Failed to render blogs.html. {}", err);
                     get_500_internal_server_error()
                 }
             }
