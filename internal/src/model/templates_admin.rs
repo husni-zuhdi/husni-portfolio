@@ -55,3 +55,16 @@ pub struct AdminBlogsTemplate {
     pub blogs: Vec<BlogMetadataTemplate>,
     pub active_tags: Vec<String>,
 }
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/get_blogs.html")]
+pub struct AdminGetBlogsTemplate {
+    pub blogs: Vec<BlogMetadataTemplate>,
+    pub active_tags: Vec<String>,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/get_add_blog.html")]
+pub struct AdminGetAddBlogTemplate {
+    pub id: i64,
+}

@@ -1,5 +1,5 @@
 use crate::handler::{
-    admin::blogs::displays as bd,
+    admin::blogs::{displays as bd, operations as bo},
     admin::talks::{displays as td, operations as to},
     blogs::{get_blog, get_blogs},
     talks::get_talks,
@@ -58,5 +58,9 @@ fn admin_talks_route() -> Router<AppState> {
 }
 
 fn admin_blogs_route() -> Router<AppState> {
-    Router::new().route("/", get(bd::get_base_admin_blogs))
+    Router::new()
+        .route("/", get(bd::get_base_admin_blogs))
+        .route("/get", get(bd::get_admin_blogs))
+        .route("/add", get(bd::get_add_admin_blog))
+        .route("/add", post(bo::post_add_admin_blog))
 }
