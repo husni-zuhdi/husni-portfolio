@@ -89,15 +89,13 @@ impl BlogRepo for TursoDatabase {
         let start_seq = start.0;
         let end_seq = end.0;
         let limit = end_seq - start_seq;
-        // let mut prep_query = "SELECT * FROM blogs ORDER BY id {} LIMIT ?1 OFFSET ?2";
 
         let tag_names: Vec<String> = tags
             .split(",")
             .map(|tag| format!(" tags.name='{}' ", tag))
             .collect();
         let tag_names_joined = tag_names.join("OR");
-        // let tags_query = format!("WHERE {}", tag_names_joined);
-        let tags_query = if &tags == "" {
+        let tags_query = if tags.is_empty() {
             String::new()
         } else {
             format!("WHERE {}", tag_names_joined)
@@ -201,13 +199,38 @@ impl BlogRepo for TursoDatabase {
             }
         }
     }
+    async fn get_new_id(&self) -> Option<BlogId> {
+        let prep_query = "SELECT COUNT(id) AS length FROM blogs";
+        debug!("Executing lenght query {}", &prep_query);
+
+        let row = self
+            .conn
+            .query(prep_query, ())
+            .await
+            .expect("Failed to query length Blog id.")
+            .next()
+            .await
+            .expect("Failed to access query length Blog id.")
+            .expect("Failed to access row length Blog id");
+
+        debug!("Debug Row {:?}", &row);
+
+        let lenght_id: Option<i64> = row.get(0).unwrap();
+        let new_id = lenght_id.unwrap() + 1;
+
+        Some(BlogId { id: new_id })
+    }
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
         // TODO: Update the tags implementation on here
         // We need to add a blog_tag_mapping table
         let blog_id = &blog.id.id;
         let blog_name = &blog.name.unwrap();
-        let blog_filename = &blog.filename.unwrap();
-        let blog_source = format!("{}", blog.source.unwrap());
+        let blog_filename = &blog.filename.unwrap_or("".to_string());
+        let blog_source = if blog.source.is_none() {
+            "".to_string()
+        } else {
+            format!("{}", blog.source.unwrap())
+        };
         let blog_body = &blog.body.unwrap();
         let blog_tags: &String = &blog.tags.unwrap().join(",");
         let prep_add_query =
@@ -222,7 +245,7 @@ impl BlogRepo for TursoDatabase {
 
         let exe = stmt
             .execute((
-                blog_id.clone(),
+                *blog_id,
                 blog_name.clone(),
                 blog_filename.clone(),
                 blog_source.clone(),

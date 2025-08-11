@@ -115,6 +115,17 @@ impl BlogRepo for MemoryBlogRepo {
             }
         }
     }
+    async fn get_new_id(&self) -> Option<BlogId> {
+        if self.blogs.is_empty() {
+            info!("Blogs is empty. The new Blog ID is 1 in Memory.");
+            return Some(BlogId { id: 1 });
+        }
+
+        let result: i64 = self.blogs.len().try_into().unwrap();
+        let new_id = result + 1;
+        info!("The new Blog ID is {} in Memory.", &new_id);
+        Some(BlogId { id: new_id })
+    }
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
         self.blogs.push(blog.clone());
         info!("Blog {} added.", &blog.id);
