@@ -9,7 +9,6 @@ use tracing::{debug, error, info};
 impl BlogRepo for TursoDatabase {
     async fn find(&self, id: BlogId) -> Option<Blog> {
         let blog_id = id.id;
-        // let prep_query = "SELECT * FROM blogs WHERE id = ?1 ORDER BY id";
         let prep_query = r#"
             SELECT 
                 blogs.id AS id,
@@ -31,12 +30,12 @@ impl BlogRepo for TursoDatabase {
             .conn
             .prepare(prep_query)
             .await
-            .expect("Failed to prepare find query.");
+            .expect("Failed to prepare find Blog query.");
 
         let res = stmt
             .query([blog_id])
             .await
-            .expect("Failed to query blog.")
+            .expect("Failed to query a blog.")
             .next()
             .await
             .expect("Failed to access query blog.");
@@ -49,7 +48,7 @@ impl BlogRepo for TursoDatabase {
                     "Filesystem" => BlogSource::Filesystem,
                     "Github" => BlogSource::Github,
                     _ => {
-                        error!("Failed to parse blog source. Default to Filesystem");
+                        error!("Failed to parse blog source. Default to Filesystem.");
                         BlogSource::Filesystem
                     }
                 };
@@ -61,9 +60,6 @@ impl BlogRepo for TursoDatabase {
                     .map(|tag| tag.to_string())
                     .collect();
 
-                // We ditch Turso deserialize since it cannot submit id and source
-                // id and source are Tuple Struct
-                // I think libsql deserialize is not robust enough yet
                 Some(Blog {
                     id: BlogId {
                         id: row.get(0).unwrap(),
@@ -76,7 +72,7 @@ impl BlogRepo for TursoDatabase {
                 })
             }
             None => {
-                debug!("No Blog with Id {} is available", &blog_id);
+                debug!("No Blog with Id {} is available.", &blog_id);
                 None
             }
         }
@@ -134,7 +130,7 @@ impl BlogRepo for TursoDatabase {
             .conn
             .prepare(&prep_query)
             .await
-            .expect("Failed to prepare find query.");
+            .expect("Failed to prepare find blogs query.");
 
         let mut rows = stmt
             .query([limit, start_seq])
@@ -153,9 +149,6 @@ impl BlogRepo for TursoDatabase {
                 .map(|tag| tag.to_string())
                 .collect();
 
-            // We ditch Turso deserialize since it cannot submit id and source
-            // id and source are Tuple Struct
-            // I think libsql deserialize is not robust enough yet
             blogs.push(BlogMetadata {
                 id: BlogId {
                     id: row.get(0).unwrap(),
@@ -180,7 +173,7 @@ impl BlogRepo for TursoDatabase {
             .expect("Failed to prepare find query.");
 
         let row = stmt
-            .query([blog_id.clone()])
+            .query([blog_id])
             .await
             .expect("Failed to query blog id.")
             .next()
@@ -190,11 +183,11 @@ impl BlogRepo for TursoDatabase {
         match row {
             Some(val) => {
                 let id: BlogId = de::from_row(&val).unwrap();
-                info!("Blog {:?} is in Turso/SQLite.", &id);
+                info!("Blog {:?} is in Turso.", &id);
                 Some(BlogCommandStatus::Stored)
             }
             None => {
-                info!("Blog {} is not in Turso/SQLite.", &blog_id);
+                info!("Blog {} is not in Turso.", &blog_id);
                 None
             }
         }
@@ -207,11 +200,11 @@ impl BlogRepo for TursoDatabase {
             .conn
             .query(prep_query, ())
             .await
-            .expect("Failed to query length Blog id.")
+            .expect("Failed to query Blogs length.")
             .next()
             .await
-            .expect("Failed to access query length Blog id.")
-            .expect("Failed to access row length Blog id");
+            .expect("Failed to access Blogs length.")
+            .expect("Failed to access Blogs length row");
 
         debug!("Debug Row {:?}", &row);
 
@@ -221,8 +214,6 @@ impl BlogRepo for TursoDatabase {
         Some(BlogId { id: new_id })
     }
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        // TODO: Update the tags implementation on here
-        // We need to add a blog_tag_mapping table
         let blog_id = &blog.id.id;
         let blog_name = &blog.name.unwrap();
         let blog_filename = &blog.filename.unwrap_or("".to_string());
@@ -253,14 +244,12 @@ impl BlogRepo for TursoDatabase {
                 blog_tags.clone(),
             ))
             .await
-            .expect("Failed to add blog.");
+            .expect("Failed to add a blog.");
         debug!("Add Execution returned: {}", exe);
 
         Some(BlogCommandStatus::Stored)
     }
     async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
-        // TODO: Update the tags implementation on here
-        // We need to delete a blog_tag_mapping table
         let blog_id = id.id;
         let prep_query = "DELETE FROM blogs WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
@@ -271,7 +260,7 @@ impl BlogRepo for TursoDatabase {
             .await
             .expect("Failed to prepare delete command.");
 
-        match stmt.execute([blog_id.clone()]).await {
+        match stmt.execute([blog_id]).await {
             Ok(val) => {
                 debug!(
                     "Blog {} was deleted. Execution returned : {}",
@@ -286,8 +275,6 @@ impl BlogRepo for TursoDatabase {
         }
     }
     async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        // TODO: Update the tags implementation on here
-        // We need to update blog_tag_mapping table
         let blog_id = &blog.id.id;
         let mut affected_col = "".to_string();
         match &blog.name {
@@ -349,7 +336,7 @@ impl BlogRepo for TursoDatabase {
             .expect("Failed to prepare update query.");
 
         let exe = stmt
-            .execute([blog_id.clone()])
+            .execute([*blog_id])
             .await
             .expect("Failed to update blog.");
         debug!("Update Execution returned: {}", exe);
