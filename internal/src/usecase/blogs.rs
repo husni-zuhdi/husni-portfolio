@@ -26,6 +26,9 @@ impl BlogQueryPort for BlogUseCase {
     async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {
         self.blog_repo.check_id(id).await
     }
+    async fn get_new_id(&self) -> Option<BlogId> {
+        self.blog_repo.get_new_id().await
+    }
 }
 
 #[async_trait]
