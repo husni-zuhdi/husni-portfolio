@@ -32,8 +32,8 @@ impl BlogTagMappingCommandPort for BlogTagMappingUseCase {
     async fn add(&mut self, blog_id: i64, tag_id: i64) -> Option<BlogTagMappingCommandStatus> {
         self.blog_tag_mapping_repo.add(blog_id, tag_id).await
     }
-    async fn delete_by_id(&mut self, blog_id: i64) -> Option<BlogTagMappingCommandStatus> {
-        self.blog_tag_mapping_repo.delete_by_id(blog_id).await
+    async fn delete_by_blog_id(&mut self, blog_id: i64) -> Option<BlogTagMappingCommandStatus> {
+        self.blog_tag_mapping_repo.delete_by_blog_id(blog_id).await
     }
 }
 
