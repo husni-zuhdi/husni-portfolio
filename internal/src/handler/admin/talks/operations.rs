@@ -1,17 +1,16 @@
 use crate::handler::admin::talks::sanitize_talk_media_org;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use askama::Template;
-use axum::response::Html;
-use urlencoding::decode;
-
 use crate::model::axum::AppState;
 use crate::model::talks::{Talk, TalkCommandStatus, TalkEndPage, TalkId, TalkStartPage};
 use crate::model::templates_admin::{
     AdminGetTalkTemplate, AdminGetTalksTemplate, AdminTalkTemplate,
 };
+use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, State};
+use axum::response::Html;
 use tracing::{debug, error, info, warn};
+use urlencoding::decode;
 
 // Take request body String from PUT and POST operations to create a new Talk
 fn process_talk_body(body: String) -> Talk {

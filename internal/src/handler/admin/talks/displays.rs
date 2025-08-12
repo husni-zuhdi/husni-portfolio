@@ -1,8 +1,4 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use crate::port::talks::query::TalkQueryPort;
-use askama::Template;
-use axum::response::Html;
-
 use crate::model::talks::{Talk, TalkEndPage, TalkId, TalkPagination, TalkStartPage};
 use crate::model::{
     axum::AppState,
@@ -11,8 +7,11 @@ use crate::model::{
         AdminGetTalkTemplate, AdminGetTalksTemplate, AdminTalkTemplate, AdminTalksTemplate,
     },
 };
+use crate::port::talks::query::TalkQueryPort;
+use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
+use axum::response::Html;
 use tracing::{debug, error, info, warn};
 
 /// get_base_admin_talks
