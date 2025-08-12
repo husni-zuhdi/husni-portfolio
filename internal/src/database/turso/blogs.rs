@@ -223,9 +223,8 @@ impl BlogRepo for TursoDatabase {
             format!("{}", blog.source.unwrap())
         };
         let blog_body = &blog.body.unwrap();
-        let blog_tags: &String = &blog.tags.unwrap().join(",");
         let prep_add_query =
-            "INSERT INTO blogs (id, name, filename, source, body, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
+            "INSERT INTO blogs (id, name, filename, source, body) VALUES (?1, ?2, ?3, ?4, ?5)";
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
 
         let mut stmt = self
@@ -241,7 +240,6 @@ impl BlogRepo for TursoDatabase {
                 blog_filename.clone(),
                 blog_source.clone(),
                 blog_body.clone(),
-                blog_tags.clone(),
             ))
             .await
             .expect("Failed to add a blog.");
@@ -311,16 +309,6 @@ impl BlogRepo for TursoDatabase {
             }
             None => {
                 debug!("Skipped update body field")
-            }
-        }
-        match &blog.tags {
-            Some(val) => {
-                let updated_tags = val.join(",");
-                affected_col = format!("{} tags = '{}' ,", &affected_col, updated_tags);
-                debug!("Affected Column: '{}'", &affected_col)
-            }
-            None => {
-                debug!("Skipped update tags field")
             }
         }
 

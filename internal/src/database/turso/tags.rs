@@ -43,6 +43,35 @@ impl TagRepo for TursoDatabase {
             name: row.get(1).unwrap(),
         })
     }
+    async fn find_all(&self) -> Option<Tags> {
+        let prep_query = r#"
+            SELECT
+                id,
+                name
+            FROM tags
+        "#;
+        debug!("Executing query {}", &prep_query);
+
+        let mut stmt = self
+            .conn
+            .prepare(prep_query)
+            .await
+            .expect("Failed to prepare find query.");
+
+        let mut rows = stmt.query(()).await.expect("Failed to query tags.");
+
+        let mut tags: Vec<Tag> = Vec::new();
+
+        while let Some(row) = rows.next().await.unwrap() {
+            debug!("Debug Row {:?}", &row);
+            tags.push(Tag {
+                id: row.get(0).unwrap(),
+                name: row.get(1).unwrap(),
+            });
+        }
+
+        Some(Tags { tags })
+    }
     async fn get_new_id(&self) -> Option<i64> {
         let prep_query = "SELECT COUNT(id) AS length FROM tags";
         debug!("Executing lenght query {}", &prep_query);
