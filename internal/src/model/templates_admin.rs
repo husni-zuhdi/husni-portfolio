@@ -68,3 +68,15 @@ pub struct AdminGetBlogsTemplate {
 pub struct AdminGetAddBlogTemplate {
     pub id: i64,
 }
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/get_blog.html")]
+pub struct AdminGetBlogTemplate {
+    pub blog: BlogMetadataTemplate,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/get_delete_blog.html")]
+pub struct AdminGetDeleteBlogTemplate {
+    pub id: i64,
+}
