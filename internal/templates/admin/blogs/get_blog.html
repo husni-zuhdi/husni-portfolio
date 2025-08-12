@@ -1,0 +1,17 @@
+<button hx-get="/admin/blogs/{{blog.id}}/edit" hx-target="#blog_{{blog.id}}_target" hx-swap="innerHTML" class="btn_blue">
+    Edit
+</button>
+<button hx-get="/admin/blogs/{{blog.id}}/delete" hx-target="#blog_{{blog.id}}_target" hx-swap="innerHTML" class="btn_red">
+    Delete
+</button>
+{{blog.name}}
+{% for tag in blog.tags %}
+    {% if tag == "" %}
+       <!-- No tag to render  -->
+       <!-- Skip this tag -->
+    {% else %}
+        <button class="inactive_tag">
+            {{tag}}
+        </button>
+    {% endif %}
+{% endfor %}
