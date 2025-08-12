@@ -63,4 +63,7 @@ fn admin_blogs_route() -> Router<AppState> {
         .route("/get", get(bd::get_admin_blogs))
         .route("/add", get(bd::get_add_admin_blog))
         .route("/add", post(bo::post_add_admin_blog))
+        .route("/:blog_id", get(bd::get_admin_blog))
+        .route("/:blog_id/delete", get(bd::get_delete_admin_blog))
+        .route("/:blog_id/delete", delete(bo::delete_delete_admin_blog))
 }
