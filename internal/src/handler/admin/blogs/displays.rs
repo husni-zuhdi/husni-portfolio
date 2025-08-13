@@ -238,7 +238,7 @@ pub async fn get_admin_blog(
         }
         None => {
             info!("Failed to find Talk with Id {}.", &path);
-            return get_404_not_found().await;
+            get_404_not_found().await
         }
     }
 }

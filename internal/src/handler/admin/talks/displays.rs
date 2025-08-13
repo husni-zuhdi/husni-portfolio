@@ -38,7 +38,7 @@ pub async fn get_base_admin_talks(
                         .map(|talk| {
                             debug!("Construct AdminTalkTemplate for Talk Id {}", &talk.id);
                             debug!("AdminTalkTemplate {:?}", &talk);
-                            let (media_link, org_name, org_link) = sanitize_talk_media_org(&talk);
+                            let (media_link, org_name, org_link) = sanitize_talk_media_org(talk);
 
                             AdminTalkTemplate {
                                 id: talk.id.id,
@@ -99,7 +99,7 @@ pub async fn get_admin_talks(
                         .map(|talk| {
                             debug!("Construct AdminTalkTemplate for Talk Id {}", &talk.id);
                             debug!("AdminTalkTemplate {:?}", &talk);
-                            let (media_link, org_name, org_link) = sanitize_talk_media_org(&talk);
+                            let (media_link, org_name, org_link) = sanitize_talk_media_org(talk);
 
                             AdminTalkTemplate {
                                 id: talk.id.id,
@@ -189,17 +189,17 @@ pub async fn get_admin_talk(
                     match talk {
                         Ok(res) => {
                             info!("Talks askama template rendered.");
-                            return Html(res);
+                            Html(res)
                         }
                         Err(err) => {
                             error!("Failed to render admin/get_talk.html. {}", err);
-                            return get_500_internal_server_error();
+                            get_500_internal_server_error()
                         }
                     }
                 }
                 None => {
                     info!("Failed to find Talk with Id {}.", &path);
-                    return get_404_not_found().await;
+                    get_404_not_found().await
                 }
             }
         }
@@ -232,17 +232,17 @@ pub async fn get_add_admin_talk(State(app_state): State<AppState>) -> Html<Strin
                     match add_talk {
                         Ok(res) => {
                             info!("Talks askama template rendered.");
-                            return Html(res);
+                            Html(res)
                         }
                         Err(err) => {
                             error!("Failed to render admin/get_add_talk.html. {}", err);
-                            return get_500_internal_server_error();
+                            get_500_internal_server_error()
                         }
                     }
                 }
                 None => {
                     info!("Failed to add Talk.");
-                    return get_404_not_found().await;
+                    get_404_not_found().await
                 }
             }
         }
@@ -303,17 +303,17 @@ pub async fn get_edit_admin_talk(
                     match edit_talk {
                         Ok(res) => {
                             info!("Talks askama template rendered.");
-                            return Html(res);
+                            Html(res)
                         }
                         Err(err) => {
                             error!("Failed to render admin/get_edit_talk.html. {}", err);
-                            return get_500_internal_server_error();
+                            get_500_internal_server_error()
                         }
                     }
                 }
                 None => {
                     info!("Failed to find Talk with Id {}.", &path);
-                    return get_404_not_found().await;
+                    get_404_not_found().await
                 }
             }
         }
@@ -363,17 +363,17 @@ pub async fn get_delete_admin_talk(
                     match delete_talk {
                         Ok(res) => {
                             info!("Talks askama template rendered.");
-                            return Html(res);
+                            Html(res)
                         }
                         Err(err) => {
                             error!("Failed to render admin/get_delete_talk.html. {}", err);
-                            return get_500_internal_server_error();
+                            get_500_internal_server_error()
                         }
                     }
                 }
                 None => {
                     info!("Failed to find Talk with Id {}.", &path);
-                    return get_404_not_found().await;
+                    get_404_not_found().await
                 }
             }
         }

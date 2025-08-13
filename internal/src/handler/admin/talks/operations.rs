@@ -101,7 +101,7 @@ pub async fn post_add_admin_talk(State(app_state): State<AppState>, body: String
                         .map(|talk| {
                             debug!("Construct AdminTalkTemplate for Talk Id {}", &talk.id);
                             debug!("AdminTalkTemplate {:?}", &talk);
-                            let (media_link, org_name, org_link) = sanitize_talk_media_org(&talk);
+                            let (media_link, org_name, org_link) = sanitize_talk_media_org(talk);
 
                             AdminTalkTemplate {
                                 id: talk.id.id,
@@ -210,17 +210,17 @@ pub async fn put_edit_admin_talk(
                     match edit_talk {
                         Ok(res) => {
                             info!("Talks askama template rendered.");
-                            return Html(res);
+                            Html(res)
                         }
                         Err(err) => {
                             error!("Failed to render admin/get_talk.html. {}", err);
-                            return get_500_internal_server_error();
+                            get_500_internal_server_error()
                         }
                     }
                 }
                 None => {
                     info!("Failed to find Talk with Id {}.", &path);
-                    return get_404_not_found().await;
+                    get_404_not_found().await
                 }
             }
         }
@@ -282,7 +282,7 @@ pub async fn delete_delete_admin_talk(
                         .map(|talk| {
                             debug!("Construct AdminTalkTemplate for Talk Id {}", &talk.id);
                             debug!("AdminTalkTemplate {:?}", &talk);
-                            let (media_link, org_name, org_link) = sanitize_talk_media_org(&talk);
+                            let (media_link, org_name, org_link) = sanitize_talk_media_org(talk);
 
                             AdminTalkTemplate {
                                 id: talk.id.id,
