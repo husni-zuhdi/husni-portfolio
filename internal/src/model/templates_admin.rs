@@ -67,6 +67,16 @@ pub struct AdminGetBlogsTemplate {
 #[template(path = "admin/blogs/get_add_blog.html")]
 pub struct AdminGetAddBlogTemplate {
     pub id: i64,
+    pub avail_tags: Vec<String>,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/get_edit_blog.html")]
+pub struct AdminGetEditBlogTemplate {
+    pub id: i64,
+    pub name: String,
+    pub body: String,
+    pub tags: Vec<String>,
 }
 
 #[derive(Template, Debug)]

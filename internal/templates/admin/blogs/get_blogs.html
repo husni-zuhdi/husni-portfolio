@@ -1,7 +1,7 @@
 {% for blog in blogs %}
     <h2 class="mb-2 hover:font-bold md:justify-start">
         <div id="blog_{{blog.id}}_target">
-            <button hx-get="/admin/blogs/{{blog.id}}/edit" hx-target="#blog_{{blog.id}}_target" hx-swap="innerHTML" class="btn_blue">
+            <button hx-get="/admin/blogs/{{blog.id}}/edit" hx-target="#blogs_target" hx-swap="innerHTML" class="btn_blue">
                 Edit
             </button>
             <button hx-get="/admin/blogs/{{blog.id}}/delete" hx-target="#blog_{{blog.id}}_target" hx-swap="innerHTML" class="btn_red">

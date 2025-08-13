@@ -138,6 +138,53 @@ pub async fn post_add_admin_blog(State(app_state): State<AppState>, body: String
     get_admin_blogs(State(app_state), Query(query_params)).await
 }
 
+/// put_edit_admin_blog
+/// Serve PUT edit blog HTML file
+#[debug_handler]
+pub async fn put_edit_admin_blog(
+    Path(path): Path<String>,
+    State(app_state): State<AppState>,
+    body: String,
+) -> Html<String> {
+    let mut data = app_state.blog_usecase.lock().await.clone();
+    // Sanitize `path`
+    let id = path.parse::<i64>();
+    match &id {
+        Ok(val) => {
+            debug!("Successfully parse path {} into {} i64", &path, &val);
+        }
+        Err(err) => {
+            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
+            return get_404_not_found().await;
+        }
+    };
+
+    let blog = process_blog_body(body);
+
+    let result = data.blog_repo.update(blog).await;
+
+    match result {
+        Some(blog_command_status) => {
+            if blog_command_status != BlogCommandStatus::Updated {
+                error!("Failed to edit Blog with Id {}", &path);
+                return get_500_internal_server_error();
+            }
+        }
+        None => {
+            info!("Failed to edit Blog with Id {}.", &path);
+            return get_404_not_found().await;
+        }
+    }
+
+    let query_params = BlogsParams {
+        start: None,
+        end: None,
+        tags: None,
+    };
+
+    get_admin_blogs(State(app_state), Query(query_params)).await
+}
+
 /// delete_delete_admin_blog
 /// Serve DELETE delete blog HTML file
 #[debug_handler]
