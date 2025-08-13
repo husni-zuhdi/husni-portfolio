@@ -31,12 +31,11 @@ impl TagRepo for TursoDatabase {
             .await
             .expect("Failed to access query tag.");
 
-        if res.is_none() {
+        let Some(row) = res else {
             debug!("No Tag with Id {} is available.", &id);
             return None;
-        }
+        };
 
-        let row = res.unwrap();
         debug!("Debug Row {:?}", &row);
         Some(Tag {
             id: row.get(0).unwrap(),
