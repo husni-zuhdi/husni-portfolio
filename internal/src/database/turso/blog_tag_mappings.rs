@@ -12,7 +12,7 @@ impl BlogTagMappingRepo for TursoDatabase {
                 blog_ref,
                 tag_ref
             FROM blog_tag_mapping
-            WHERE blog_id=?1
+            WHERE blog_ref = ?1
         "#;
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
@@ -45,7 +45,7 @@ impl BlogTagMappingRepo for TursoDatabase {
                 blog_ref,
                 tag_ref
             FROM blog_tag_mapping
-            WHERE tag_id=?1
+            WHERE tag_ref = ?1
         "#;
         debug!("Executing query {} for id {}", &prep_query, &tag_id);
 
@@ -108,6 +108,32 @@ impl BlogTagMappingRepo for TursoDatabase {
 
         let exe = stmt
             .execute([blog_id])
+            .await
+            .expect("Failed to delete a Blog Tag Mapping.");
+
+        debug!("Delete Execution returned: {}", exe);
+        Some(BlogTagMappingCommandStatus::Deleted)
+    }
+    async fn delete_by_blog_id_and_tag_id(
+        &mut self,
+        blog_id: i64,
+        tag_id: i64,
+    ) -> Option<BlogTagMappingCommandStatus> {
+        let prep_delete_command =
+            "DELETE FROM blog_tag_mapping WHERE blog_ref = ?1 AND tag_ref = ?2";
+        debug!(
+            "Executing query {} for blog id {} and tag id {}",
+            &prep_delete_command, &blog_id, &tag_id
+        );
+
+        let mut stmt = self
+            .conn
+            .prepare(prep_delete_command)
+            .await
+            .expect("Failed to prepare delete command.");
+
+        let exe = stmt
+            .execute([blog_id, tag_id])
             .await
             .expect("Failed to delete a Blog Tag Mapping.");
 

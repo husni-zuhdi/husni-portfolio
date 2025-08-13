@@ -76,7 +76,8 @@ pub struct AdminGetEditBlogTemplate {
     pub id: i64,
     pub name: String,
     pub body: String,
-    pub tags: Vec<String>,
+    pub blog_tags: Vec<String>,
+    pub avail_tags: Vec<String>,
 }
 
 #[derive(Template, Debug)]

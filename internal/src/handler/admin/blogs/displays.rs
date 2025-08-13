@@ -307,7 +307,7 @@ pub async fn get_edit_admin_blog(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
 ) -> Html<String> {
-    let data = app_state.blog_usecase.lock().await.clone();
+    let blog_uc = app_state.blog_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -320,44 +320,62 @@ pub async fn get_edit_admin_blog(
         }
     };
 
-    let result = data
+    let blog_result = blog_uc
         .blog_repo
         .find(BlogId {
             id: id.clone().unwrap(),
         })
         .await;
 
-    match result {
-        Some(blog_data) => {
-            debug!(
-                "Construct AdminGetEditBlogTemplate for Blog Id {}",
-                &blog_data.id
-            );
-            debug!("Blog {:?}", &blog_data);
+    let Some(blog_data) = blog_result else {
+        info!("Failed to find Blog with Id {}.", &path);
+        return get_404_not_found().await;
+    };
+    debug!("Blog {:?}", &blog_data);
 
-            let edit_blog = AdminGetEditBlogTemplate {
-                id: id.clone().unwrap(),
-                name: blog_data.name.unwrap().clone(),
-                body: blog_data.body.unwrap().clone(),
-                tags: blog_data.tags.unwrap().clone(),
-            }
-            .render();
-            debug!("AdminGetEditBlogTemplate : {:?}", &edit_blog);
+    let tag_uc = app_state.tag_usecase.lock().await.clone();
+    if tag_uc.is_none() {
+        error!("Failed to lock Tag Usecase Mutex.");
+        return get_500_internal_server_error();
+    }
 
-            match edit_blog {
-                Ok(res) => {
-                    info!("Talks askama template rendered.");
-                    Html(res)
-                }
-                Err(err) => {
-                    error!("Failed to render admin/blogs/get_edit_blog.html. {}", err);
-                    get_500_internal_server_error()
-                }
-            }
+    let tags_result = tag_uc.unwrap().tag_repo.find_all().await;
+    let Some(complete_tags_data) = tags_result else {
+        error!("Failed to get all Tags");
+        return get_500_internal_server_error();
+    };
+    let avail_tags: Vec<String> = complete_tags_data
+        .tags
+        .iter()
+        // Get tags not available in the current Blog Tags
+        .filter(|t| !blog_data.tags.clone().unwrap().contains(&t.name))
+        // Grab only tag name
+        .map(|t| t.name.clone())
+        .collect();
+
+    debug!(
+        "Construct AdminGetEditBlogTemplate for Blog Id {}",
+        &blog_data.id
+    );
+
+    let edit_blog = AdminGetEditBlogTemplate {
+        id: id.clone().unwrap(),
+        name: blog_data.name.unwrap().clone(),
+        body: blog_data.body.unwrap().clone(),
+        blog_tags: blog_data.tags.unwrap().clone(),
+        avail_tags,
+    }
+    .render();
+    debug!("AdminGetEditBlogTemplate : {:?}", &edit_blog);
+
+    match edit_blog {
+        Ok(res) => {
+            info!("Talks askama template rendered.");
+            Html(res)
         }
-        None => {
-            info!("Failed to find Blog with Id {}.", &path);
-            get_404_not_found().await
+        Err(err) => {
+            error!("Failed to render admin/blogs/get_edit_blog.html. {}", err);
+            get_500_internal_server_error()
         }
     }
 }
