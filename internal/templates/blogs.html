@@ -21,14 +21,12 @@
                        <!-- No tag to render  -->
                        <!-- Skip this tag -->
                     {% else if active_tags.contains(tag) %}
-                        <button class="active_tag">
-                            <!-- <a href="/blogs" class="text-white hover:text-blue-900">{{tag}}</a> -->
-                            <a href="/blogs" class="active_tag">{{tag}}</a>
+                        <button class="active_tag" hx-get="/blogs" hx-target="#body_target" hx-swap="innerHTML" hx-replace-url="true">
+                            {{tag}}
                         </button>
                     {% else %}
-                        <button class="inactive_tag">
-                            <!-- <a href="/blogs?tags={{tag}}" class="hover:text-white">{{tag}}</a> -->
-                            <a href="/blogs?tags={{tag}}" class="inactive_tag">{{tag}}</a>
+                        <button class="inactive_tag" hx-get="/blogs?tags={{tag}}" hx-target="#body_target" hx-swap="innerHTML" hx-replace-url="true">
+                            {{tag}}
                         </button>
                     {% endif %}
                 {% endfor %}
