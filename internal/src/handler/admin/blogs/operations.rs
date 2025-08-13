@@ -222,7 +222,7 @@ pub async fn put_edit_admin_blog(
     let delete_plan_mapping: Vec<BlogTagMapping> = btm
         .maps
         .iter()
-        .filter(|map| selected_tag_ids.contains(&map.tag_id))
+        .filter(|map| !selected_tag_ids.contains(&map.tag_id))
         .cloned()
         .collect();
     for delete_tag in delete_plan_mapping {
@@ -258,7 +258,7 @@ pub async fn put_edit_admin_blog(
     let add_plan_mapping: Vec<i64> = selected_tag_ids
         .iter()
         .filter(|tag_id| {
-            btm.maps.contains(&BlogTagMapping {
+            !btm.maps.contains(&BlogTagMapping {
                 blog_id: id.clone().unwrap(),
                 tag_id: **tag_id,
             })
