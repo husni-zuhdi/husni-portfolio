@@ -9,7 +9,6 @@ use tracing::{debug, error, info};
 impl BlogRepo for TursoDatabase {
     async fn find(&self, id: BlogId) -> Option<Blog> {
         let blog_id = id.id;
-        // let prep_query = "SELECT * FROM blogs WHERE id = ?1 ORDER BY id";
         let prep_query = r#"
             SELECT 
                 blogs.id AS id,
@@ -31,12 +30,12 @@ impl BlogRepo for TursoDatabase {
             .conn
             .prepare(prep_query)
             .await
-            .expect("Failed to prepare find query.");
+            .expect("Failed to prepare find Blog query.");
 
         let res = stmt
             .query([blog_id])
             .await
-            .expect("Failed to query blog.")
+            .expect("Failed to query a blog.")
             .next()
             .await
             .expect("Failed to access query blog.");
@@ -49,7 +48,7 @@ impl BlogRepo for TursoDatabase {
                     "Filesystem" => BlogSource::Filesystem,
                     "Github" => BlogSource::Github,
                     _ => {
-                        error!("Failed to parse blog source. Default to Filesystem");
+                        error!("Failed to parse blog source. Default to Filesystem.");
                         BlogSource::Filesystem
                     }
                 };
@@ -61,9 +60,6 @@ impl BlogRepo for TursoDatabase {
                     .map(|tag| tag.to_string())
                     .collect();
 
-                // We ditch Turso deserialize since it cannot submit id and source
-                // id and source are Tuple Struct
-                // I think libsql deserialize is not robust enough yet
                 Some(Blog {
                     id: BlogId {
                         id: row.get(0).unwrap(),
@@ -76,7 +72,7 @@ impl BlogRepo for TursoDatabase {
                 })
             }
             None => {
-                debug!("No Blog with Id {} is available", &blog_id);
+                debug!("No Blog with Id {} is available.", &blog_id);
                 None
             }
         }
@@ -89,15 +85,13 @@ impl BlogRepo for TursoDatabase {
         let start_seq = start.0;
         let end_seq = end.0;
         let limit = end_seq - start_seq;
-        // let mut prep_query = "SELECT * FROM blogs ORDER BY id {} LIMIT ?1 OFFSET ?2";
 
         let tag_names: Vec<String> = tags
             .split(",")
             .map(|tag| format!(" tags.name='{}' ", tag))
             .collect();
         let tag_names_joined = tag_names.join("OR");
-        // let tags_query = format!("WHERE {}", tag_names_joined);
-        let tags_query = if &tags == "" {
+        let tags_query = if tags.is_empty() {
             String::new()
         } else {
             format!("WHERE {}", tag_names_joined)
@@ -136,7 +130,7 @@ impl BlogRepo for TursoDatabase {
             .conn
             .prepare(&prep_query)
             .await
-            .expect("Failed to prepare find query.");
+            .expect("Failed to prepare find blogs query.");
 
         let mut rows = stmt
             .query([limit, start_seq])
@@ -155,9 +149,6 @@ impl BlogRepo for TursoDatabase {
                 .map(|tag| tag.to_string())
                 .collect();
 
-            // We ditch Turso deserialize since it cannot submit id and source
-            // id and source are Tuple Struct
-            // I think libsql deserialize is not robust enough yet
             blogs.push(BlogMetadata {
                 id: BlogId {
                     id: row.get(0).unwrap(),
@@ -182,7 +173,7 @@ impl BlogRepo for TursoDatabase {
             .expect("Failed to prepare find query.");
 
         let row = stmt
-            .query([blog_id.clone()])
+            .query([blog_id])
             .await
             .expect("Failed to query blog id.")
             .next()
@@ -192,26 +183,52 @@ impl BlogRepo for TursoDatabase {
         match row {
             Some(val) => {
                 let id: BlogId = de::from_row(&val).unwrap();
-                info!("Blog {:?} is in Turso/SQLite.", &id);
+                info!("Blog {:?} is in Turso.", &id);
                 Some(BlogCommandStatus::Stored)
             }
             None => {
-                info!("Blog {} is not in Turso/SQLite.", &blog_id);
+                info!("Blog {} is not in Turso.", &blog_id);
                 None
             }
         }
     }
+    async fn get_new_id(&self) -> Option<BlogId> {
+        let prep_query = "SELECT COUNT(id) AS length FROM blogs";
+        debug!("Executing lenght query {}", &prep_query);
+
+        let row = self
+            .conn
+            .query(prep_query, ())
+            .await
+            .expect("Failed to query Blogs length.")
+            .next()
+            .await
+            .expect("Failed to access Blogs length.")
+            .expect("Failed to access Blogs length row");
+
+        debug!("Debug Row {:?}", &row);
+
+        let lenght_id: Option<i64> = row.get(0).unwrap();
+        let new_id = lenght_id.unwrap() + 1;
+
+        Some(BlogId { id: new_id })
+    }
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        // TODO: Update the tags implementation on here
-        // We need to add a blog_tag_mapping table
         let blog_id = &blog.id.id;
         let blog_name = &blog.name.unwrap();
-        let blog_filename = &blog.filename.unwrap();
-        let blog_source = format!("{}", blog.source.unwrap());
-        let blog_body = &blog.body.unwrap();
-        let blog_tags: &String = &blog.tags.unwrap().join(",");
+        let blog_filename = &blog.filename.unwrap_or("".to_string());
+        let blog_source = if blog.source.is_none() {
+            "".to_string()
+        } else {
+            format!("{}", blog.source.unwrap())
+        };
+        let blog_body_raw = &blog.body.unwrap();
+        // Sanitize ' to ''. It's the escape char for '
+        // https://stackoverflow.com/questions/603572/escape-single-quote-character-for-use-in-an-sqlite-query
+        let blog_body = blog_body_raw.replace("'", "''");
+
         let prep_add_query =
-            "INSERT INTO blogs (id, name, filename, source, body, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
+            "INSERT INTO blogs (id, name, filename, source, body) VALUES (?1, ?2, ?3, ?4, ?5)";
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
 
         let mut stmt = self
@@ -222,22 +239,19 @@ impl BlogRepo for TursoDatabase {
 
         let exe = stmt
             .execute((
-                blog_id.clone(),
+                *blog_id,
                 blog_name.clone(),
                 blog_filename.clone(),
                 blog_source.clone(),
                 blog_body.clone(),
-                blog_tags.clone(),
             ))
             .await
-            .expect("Failed to add blog.");
+            .expect("Failed to add a blog.");
         debug!("Add Execution returned: {}", exe);
 
         Some(BlogCommandStatus::Stored)
     }
     async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
-        // TODO: Update the tags implementation on here
-        // We need to delete a blog_tag_mapping table
         let blog_id = id.id;
         let prep_query = "DELETE FROM blogs WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
@@ -248,7 +262,7 @@ impl BlogRepo for TursoDatabase {
             .await
             .expect("Failed to prepare delete command.");
 
-        match stmt.execute([blog_id.clone()]).await {
+        match stmt.execute([blog_id]).await {
             Ok(val) => {
                 debug!(
                     "Blog {} was deleted. Execution returned : {}",
@@ -263,13 +277,11 @@ impl BlogRepo for TursoDatabase {
         }
     }
     async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        // TODO: Update the tags implementation on here
-        // We need to update blog_tag_mapping table
         let blog_id = &blog.id.id;
         let mut affected_col = "".to_string();
         match &blog.name {
             Some(val) => {
-                affected_col = format!("{} name = {} ,", &affected_col, val);
+                affected_col = format!("{} name = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -278,7 +290,7 @@ impl BlogRepo for TursoDatabase {
         }
         match &blog.filename {
             Some(val) => {
-                affected_col = format!("{} filename = {} ,", &affected_col, val);
+                affected_col = format!("{} filename = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -287,7 +299,7 @@ impl BlogRepo for TursoDatabase {
         }
         match &blog.source {
             Some(val) => {
-                affected_col = format!("{} source = {} ,", &affected_col, val);
+                affected_col = format!("{} source = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -296,21 +308,14 @@ impl BlogRepo for TursoDatabase {
         }
         match &blog.body {
             Some(val) => {
-                affected_col = format!("{} body = {} ,", &affected_col, val);
+                // Sanitize ' to ''. It's the escape char for '
+                // https://stackoverflow.com/questions/603572/escape-single-quote-character-for-use-in-an-sqlite-query
+                let body = val.replace("'", "''");
+                affected_col = format!("{} body = '{}' ,", &affected_col, body);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
                 debug!("Skipped update body field")
-            }
-        }
-        match &blog.tags {
-            Some(val) => {
-                let updated_tags = val.join(",");
-                affected_col = format!("{} tags = {} ,", &affected_col, updated_tags);
-                debug!("Affected Column: '{}'", &affected_col)
-            }
-            None => {
-                debug!("Skipped update tags field")
             }
         }
 
@@ -326,7 +331,7 @@ impl BlogRepo for TursoDatabase {
             .expect("Failed to prepare update query.");
 
         let exe = stmt
-            .execute([blog_id.clone()])
+            .execute([*blog_id])
             .await
             .expect("Failed to update blog.");
         debug!("Update Execution returned: {}", exe);

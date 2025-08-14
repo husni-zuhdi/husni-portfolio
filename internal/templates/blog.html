@@ -13,8 +13,8 @@
            <!-- No tag to render  -->
            <!-- Skip this tag -->
         {% else %}
-            <button class="bg-gray-200 rounded-md px-3 py-1 hover:bg-gray-700">
-                <a href="/blogs?tags={{tag}}" class="text-sm font-small hover:text-white">{{tag}}</a>
+            <button hx-get="/blogs?tags={{tag}}" hx-target="#body_target" hx-swap="innerHTML" hx-replace-url="true">
+                {{tag}}
             </button>
         {% endif %}
     {% endfor %}

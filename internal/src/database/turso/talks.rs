@@ -6,6 +6,27 @@ use tracing::{debug, info};
 
 #[async_trait]
 impl TalkRepo for TursoDatabase {
+    async fn get_new_id(&self) -> Option<TalkId> {
+        let prep_query = "SELECT COUNT(id) AS lenght FROM talks";
+        debug!("Executing lenght query {}", &prep_query);
+
+        let row = self
+            .conn
+            .query(prep_query, ())
+            .await
+            .expect("Failed to query Talks length.")
+            .next()
+            .await
+            .expect("Failed to access Talks length.")
+            .expect("Failed to access Talks length row.");
+
+        debug!("Debug Row {:?}", &row);
+
+        let lenght_id: Option<i64> = row.get(0).unwrap();
+        let new_id = lenght_id.unwrap() + 1;
+
+        Some(TalkId { id: new_id })
+    }
     async fn find(&self, id: TalkId) -> Option<Talk> {
         let talk_id = id.id;
         let prep_query = "SELECT * FROM talks WHERE id = ?1 ORDER BY id";
@@ -24,7 +45,7 @@ impl TalkRepo for TursoDatabase {
             .next()
             .await
             .expect("Failed to access query talk.")
-            .expect("Failed to access row talk");
+            .expect("Failed to access row talk.");
 
         debug!("Debug Row {:?}", &row);
 
@@ -41,9 +62,6 @@ impl TalkRepo for TursoDatabase {
             org_link = None;
         }
 
-        // We ditch Turso deserialize since it cannot submit id and source
-        // id and source are Tuple Struct
-        // I think libsql deserialize is not robust enough yet
         Some(Talk {
             id: TalkId {
                 id: row.get(0).unwrap(),
@@ -69,7 +87,7 @@ impl TalkRepo for TursoDatabase {
             .conn
             .prepare(prep_query)
             .await
-            .expect("Failed to prepare find query.");
+            .expect("Failed to prepare find Talks query.");
 
         let mut rows = stmt
             .query([limit, start_seq])
@@ -94,9 +112,6 @@ impl TalkRepo for TursoDatabase {
                 org_link = None;
             }
 
-            // We ditch Turso deserialize since it cannot submit id and source
-            // id and source are Tuple Struct
-            // I think libsql deserialize is not robust enough yet
             talks.push(Talk {
                 id: TalkId {
                     id: row.get(0).unwrap(),
@@ -142,21 +157,21 @@ impl TalkRepo for TursoDatabase {
             "".to_string()
         };
 
-        let prep_add_query =
+        let prep_add_command =
             "INSERT INTO talks (id, name, date, media_link, org_name, org_link) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
-        debug!("Executing query {} for id {}", &prep_add_query, &talk_id);
+        debug!("Executing query {} for id {}", &prep_add_command, &talk_id);
 
         let mut stmt = self
             .conn
-            .prepare(prep_add_query)
+            .prepare(prep_add_command)
             .await
-            .expect("Failed to prepare add query.");
+            .expect("Failed to prepare add Talk command.");
 
         // TRIVIA: With libsql 0.6.0 don't use execute other than execute(())
         // Somehow it broke the complier and mess up the variables type
         let exe = stmt
             .execute((
-                talk_id.clone(),
+                *talk_id,
                 talk_name.clone(),
                 talk_date.clone(),
                 talk_media_link.clone(),
@@ -164,7 +179,7 @@ impl TalkRepo for TursoDatabase {
                 talk_org_link.clone(),
             ))
             .await
-            .expect("Failed to add talk.");
+            .expect("Failed to add a Talk.");
         info!("Add Execution returned: {}", exe);
 
         Some(TalkCommandStatus::Stored)
@@ -178,21 +193,15 @@ impl TalkRepo for TursoDatabase {
             .conn
             .prepare(prep_query)
             .await
-            .expect("Failed to prepare delete command.");
+            .expect("Failed to prepare delete Talk command.");
 
-        match stmt.execute([talk_id.clone()]).await {
-            Ok(val) => {
-                debug!(
-                    "Talk {} was deleted. Execution returned : {}",
-                    &talk_id, val
-                );
-                Some(TalkCommandStatus::Deleted)
-            }
-            Err(err) => {
-                debug!("Talk {} is not deleted in Turso. Error {}", &talk_id, err);
-                None
-            }
-        }
+        let exe = stmt
+            .execute([talk_id])
+            .await
+            .expect("Failed to delete a Talk.");
+
+        debug!("Delete Execution returned: {}", exe);
+        Some(TalkCommandStatus::Deleted)
     }
     async fn update(
         &mut self,
@@ -207,7 +216,7 @@ impl TalkRepo for TursoDatabase {
         let mut affected_col = "".to_string();
         match &name {
             Some(val) => {
-                affected_col = format!("{} name = {} ,", &affected_col, val);
+                affected_col = format!("{} name = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -216,7 +225,7 @@ impl TalkRepo for TursoDatabase {
         }
         match &date {
             Some(val) => {
-                affected_col = format!("{} date = {} ,", &affected_col, val);
+                affected_col = format!("{} date = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -225,7 +234,7 @@ impl TalkRepo for TursoDatabase {
         }
         match &media_link {
             Some(val) => {
-                affected_col = format!("{} media_link = {} ,", &affected_col, val);
+                affected_col = format!("{} media_link = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -234,7 +243,7 @@ impl TalkRepo for TursoDatabase {
         }
         match &org_name {
             Some(val) => {
-                affected_col = format!("{} org_name = {} ,", &affected_col, val);
+                affected_col = format!("{} org_name = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -243,7 +252,7 @@ impl TalkRepo for TursoDatabase {
         }
         match &org_link {
             Some(val) => {
-                affected_col = format!("{} org_link = {} ,", &affected_col, val);
+                affected_col = format!("{} org_link = '{}' ,", &affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -260,12 +269,12 @@ impl TalkRepo for TursoDatabase {
             .conn
             .prepare(&prep_update_query)
             .await
-            .expect("Failed to prepare update query.");
+            .expect("Failed to prepare update Talk command.");
 
         let exe = stmt
-            .execute([talk_id.clone()])
+            .execute([*talk_id])
             .await
-            .expect("Failed to update talk.");
+            .expect("Failed to update a Talk.");
         info!("Update Execution returned: {}", exe);
 
         Some(TalkCommandStatus::Updated)

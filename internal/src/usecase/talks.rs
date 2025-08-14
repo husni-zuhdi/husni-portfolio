@@ -23,6 +23,9 @@ impl TalkQueryPort for TalkUseCase {
     async fn find_talks(&self, start: TalkStartPage, end: TalkEndPage) -> Option<Vec<Talk>> {
         self.talk_repo.find_talks(start, end).await
     }
+    async fn get_new_id(&self) -> Option<TalkId> {
+        self.talk_repo.get_new_id().await
+    }
 }
 
 #[async_trait]

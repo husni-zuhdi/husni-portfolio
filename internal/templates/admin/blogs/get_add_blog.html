@@ -1,0 +1,39 @@
+<h2 class="mb-2 hover:font-bold md:justify-start">
+    <form hx-post="/admin/blogs/add" hx-target="#blogs_target" hx-swap="innerHTML">
+        <div class="flex flex-row">
+            <div class="basis-1/3 px-3">
+                <div class="admin_input">
+                    <label for=blog_id>Blog ID :</label>
+                    <input type="text" id="blog_id" name="blog_id" value="{{id}}" class="readonly" readonly>
+                </div>
+                <div class="admin_input">
+                    <label for=blog_name>Name :</label>
+                    <input type="text" id="blog_name" name="blog_name" value=""><br>
+                </div>
+                <div class="admin_input">
+                    <label for=blog_tag>Tags :</label><br>
+                    <select id="blog_tag" name="blog_tag" multiple>
+                    {% for tag in avail_tags %}
+                        {% if tag == "" %}
+                           <!-- No tag to render  -->
+                           <!-- Skip this tag -->
+                        {% else %}
+                        <option class ="admin_input" value="{{tag}}">{{tag}}</option>
+                        {% endif %}
+                    {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <button class="btn_green" type="submit">Submit</button>
+                    <button class="btn_red" hx-get="/admin/blogs/get" hx-target="#blogs_target" hx-swap="innerHTML">Cancel</button>
+                </div>
+            </div>
+            <div class="basis-2/3 px-3">
+                <div class="admin_input">
+                    <label for=blog_body>Body :</label><br>
+                    <textarea id="blog_body" name="blog_body" rows="10" cols="60">Your new blog...</textarea>
+                </div>
+            </div>
+        </div>
+    </form>
+</h2>

@@ -16,9 +16,9 @@
                  | {{talk.name}}
             {% endif %}
             {% if talk.org_link != "" && talk.org_name != "" %}
-                 | <a href="{{talk.org_link}}">[{{talk.org_name}}]</a>
+                 at <a href="{{talk.org_link}}">{{talk.org_name}}</a>
             {% else if talk.org_name != "" %}
-                 | {{talk.org_name}}
+                 at {{talk.org_name}}
             {% else %}
                 
             {% endif %}

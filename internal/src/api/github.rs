@@ -22,13 +22,13 @@ pub struct GithubApiUseCase {
 #[async_trait]
 impl ApiRepo for GithubApiUseCase {
     async fn list_metadata(&self) -> Option<Vec<BlogMetadata>> {
-        let trees_result = Self::fetch_github_trees(&self).await;
+        let trees_result = Self::fetch_github_trees(self).await;
 
         let mut blogs_metadata: Vec<BlogMetadata> = Vec::new();
         match trees_result {
             Some(github_trees) => {
                 for tree in github_trees.trees {
-                    let blog_metadata = Self::process_github_metadata(&self, tree.clone()).await;
+                    let blog_metadata = Self::process_github_metadata(self, tree.clone()).await;
                     match blog_metadata {
                         Some(metadata) => blogs_metadata.push(metadata),
                         None => {
@@ -44,10 +44,10 @@ impl ApiRepo for GithubApiUseCase {
         Some(blogs_metadata)
     }
     async fn fetch(&self, metadata: BlogMetadata) -> Option<Blog> {
-        let result = Self::fetch_github_content(&self, metadata.filename.clone()).await;
+        let result = Self::fetch_github_content(self, metadata.filename.clone()).await;
 
         match result {
-            Some(content) => Self::process_github_content(&self, content, metadata),
+            Some(content) => Self::process_github_content(self, content, metadata),
             None => {
                 error!(
                     "Failed to get Blog content with Blog ID {} and Name {}: File Not Found",
@@ -80,7 +80,8 @@ impl GithubApiUseCase {
             self.github_owner, self.github_repo, self.github_branch
         );
         let github_trees = octocrab::instance()._get(trees_endpoint).await;
-        let trees_result = match github_trees {
+        
+        match github_trees {
             Ok(github_trees) => {
                 let body_bytes = github_trees.into_body().collect().await.unwrap().to_bytes();
                 let body_json = String::from_utf8(body_bytes.to_vec()).unwrap();
@@ -91,8 +92,7 @@ impl GithubApiUseCase {
                 error!("Failed to parse Github Trees result: {}", err);
                 None
             }
-        };
-        trees_result
+        }
     }
     /// Get blog_id with specification of 3 digit integer and blog_name
     /// Return an optional 2 string for blog_id and blog_name
@@ -116,7 +116,7 @@ impl GithubApiUseCase {
         // Main Infrastructure is the base-level step to replicate
         // all infrastructure from `husni-blog-resource`
         // Ref: https://github.com/husni-zuhdi/husni-blog-resources/tree/main/000-main-infrastructure
-        let blog_id_is_not_main_infra = &blog_id != &"000".to_string();
+        let blog_id_is_not_main_infra = blog_id != *"000";
 
         if tree_is_dir {
             match blog_id.parse::<i64>() {
@@ -163,7 +163,8 @@ impl GithubApiUseCase {
     /// Returned Optional octocrab::models::Content
     async fn fetch_github_content(&self, url: String) -> Option<Content> {
         let github_content = octocrab::instance()._get(url.clone()).await;
-        let content = match github_content {
+        
+        match github_content {
             Ok(content) => {
                 let body_bytes = content.into_body().collect().await.unwrap().to_bytes();
                 let body_json = String::from_utf8(body_bytes.to_vec()).unwrap();
@@ -177,8 +178,7 @@ impl GithubApiUseCase {
                 );
                 None
             }
-        };
-        content
+        }
     }
     /// Process Content Markdown
     /// Included replace Github Blog relative links with full github content links

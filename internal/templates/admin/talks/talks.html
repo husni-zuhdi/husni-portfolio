@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Talks{% endblock %}
+{% block description %}"Husni Naufal Zuhdi Admin Talks"{% endblock %}
+
+{% block content %}
+<div>
+    <h1 class="mb-4 font-semibold uppercase md:justify-start">
+        Admin Talks
+    </h1>
+    <p>Manage your Talks. Yapping all day and night.</p>
+</div>
+<hr>
+
+<div id="talks_target">
+    {% for talk in talks %}
+    <h2 class="mb-2 hover:font-bold md:justify-start">
+        <div id="talk_{{talk.id}}_target">
+            <p>
+                <button hx-get="/admin/talks/{{talk.id}}/edit" hx-target="#talk_{{talk.id}}_target" hx-swap="innerHTML" class="btn_blue">
+                    Edit
+                </button>
+                <button hx-get="/admin/talks/{{talk.id}}/delete" hx-target="#talk_{{talk.id}}_target" hx-swap="innerHTML" class="btn_red">
+                    Delete
+                </button>
+                {{talk.date}}
+                {% if talk.media_link != "" %}
+                     | <a href="{{talk.media_link}}">{{talk.name}}</a>
+                {% else %}
+                     | {{talk.name}}
+                {% endif %}
+                {% if talk.org_link != "" && talk.org_name != "" %}
+                     at <a href="{{talk.org_link}}">{{talk.org_name}}</a>
+                {% else if talk.org_name != "" %}
+                     at {{talk.org_name}}
+                {% else %}
+                    
+                {% endif %}
+            </p>
+        </div>
+    </h2>
+    {% endfor %}
+    <h2 class="mb-2 hover:font-bold md:justify-start">
+        <button hx-get="/admin/talks/add" hx-target="#talks_target" hx-swap="innerHTML" class="btn_green">
+            Add
+        </button>
+    </h2>
+</div>
+{% endblock content %}

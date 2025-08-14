@@ -52,7 +52,7 @@ impl Default for Config {
 impl Config {
     /// Parse optional environment variable to setup the envar and set default
     fn parse_optional_envar(envar: &str, default: &str) -> String {
-        match env::var(&envar) {
+        match env::var(envar) {
             Err(e) => {
                 warn!(
                     "Failed to load {} environment variable. Set default to '{}'. Error {}",
@@ -76,42 +76,9 @@ impl Config {
             .expect("failed to load SVC_PORT environment variable. Double check your config");
 
         // Optional
-        let log_level: tracing::Level = match env::var("LOG_LEVEL") {
-            Err(e) => {
-                warn!(
-                    "Failed to load LOG_LEVEL environment variable. Set default to 'info'. Error {}", e
-                );
-                tracing::Level::INFO
-            }
-            Ok(val) => match val.as_str() {
-                "error" => tracing::Level::ERROR,
-                "warn" => tracing::Level::WARN,
-                "info" => tracing::Level::INFO,
-                "debug" => tracing::Level::DEBUG,
-                "trace" => tracing::Level::TRACE,
-                _ => tracing::Level::INFO,
-            },
-        };
+        let log_level = parse_log_level();
         let environment: String = Self::parse_optional_envar("ENVIRONMENT", "release");
-        // let data_source: String = Self::parse_optional_envar("DATA_SOURCE", "memory");
-        let data_source: String = match env::var("DATA_SOURCE") {
-            Err(e) => {
-                warn!(
-                "Failed to load DATA_SOURCE environment variable. Set default to 'memory'. Error {}", e
-                );
-                "memory".to_string()
-            }
-            Ok(val) => match val.as_str() {
-                "memory" | "sqlite" | "turso" => val,
-                _ => {
-                    error!(
-                        "Data Source type {} is not supported! Default to 'memory'.",
-                        val
-                    );
-                    "memory".to_string()
-                }
-            },
-        };
+        let data_source = parse_data_source();
         let database_url: String = Self::parse_optional_envar("DATABASE_URL", "");
         let turso_auth_token: String = Self::parse_optional_envar("TURSO_AUTH_TOKEN", "");
         let filesystem_dir: String = Self::parse_optional_envar("FILESYSTEM_DIR", "");
@@ -132,6 +99,51 @@ impl Config {
             gh_repo,
             gh_branch,
         }
+    }
+}
+
+fn parse_log_level() -> tracing::Level {
+    match env::var("LOG_LEVEL") {
+        Err(e) => {
+            warn!(
+                "Failed to load LOG_LEVEL environment variable. Set default to 'info'. Error {}",
+                e
+            );
+            tracing::Level::INFO
+        }
+        Ok(val) => match_log_level(val),
+    }
+}
+
+fn match_log_level(log_level: String) -> tracing::Level {
+    match log_level.as_str() {
+        "error" => tracing::Level::ERROR,
+        "warn" => tracing::Level::WARN,
+        "info" => tracing::Level::INFO,
+        "debug" => tracing::Level::DEBUG,
+        "trace" => tracing::Level::TRACE,
+        _ => tracing::Level::INFO,
+    }
+}
+
+fn parse_data_source() -> String {
+    match env::var("DATA_SOURCE") {
+        Err(e) => {
+            warn!(
+                "Failed to load DATA_SOURCE environment variable. Set default to 'memory'. Error {}", e
+                );
+            "memory".to_string()
+        }
+        Ok(val) => match val.as_str() {
+            "memory" | "sqlite" | "turso" => val,
+            _ => {
+                error!(
+                    "Data Source type {} is not supported! Default to 'memory'.",
+                    val
+                );
+                "memory".to_string()
+            }
+        },
     }
 }
 
@@ -185,19 +197,19 @@ mod test {
         let gh_repo = "";
         let gh_branch = "";
 
-        set_envars(
-            svc_endpoint,
-            svc_port,
-            log_level,
-            environment,
-            data_source,
-            database_url,
-            turso_auth_token,
-            filesystem_dir,
-            gh_owner,
-            gh_repo,
-            gh_branch,
-        );
+        set_envars(Config {
+            svc_endpoint: svc_endpoint.to_string(),
+            svc_port: svc_port.to_string(),
+            log_level: match_log_level(log_level.to_string()),
+            environment: environment.to_string(),
+            data_source: data_source.to_string(),
+            database_url: database_url.to_string(),
+            turso_auth_token: turso_auth_token.to_string(),
+            filesystem_dir: filesystem_dir.to_string(),
+            gh_owner: gh_owner.to_string(),
+            gh_repo: gh_repo.to_string(),
+            gh_branch: gh_branch.to_string(),
+        });
 
         let result = Config::from_envar();
 
@@ -231,19 +243,19 @@ mod test {
         let gh_repo = "husni-blog-resources";
         let gh_branch = "main";
 
-        set_envars(
-            svc_endpoint,
-            svc_port,
-            log_level,
-            environment,
-            data_source,
-            database_url,
-            turso_auth_token,
-            filesystem_dir,
-            gh_owner,
-            gh_repo,
-            gh_branch,
-        );
+        set_envars(Config {
+            svc_endpoint: svc_endpoint.to_string(),
+            svc_port: svc_port.to_string(),
+            log_level: match_log_level(log_level.to_string()),
+            environment: environment.to_string(),
+            data_source: data_source.to_string(),
+            database_url: database_url.to_string(),
+            turso_auth_token: turso_auth_token.to_string(),
+            filesystem_dir: filesystem_dir.to_string(),
+            gh_owner: gh_owner.to_string(),
+            gh_repo: gh_repo.to_string(),
+            gh_branch: gh_branch.to_string(),
+        });
 
         let result = Config::from_envar();
 
@@ -262,30 +274,18 @@ mod test {
         remove_envars()
     }
 
-    fn set_envars(
-        svc_endpoint: &str,
-        svc_port: &str,
-        log_level: &str,
-        environment: &str,
-        data_source: &str,
-        database_url: &str,
-        turso_auth_token: &str,
-        filesystem_dir: &str,
-        gh_owner: &str,
-        gh_repo: &str,
-        gh_branch: &str,
-    ) {
-        env::set_var("SVC_ENDPOINT", svc_endpoint);
-        env::set_var("SVC_PORT", svc_port);
-        env::set_var("LOG_LEVEL", log_level);
-        env::set_var("ENVIRONMENT", environment);
-        env::set_var("DATA_SOURCE", data_source);
-        env::set_var("DATABASE_URL", database_url);
-        env::set_var("TURSO_AUTH_TOKEN", turso_auth_token);
-        env::set_var("FILESYSTEM_DIR", filesystem_dir);
-        env::set_var("GITHUB_OWNER", gh_owner);
-        env::set_var("GITHUB_REPO", gh_repo);
-        env::set_var("GITHUB_BRANCH", gh_branch);
+    fn set_envars(config: Config) {
+        env::set_var("SVC_ENDPOINT", config.svc_endpoint);
+        env::set_var("SVC_PORT", config.svc_port);
+        env::set_var("LOG_LEVEL", config.log_level.to_string());
+        env::set_var("ENVIRONMENT", config.environment);
+        env::set_var("DATA_SOURCE", config.data_source);
+        env::set_var("DATABASE_URL", config.database_url);
+        env::set_var("TURSO_AUTH_TOKEN", config.turso_auth_token);
+        env::set_var("FILESYSTEM_DIR", config.filesystem_dir);
+        env::set_var("GITHUB_OWNER", config.gh_owner);
+        env::set_var("GITHUB_REPO", config.gh_repo);
+        env::set_var("GITHUB_BRANCH", config.gh_branch);
     }
 
     fn remove_envars() {

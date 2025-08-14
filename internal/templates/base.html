@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-US" class="text-gray-900 bg-gray-100 font-mono">
+<html lang="en-US" class="text-black bg-gray-100 font-mono">
     <head>
         <title>{% block title %}{% endblock %}</title>
         <!-- Setup Metadatas -->
@@ -7,14 +7,12 @@
         <meta name="description" content={% block description %}{% endblock %}>
         <meta name="author" content="Husni Zuhdi">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- HTMX Disabled for now-->
-        <!-- <script type="text/javascript" id="HTMX" -->
-        <!--     async src="https://unpkg.com/htmx.org@1.9.8"> -->
-        <!-- </script> -->
+        <!-- HTMX Enabled-->
+        <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" integrity="sha384-Akqfrbj/HpNVo8k11SXBb6TlBWmXXlYQrCSqEWmyKJe+hDm3Z/B2WVG4smwBkRVm" crossorigin="anonymous"></script>
         <!-- MathJax Disabled for now-->
-        <!-- <script type="text/javascript" id="MathJax-script" -->
-        <!--     async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> -->
-        <!-- </script> -->
+        <script id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js">
+        </script>
         <!-- Emoji as icon -->
         <link rel="apple-touch-icon" sizes="180x180" href="/statics/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="/statics/favicon-32x32.png">
@@ -22,33 +20,12 @@
         <!-- Sttlesheet CSS -->
         <link rel="stylesheet" href="/statics/styles.css"/>
     </head>
-    <body class="body">
-        <nav class="bg-gray-100">
+    <body id="body_target" class="body bg-gray-100">
+        <nav class="bg-gray-50">
+
+          <!-- Web Menu -->
           <div class="mx-6">
             <div class="relative flex h-16 items-center justify-between">
-              <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
-                <!-- Mobile menu button-->
-                <button type="button" class="relative inline-flex items-center justify-center rounded-md p-2 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
-                  <span class="absolute -inset-0.5"></span>
-                  <span class="sr-only">Open main menu</span>
-                  <!--
-                    Icon when menu is closed.
-
-                    Menu open: "hidden", Menu closed: "block"
-                  -->
-                  <svg class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                  </svg>
-                  <!--
-                    Icon when menu is open.
-
-                    Menu open: "block", Menu closed: "hidden"
-                  -->
-                  <svg class="hidden h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
               <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                 <div class="flex flex-shrink-0 items-center">
                   <img class="h-8 w-auto" src="/statics/favicon-32x32.png" alt="Husni Zuhdi">
@@ -67,7 +44,6 @@
           <!-- Mobile menu, show/hide based on menu state. -->
           <div class="sm:hidden" id="mobile-menu">
             <div class="space-y-1 px-2 pb-3 pt-2">
-              <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
               <a href="/" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white" aria-current="page">Home</a>
               <a href="/blogs" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white">Blogs</a>
               <a href="/talks" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white">Talks</a>
@@ -76,13 +52,13 @@
         </nav>
 
         <!-- Main Section -->
-        <div id="main" class="mx-6 bg-gray-100 text-left">
+        <div id="main_body_target" class="mx-6 bg-gray-100 text-left">
             {% block content %}<p>Placeholder content</p>{% endblock %}
         </div>
 
         <!-- Footer container -->
         <footer class="bg-gray-100 text-center lg:text-left bottom-0">
-          <div class="flex items-center justify-center border-2 border-y-neutral-500 mt-4 p-6 lg:justify-between">
+          <div class="flex items-center justify-center bg-gray-50 border-2 mt-4 p-6 lg:justify-between">
             <div class="me-12 hidden lg:block">
               <span>Get connected with me on social networks:</span>
             </div>
@@ -125,9 +101,7 @@
             <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
               <!-- TW Elements section -->
               <div class="">
-                <h6 class="mb-4 flex items-center justify-center font-semibold uppercase md:justify-start">
-                  Husni Zuhdi
-                </h6>
+                <h6 class="mb-4 flex items-center justify-center font-semibold uppercase md:justify-start">Husni Zuhdi</h6>
                 <p>
                     <i>Character is Destiny</i>
                 </p>
@@ -137,9 +111,7 @@
               </div>
               <!-- Pages section -->
               <div>
-                <h6 class="mb-4 flex justify-center font-semibold uppercase md:justify-start">
-                  Pages
-                </h6>
+                <h6 class="mb-4 flex justify-center font-semibold uppercase md:justify-start">Pages</h6>
                 <p class="mb-1">
                   <a href="/">Home</a>
                 </p>

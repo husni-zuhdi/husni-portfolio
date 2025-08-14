@@ -13,7 +13,7 @@ pub struct MemoryBlogRepo {
 #[async_trait]
 impl BlogRepo for MemoryBlogRepo {
     async fn find(&self, id: BlogId) -> Option<Blog> {
-        let result = self.blogs.iter().filter(|blog| &blog.id == &id).next();
+        let result = self.blogs.iter().find(|blog| blog.id == id);
         match result {
             Some(blog) => {
                 info!("Blog {} processed.", &blog.id);
@@ -59,7 +59,7 @@ impl BlogRepo for MemoryBlogRepo {
         let result: &Vec<&Blog> = &self
             .blogs
             .iter()
-            .filter(|blog| &blog.id.id >= &start_seq && &blog.id.id < &end_seq)
+            .filter(|blog| blog.id.id >= start_seq && blog.id.id < end_seq)
             .filter(|blog| {
                 // Basically we need an OR operation to determine which tags
                 // To be displayed. It's an OR operation because I want to show
@@ -103,7 +103,7 @@ impl BlogRepo for MemoryBlogRepo {
         }
     }
     async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {
-        let result = self.blogs.iter().filter(|blog| &blog.id == &id).next();
+        let result = self.blogs.iter().find(|blog| blog.id == id);
         match result {
             Some(blog) => {
                 info!("Blog {} is in Memory.", &blog.id);
@@ -115,6 +115,17 @@ impl BlogRepo for MemoryBlogRepo {
             }
         }
     }
+    async fn get_new_id(&self) -> Option<BlogId> {
+        if self.blogs.is_empty() {
+            info!("Blogs is empty. The new Blog ID is 1 in Memory.");
+            return Some(BlogId { id: 1 });
+        }
+
+        let result: i64 = self.blogs.len().try_into().unwrap();
+        let new_id = result + 1;
+        info!("The new Blog ID is {} in Memory.", &new_id);
+        Some(BlogId { id: new_id })
+    }
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
         self.blogs.push(blog.clone());
         info!("Blog {} added.", &blog.id);
@@ -122,7 +133,7 @@ impl BlogRepo for MemoryBlogRepo {
         Some(BlogCommandStatus::Stored)
     }
     async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
-        let result = self.blogs.iter().position(|blog| &blog.id == &id);
+        let result = self.blogs.iter().position(|blog| blog.id == id);
         match result {
             Some(val) => {
                 info!("Deleting Blog with Id {}", &val);
@@ -139,61 +150,44 @@ impl BlogRepo for MemoryBlogRepo {
     async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
         let result: Option<&mut Blog> = self
             .blogs
-            .iter_mut()
-            .filter(|blog| &blog.id == &blog.id)
-            .next();
+            .iter_mut().find(|blog| blog.id == blog.id);
 
         match result {
             Some(in_mem_blog) => {
-                match blog.name {
-                    Some(updated_name) => {
-                        debug!(
-                            "Update Blog {} name from {:?} to {}",
-                            &blog.id, &in_mem_blog.name, &updated_name
-                        );
-                        in_mem_blog.name = Some(updated_name)
-                    }
-                    None => (),
+                if let Some(updated_name) = blog.name {
+                    debug!(
+                        "Update Blog {} name from {:?} to {}",
+                        &blog.id, &in_mem_blog.name, &updated_name
+                    );
+                    in_mem_blog.name = Some(updated_name)
                 }
-                match blog.filename {
-                    Some(updated_filename) => {
-                        debug!(
-                            "Update Blog {} filename from {:?} to {}",
-                            &blog.id, &in_mem_blog.filename, &updated_filename
-                        );
-                        in_mem_blog.filename = Some(updated_filename)
-                    }
-                    None => (),
+                if let Some(updated_filename) = blog.filename {
+                    debug!(
+                        "Update Blog {} filename from {:?} to {}",
+                        &blog.id, &in_mem_blog.filename, &updated_filename
+                    );
+                    in_mem_blog.filename = Some(updated_filename)
                 }
-                match blog.source {
-                    Some(updated_source) => {
-                        debug!(
-                            "Update Blog {} source from {:?} to {}",
-                            &blog.id, &in_mem_blog.source, &updated_source
-                        );
-                        in_mem_blog.source = Some(updated_source)
-                    }
-                    None => (),
+                if let Some(updated_source) = blog.source {
+                    debug!(
+                        "Update Blog {} source from {:?} to {}",
+                        &blog.id, &in_mem_blog.source, &updated_source
+                    );
+                    in_mem_blog.source = Some(updated_source)
                 }
-                match blog.body {
-                    Some(updated_body) => {
-                        debug!(
-                            "Update Blog {} body from {:?} to {}",
-                            &blog.id, &in_mem_blog.body, &updated_body
-                        );
-                        in_mem_blog.body = Some(updated_body)
-                    }
-                    None => (),
+                if let Some(updated_body) = blog.body {
+                    debug!(
+                        "Update Blog {} body from {:?} to {}",
+                        &blog.id, &in_mem_blog.body, &updated_body
+                    );
+                    in_mem_blog.body = Some(updated_body)
                 }
-                match blog.tags {
-                    Some(updated_tags) => {
-                        debug!(
-                            "Update Blog {} tags from {:?} to {:?}",
-                            &blog.id, &in_mem_blog.tags, &updated_tags
-                        );
-                        in_mem_blog.tags = Some(updated_tags)
-                    }
-                    None => (),
+                if let Some(updated_tags) = blog.tags {
+                    debug!(
+                        "Update Blog {} tags from {:?} to {:?}",
+                        &blog.id, &in_mem_blog.tags, &updated_tags
+                    );
+                    in_mem_blog.tags = Some(updated_tags)
                 }
                 Some(BlogCommandStatus::Updated)
             }

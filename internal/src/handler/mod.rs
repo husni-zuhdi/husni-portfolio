@@ -1,3 +1,4 @@
+pub mod admin;
 pub mod blogs;
 pub mod profile;
 pub mod status;
