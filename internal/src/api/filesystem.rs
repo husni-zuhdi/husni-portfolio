@@ -1,8 +1,7 @@
 use crate::model::blogs::{Blog, BlogId, BlogMetadata, BlogSource};
 use crate::repo::api::ApiRepo;
-use crate::utils::capitalize;
+use crate::utils::{capitalize, convert_markdown_to_html};
 use async_trait::async_trait;
-use markdown::{to_html_with_options, CompileOptions, Constructs, Options, ParseOptions};
 use std::fs;
 use std::path::PathBuf;
 use tracing::{debug, error, info};
@@ -38,29 +37,25 @@ impl ApiRepo for FilesystemApiUseCase {
         }
     }
     async fn fetch(&self, metadata: BlogMetadata) -> Option<Blog> {
-        let result = Self::process_markdown(metadata.filename.clone());
-        match result {
-            Ok(body) => {
-                debug!("Blog Body with Id {}: {}", &metadata.id, &body);
+        let body_md = fs::read_to_string(metadata.filename.clone())
+            .expect("Failed to read markdown blog file");
+        debug!(
+            "Markdown Body for filename {}: {}",
+            &metadata.filename, body_md
+        );
 
-                Some(Blog {
-                    id: metadata.id,
-                    name: Some(metadata.name),
-                    source: Some(BlogSource::Filesystem),
-                    filename: Some(metadata.filename),
-                    body: Some(body),
-                    // Set empty tags for non-database
-                    tags: Some(vec!["".to_string()]),
-                })
-            }
-            Err(err) => {
-                error!(
-                    "Failed to process markdown to html for Blog Id {}. Error: {}",
-                    &metadata.id, err
-                );
-                None
-            }
-        }
+        let body = convert_markdown_to_html(body_md);
+        debug!("Blog Body with Id {}: {}", &metadata.id, &body);
+
+        Some(Blog {
+            id: metadata.id,
+            name: Some(metadata.name),
+            source: Some(BlogSource::Filesystem),
+            filename: Some(metadata.filename),
+            body: Some(body),
+            // Set empty tags for non-database
+            tags: Some(vec!["".to_string()]),
+        })
     }
 }
 
@@ -107,30 +102,5 @@ impl FilesystemApiUseCase {
             // TODO: remove the empty tags
             tags: vec!["".to_string()],
         }
-    }
-    /// Process Markdown
-    /// take String of filename and convert markdown file into html with option
-    /// return String of converted markdown in html or String of error
-    fn process_markdown(filename: String) -> Result<String, String> {
-        let body_md =
-            fs::read_to_string(filename.clone()).expect("Failed to read markdown blog file");
-        debug!("Markdown Body for filename {}: {}", &filename, body_md);
-
-        let html = to_html_with_options(
-            &body_md,
-            &Options {
-                parse: ParseOptions {
-                    constructs: Constructs {
-                        // In case you want to activeat frontmatter in the future
-                        // frontmatter: true,
-                        ..Constructs::gfm()
-                    },
-                    ..ParseOptions::gfm()
-                },
-                compile: CompileOptions::gfm(),
-            },
-        )
-        .expect("Failed to convert html with options");
-        Ok(html)
     }
 }
