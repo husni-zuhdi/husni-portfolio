@@ -6,23 +6,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 1. To make a website to show my online presence.
 2. To make a cool project.
 
-## Work in Progress 0.2.3
-### User stories
-- [x] [As an User, I want to see another blog tags when I already clicked a tag](https://github.com/husni-zuhdi/husni-portfolio/pull/31)
-    - Reffer to above story step 5.
-    - Fixed the find_blogs query for turso database by separating query into two steps.
-    - First is to find blog id with tags.
-    - Second is to get tags and blogs from those blog ids.
-
-### Admin stories
-- [ ] As an Admin, I want to have an access to edit blogs.
-    - We can explore it by creating `/admin` page and working on how to edit a `talks` (since it's easiest than `blogs`).
-    - Then we can work on the `blogs` feature.
-    - At 2025-07-30 I start to work on Talk Admin page. We finally use HTMX in this project.
-    - So far we tackle the edit button. Next we need to setup PUT endpoint.
-    - There is an opportunity to improve the codebase readability.
-
-### Engineering stories
+## Work in Progress
 
 ## TODO
 ### User stories
@@ -51,19 +35,39 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - I just want to make something that worth my time and effort!
 
 ### Admin stories
-- [ ] As an Admin, I want to have an access to edit blogs.
-    - We can explore it by creating `/admin` page and working on how to edit a `talks` (since it's easiest than `blogs`).
-    - Then we can work on the `blogs` feature.
 - [ ] As an Admin, I want to have a safe way to access my admin pages.
     - I think we can use authentication like `google` that match our google account only.
     - It's the frist time we play with authentication service. So excited! lol
 
 ### Engineering stories
-- [ ] As an Engineer, I want to finish my tech debt to properly implement `tags` and `blog_tag_mapping` tables on `blogs` databse adapter
-    - As the title said, fix it please when you have time.
-    - We need to fix this during/before we build our admin pages.
 - [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
     - We can use [git-cliff](https://git-cliff.org/) but we need to upgrade the rust version to 1.8.3 or newer
+
+## 0.3.1 2025-08-15
+### User stories
+- [x] [As an User, I want to see another blog tags when I already clicked a tag](https://github.com/husni-zuhdi/husni-portfolio/pull/31)
+    - Reffer to above story step 5.
+    - Fixed the find_blogs query for turso database by separating query into two steps.
+    - First is to find blog id with tags.
+    - Second is to get tags and blogs from those blog ids.
+
+### Admin stories
+- [x] As an Admin, I want to have an access to edit blogs.
+    - We can explore it by creating `/admin` page and working on how to edit a `talks` (since it's easiest than `blogs`).
+    - Then we can work on the `blogs` feature.
+    - At 2025-07-30 I start to work on Talk Admin page. We finally use HTMX in this project.
+    - So far we tackle the edit button. Next we need to setup PUT endpoint.
+    - There is an opportunity to improve the codebase readability.
+    - We've finished the `talks` and `blogs` admin implementation.
+
+### Engineering stories
+- [x] As an Engineer, I want to finish my tech debt to properly implement `tags` and `blog_tag_mapping` tables on `blogs` databse adapter
+    - As the title said, fix it please when you have time.
+    - We need to fix this during/before we build our admin pages.
+    - The tech debt is kind of paid with the current admin pages implementation.
+    - We separate `tags` and `blog_tag_mappings` database implementation from `blogs`.
+    - We did that to achieve segragation for each tables.
+
 
 ## 0.2.2 2025-04-29
 ### User stories
