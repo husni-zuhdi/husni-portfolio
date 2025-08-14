@@ -70,6 +70,10 @@
     select {
         @apply rounded-md border-solid border-2 border-gray-500 px-3 py-1 bg-white text-black;
     }
+
+    textarea {
+        @apply rounded-md border-solid border-2 border-gray-500 px-3 py-1 text-base;
+    }
 }
 
 @layer components {
