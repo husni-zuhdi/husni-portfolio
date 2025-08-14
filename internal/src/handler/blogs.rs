@@ -4,7 +4,7 @@ use crate::model::{
     axum::AppState,
     templates::{BlogMetadataTemplate, BlogTemplate, BlogsTemplate},
 };
-use crate::utils::remove_whitespace;
+use crate::utils::{convert_markdown_to_html, remove_whitespace};
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
@@ -124,11 +124,13 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
         .await;
     match result {
         Some(blog_data) => {
+            let raw_body = blog_data.body.unwrap();
+            let body = convert_markdown_to_html(raw_body);
             let blog = BlogTemplate {
                 id: id.clone().unwrap(),
                 name: blog_data.name.unwrap(),
                 filename: blog_data.filename.unwrap(),
-                body: blog_data.body.unwrap(),
+                body,
                 tags: blog_data.tags.unwrap(),
             }
             .render();

@@ -222,7 +222,11 @@ impl BlogRepo for TursoDatabase {
         } else {
             format!("{}", blog.source.unwrap())
         };
-        let blog_body = &blog.body.unwrap();
+        let blog_body_raw = &blog.body.unwrap();
+        // Sanitize ' to ''. It's the escape char for '
+        // https://stackoverflow.com/questions/603572/escape-single-quote-character-for-use-in-an-sqlite-query
+        let blog_body = blog_body_raw.replace("'", "''");
+
         let prep_add_query =
             "INSERT INTO blogs (id, name, filename, source, body) VALUES (?1, ?2, ?3, ?4, ?5)";
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
@@ -304,7 +308,10 @@ impl BlogRepo for TursoDatabase {
         }
         match &blog.body {
             Some(val) => {
-                affected_col = format!("{} body = '{}' ,", &affected_col, val);
+                // Sanitize ' to ''. It's the escape char for '
+                // https://stackoverflow.com/questions/603572/escape-single-quote-character-for-use-in-an-sqlite-query
+                let body = val.replace("'", "''");
+                affected_col = format!("{} body = '{}' ,", &affected_col, body);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
