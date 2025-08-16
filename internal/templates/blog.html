@@ -8,15 +8,17 @@
         {{body|safe}}
     </div>
     <div>
-    {% for tag in tags %}
-        {% if tag == "" %}
-           <!-- No tag to render  -->
-           <!-- Skip this tag -->
-        {% else %}
-            <button hx-get="/blogs?tags={{tag}}" hx-target="#body_target" hx-swap="innerHTML" hx-replace-url="true">
-                {{tag}}
-            </button>
-        {% endif %}
-    {% endfor %}
+    <p>Tags: 
+        {% for tag in tags %}
+            {% if tag == "" %}
+               <!-- No tag to render  -->
+               <!-- Skip this tag -->
+            {% else %}
+                <button hx-get="/blogs?tags={{tag}}" hx-target="#body_target" hx-swap="innerHTML" hx-replace-url="true">
+                    {{tag}}
+                </button>
+            {% endif %}
+        {% endfor %}
+    </p>
     </div>
 {% endblock content %}
