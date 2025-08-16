@@ -7,6 +7,21 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 2. To make a cool project.
 
 ## Work in Progress
+## 0.3.2
+### User stories
+- [x] As an User, I want to see whole code snippet without it's breaking the website in mobile.
+    - This issue appear when you want to read blogs in mobile. The code snippet can be longer than the mobile screen widht.
+    - What I think we can do are:
+        1. Dynamically change the font size
+        2. Add a limit on how long paragraph can go.
+        3. In a code snippet, make it so we can horizontally scroll the snippet.
+    - Applied the 2 and 3 suggestions by implementing `overflow: auto` on `<pre>` type.
+    - We also encounter similar issue with `<table>` type but with different approach.
+    - Table need to be wraped inside a div to make it responsive [ref](https://www.w3schools.com/howto/howto_css_table_responsive.asp)
+    - However we can't alter the markdown rendering to wrap table inside a div.
+    - So the current workaround is to add a notes in the add and edit blog pages.
+    - To add a div manually in the markdown file :") Yeah it's not ideal but it's what we have.
+    - Also we enabled allo dangerous html in the markdown compiler config.
 
 ## TODO
 ### User stories
@@ -20,12 +35,6 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         2. Try to implement it (maybe on) `handler` module.
         3. If it works and can improve our website loading time. Let's be bulish lol.
         4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
-- [ ] As an User, I want to see whole code snippet without it's breaking the website in mobile.
-    - This issue appear when you want to read blogs in mobile. The code snippet can be longer than the mobile screen widht.
-    - What I think we can do are:
-        1. Dynamically change the font size
-        2. Add a limit on how long paragraph can go.
-        3. In a code snippet, make it so we can horizontally scroll the snippet.
 - [ ] As an User, I need to zoom images to have a better view.
     - I can see images in mobile and I need to zoom it manually.
     - I think creating a zoom feature by clicking an image should do.

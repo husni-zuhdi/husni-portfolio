@@ -36,7 +36,7 @@
     }
 
     pre {
-        @apply px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-gray-200;
+        @apply overflow-x-auto px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-gray-200;
     }
 
     table {

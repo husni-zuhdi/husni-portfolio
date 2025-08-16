@@ -529,6 +529,7 @@ code {
 }
 
 pre {
+  overflow-x: auto;
   text-wrap: wrap;
   border-radius: 0.25rem;
   border-width: 2px;
@@ -896,6 +897,10 @@ textarea {
 
 .flex {
   display: flex;
+}
+
+.table {
+  display: table;
 }
 
 .grid {

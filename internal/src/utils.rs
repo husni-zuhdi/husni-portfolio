@@ -34,7 +34,10 @@ pub fn convert_markdown_to_html(body_md: String) -> String {
                 },
                 ..ParseOptions::gfm()
             },
-            compile: CompileOptions::gfm(),
+            compile: CompileOptions {
+                allow_dangerous_html: true,
+                ..CompileOptions::gfm()
+            },
         },
     )
     .unwrap()
