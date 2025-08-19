@@ -4,6 +4,14 @@
 {% block description %}"Blog {{id}} - {{name}}"{% endblock %}
 
 {% block content %}
+    <!-- Syntax  Highlithing -->
+    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.11.1/styles/default.min.css">
+    <script src="https://unpkg.com/@highlightjs/cdn-assets@11.11.1/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- MathJax Disabled for now-->
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js">
+    </script>
     <div>
         {{body|safe}}
     </div>
