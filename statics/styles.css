@@ -536,8 +536,6 @@ pre {
   border-style: solid;
   --tw-border-opacity: 1;
   border-color: rgb(107 114 128 / var(--tw-border-opacity));
-  --tw-bg-opacity: 1;
-  background-color: rgb(229 231 235 / var(--tw-bg-opacity));
   padding-left: 1rem;
   padding-right: 1rem;
 }
