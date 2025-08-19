@@ -1,5 +1,4 @@
 use crate::model::talks::{Talk, TalkCommandStatus, TalkEndPage, TalkId, TalkStartPage};
-use crate::port::talks::{command::TalkCommandPort, query::TalkQueryPort};
 use crate::repo::talks::TalkRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -16,7 +15,7 @@ impl Debug for dyn TalkRepo + Send + Sync {
 }
 
 #[async_trait]
-impl TalkQueryPort for TalkUseCase {
+impl TalkRepo for TalkUseCase {
     async fn find(&self, id: TalkId) -> Option<Talk> {
         self.talk_repo.find(id).await
     }
@@ -26,10 +25,6 @@ impl TalkQueryPort for TalkUseCase {
     async fn get_new_id(&self) -> Option<TalkId> {
         self.talk_repo.get_new_id().await
     }
-}
-
-#[async_trait]
-impl TalkCommandPort for TalkUseCase {
     async fn add(
         &mut self,
         id: TalkId,

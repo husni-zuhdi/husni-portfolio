@@ -1,5 +1,4 @@
 use crate::model::blogs::{Blog, BlogCommandStatus, BlogId, BlogMetadata, BlogsParams};
-use crate::port::blogs::{command::BlogCommandPort, query::BlogQueryPort};
 use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -16,7 +15,7 @@ impl Debug for dyn BlogRepo + Send + Sync {
 }
 
 #[async_trait]
-impl BlogQueryPort for BlogUseCase {
+impl BlogRepo for BlogUseCase {
     async fn find(&self, id: BlogId) -> Option<Blog> {
         self.blog_repo.find(id).await
     }
@@ -29,10 +28,6 @@ impl BlogQueryPort for BlogUseCase {
     async fn get_new_id(&self) -> Option<BlogId> {
         self.blog_repo.get_new_id().await
     }
-}
-
-#[async_trait]
-impl BlogCommandPort for BlogUseCase {
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
         self.blog_repo.add(blog).await
     }

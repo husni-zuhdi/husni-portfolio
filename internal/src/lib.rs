@@ -4,7 +4,6 @@ pub mod config;
 pub mod database;
 pub mod handler;
 pub mod model;
-pub mod port;
 pub mod repo;
 pub mod routes;
 pub mod state;

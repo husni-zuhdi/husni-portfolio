@@ -1,5 +1,4 @@
 use crate::model::tags::{Tag, TagCommandStatus, Tags};
-use crate::port::tags::{command::TagCommandPort, query::TagQueryPort};
 use crate::repo::tags::TagRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -16,7 +15,7 @@ impl Debug for dyn TagRepo + Send + Sync {
 }
 
 #[async_trait]
-impl TagQueryPort for TagUseCase {
+impl TagRepo for TagUseCase {
     async fn find(&self, id: i64) -> Option<Tag> {
         self.tag_repo.find(id).await
     }
@@ -26,10 +25,6 @@ impl TagQueryPort for TagUseCase {
     async fn get_new_id(&self) -> Option<i64> {
         self.tag_repo.get_new_id().await
     }
-}
-
-#[async_trait]
-impl TagCommandPort for TagUseCase {
     async fn add(&mut self, id: i64, name: String) -> Option<TagCommandStatus> {
         self.tag_repo.add(id, name).await
     }
