@@ -1,7 +1,4 @@
 use crate::model::blog_tag_mappings::{BlogTagMappingCommandStatus, BlogTagMappings};
-use crate::port::blog_tag_mappings::{
-    command::BlogTagMappingCommandPort, query::BlogTagMappingQueryPort,
-};
 use crate::repo::blog_tag_mappings::BlogTagMappingRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -18,17 +15,13 @@ impl Debug for dyn BlogTagMappingRepo + Send + Sync {
 }
 
 #[async_trait]
-impl BlogTagMappingQueryPort for BlogTagMappingUseCase {
+impl BlogTagMappingRepo for BlogTagMappingUseCase {
     async fn find_by_blog_id(&self, blog_id: i64) -> Option<BlogTagMappings> {
         self.blog_tag_mapping_repo.find_by_blog_id(blog_id).await
     }
     async fn find_by_tag_id(&self, tag_id: i64) -> Option<BlogTagMappings> {
         self.blog_tag_mapping_repo.find_by_tag_id(tag_id).await
     }
-}
-
-#[async_trait]
-impl BlogTagMappingCommandPort for BlogTagMappingUseCase {
     async fn add(&mut self, blog_id: i64, tag_id: i64) -> Option<BlogTagMappingCommandStatus> {
         self.blog_tag_mapping_repo.add(blog_id, tag_id).await
     }

@@ -7,7 +7,7 @@ use crate::model::{
         AdminGetTalkTemplate, AdminGetTalksTemplate, AdminTalkTemplate, AdminTalksTemplate,
     },
 };
-use crate::port::talks::query::TalkQueryPort;
+use crate::repo::talks::TalkRepo;
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};

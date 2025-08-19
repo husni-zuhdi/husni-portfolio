@@ -1,5 +1,4 @@
 use crate::model::blogs::{Blog, BlogMetadata};
-use crate::port::api::query::ApiQueryPort;
 use crate::repo::api::ApiRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -16,7 +15,7 @@ impl Debug for dyn ApiRepo + Send + Sync {
 }
 
 #[async_trait]
-impl ApiQueryPort for ApiUseCase {
+impl ApiRepo for ApiUseCase {
     async fn list_metadata(&self) -> Option<Vec<BlogMetadata>> {
         self.api_repo.list_metadata().await
     }
