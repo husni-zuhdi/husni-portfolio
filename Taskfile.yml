@@ -3,6 +3,10 @@ dotenv:
   - '.env'
 
 tasks:
+  lint:
+    summary: Run lint with clippy
+    cmds:
+      - cargo clippy
   test:
     summary: Run unit test with logs
     cmds:
