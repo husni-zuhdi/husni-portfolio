@@ -18,37 +18,33 @@
     </head>
     <body id="body_target" class="body bg-gray-100">
         <nav class="bg-gray-50">
-
-          <!-- Web Menu -->
-          <div class="mx-6">
-            <div class="relative flex h-16 items-center justify-between">
-              <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-                <div class="flex flex-shrink-0 items-center">
-                  <img class="h-8 w-auto" src="/statics/favicon-32x32.png" alt="Husni Zuhdi">
+            <div class="mx-6 h-16 relative flex items-center justify-between">
+                <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+                    <div class="flex flex-shrink-0 items-center sm:items-stretch sm:justify-start">
+                        <img class="h-8 w-auto" src="/statics/favicon-32x32.png" alt="Husni Zuhdi">
+                    </div>
+                    <!-- Web Menu -->
+                    <div class="hidden sm:ml-6 sm:block">
+                        <div class="flex space-x-4">
+                            <a href="/" class="rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-700 hover:text-white" aria-current="page">Home</a>
+                            <a href="/blogs" class="rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-700 hover:text-white">Blogs</a>
+                            <a href="/talks" class="rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-700 hover:text-white">Talks</a>
+                        </div>
+                    </div>
                 </div>
-                <div class="hidden sm:ml-6 sm:block">
-                  <div class="flex space-x-4">
-                    <a href="/" class="rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-700 hover:text-white" aria-current="page">Home</a>
-                    <a href="/blogs" class="rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-700 hover:text-white">Blogs</a>
-                    <a href="/talks" class="rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-700 hover:text-white">Talks</a>
-                  </div>
+            </div>
+            <!-- Mobile menu, show/hide based on menu state. -->
+            <div id="mobile-menu" class="sm:hidden">
+                <div class="px-2 py-2">
+                    <a href="/" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white" aria-current="page">Home</a>
+                    <a href="/blogs" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white">Blogs</a>
+                    <a href="/talks" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white">Talks</a>
                 </div>
-              </div>
             </div>
-          </div>
-
-          <!-- Mobile menu, show/hide based on menu state. -->
-          <div class="sm:hidden" id="mobile-menu">
-            <div class="space-y-1 px-2 pb-3 pt-2">
-              <a href="/" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white" aria-current="page">Home</a>
-              <a href="/blogs" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white">Blogs</a>
-              <a href="/talks" class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-700 hover:text-white">Talks</a>
-            </div>
-          </div>
         </nav>
 
         <!-- Main Section -->
-        <div id="main_body_target" class="mx-6 bg-gray-100 text-left">
+        <div id="main_body_target" class="mx-6 bg-gray-100 text-left md:mx-64">
             {% block content %}<p>Placeholder content</p>{% endblock %}
         </div>
 
@@ -96,7 +92,7 @@
           <div class="mx-6 py-10 text-center md:text-left">
             <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
               <!-- TW Elements section -->
-              <div class="">
+              <div>
                 <h6 class="mb-4 flex items-center justify-center font-semibold uppercase md:justify-start">Husni Zuhdi</h6>
                 <p>
                     <i>Character is Destiny</i>
