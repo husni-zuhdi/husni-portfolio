@@ -85,7 +85,7 @@ pub async fn post_add_admin_blog(State(app_state): State<AppState>, body: String
         return get_500_internal_server_error();
     }
 
-    let available_tags = tag_uc.unwrap().tag_repo.find_all().await;
+    let available_tags = tag_uc.unwrap().tag_repo.find_all_tags().await;
 
     // Filter tag id from the response body in the available_tags
     if available_tags.is_none() {
@@ -183,7 +183,7 @@ pub async fn put_edit_admin_blog(
         return get_500_internal_server_error();
     }
 
-    let tags_result = tag_uc.clone().unwrap().tag_repo.find_all().await;
+    let tags_result = tag_uc.clone().unwrap().tag_repo.find_all_tags().await;
     let Some(tags) = tags_result else {
         error!("Failed to get all Tags");
         return get_500_internal_server_error();
