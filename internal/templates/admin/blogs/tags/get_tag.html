@@ -1,0 +1,17 @@
+<h3 class="mb-2 hover:font-bold md:justify-start">
+    <div id="tag_{{id}}_target">
+        <button class="btn_blue"
+            hx-get="/admin/blogs/tags/{{id}}/edit"
+            hx-target="#tag_{{id}}_target"
+            hx-swap="innerHTML">
+            Edit
+        </button>
+        <button class="btn_red"
+            hx-get="/admin/blogs/tags/{{id}}/delete"
+            hx-target="#tag_{{id}}_target"
+            hx-swap="innerHTML">
+            Delete
+        </button>
+        {{name}}
+    </div>
+</h3>

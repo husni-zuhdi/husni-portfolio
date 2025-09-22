@@ -1,14 +1,21 @@
-{% extends "base.html" %}
+{% extends "admin/admin_base.html" %}
 
 {% block title %}Admin Blogs{% endblock %}
 {% block description %}"Husni Naufal Zuhdi Admin Blogs"{% endblock %}
 
 {% block content %}
-<div>
+<div id="blogs_top_section_target" class="top_section">
     <h1 class="mb-4 font-semibold uppercase md:justify-start">
         Admin Blogs
     </h1>
     <p>Manage your Blogs. Story glory berry grizly.</p>
+    <button class="btn_blue"
+        hx-get="/admin/blogs/tags"
+        hx-target="#body_target"
+        hx-swap="outerHTML"
+        hx-replace-url="true">
+        Manage Blog Tags
+    </button>
 </div>
 <hr>
 

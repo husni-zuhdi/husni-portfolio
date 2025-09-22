@@ -855,6 +855,11 @@ blockquote {
   background-color: rgb(229 231 235 / var(--tw-bg-opacity));
 }
 
+.top_section {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
 .relative {
   position: relative;
 }
@@ -962,6 +967,10 @@ blockquote {
 
 .flex-row {
   flex-direction: row;
+}
+
+.flex-col {
+  flex-direction: column;
 }
 
 .place-items-center {
@@ -1260,6 +1269,10 @@ blockquote {
 
   .lg\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .lg\:flex-row {
+    flex-direction: row;
   }
 
   .lg\:justify-between {

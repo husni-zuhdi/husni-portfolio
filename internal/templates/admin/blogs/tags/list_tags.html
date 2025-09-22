@@ -1,0 +1,19 @@
+{% for tag in tags %}
+<h3 class="mb-2 hover:font-bold md:justify-start">
+    <div id="tag_{{tag.id}}_target">
+        <button class="btn_blue"
+            hx-get="/admin/blogs/tags/{{tag.id}}/edit"
+            hx-target="#tag_{{tag.id}}_target"
+            hx-swap="innerHTML">
+            *
+        </button>
+        <button class="btn_red"
+            hx-get="/admin/blogs/tags/{{tag.id}}/delete"
+            hx-target="#tag_{{tag.id}}_target"
+            hx-swap="innerHTML">
+            x
+        </button>
+        {{tag.name}}
+    </div>
+</h3>
+{% endfor %}

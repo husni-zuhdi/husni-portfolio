@@ -1,4 +1,4 @@
-use crate::model::tags::{Tag, TagCommandStatus, Tags};
+use crate::model::tags::{Tag, TagCommandStatus, Tags, TagsListParams, TagsSearchParams};
 use crate::repo::tags::TagRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -19,8 +19,14 @@ impl TagRepo for TagUseCase {
     async fn find(&self, id: i64) -> Option<Tag> {
         self.tag_repo.find(id).await
     }
-    async fn find_all(&self) -> Option<Tags> {
-        self.tag_repo.find_all().await
+    async fn find_all_tags(&self) -> Option<Tags> {
+        self.tag_repo.find_all_tags().await
+    }
+    async fn find_tags(&self, params: TagsListParams) -> Option<Tags> {
+        self.tag_repo.find_tags(params).await
+    }
+    async fn search_tags(&self, params: TagsSearchParams) -> Option<Tags> {
+        self.tag_repo.search_tags(params).await
     }
     async fn get_new_id(&self) -> Option<i64> {
         self.tag_repo.get_new_id().await

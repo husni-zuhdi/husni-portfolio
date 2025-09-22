@@ -1,6 +1,6 @@
 use askama::Template;
 
-use crate::model::templates::BlogMetadataTemplate;
+use crate::model::{tags::Tag, templates::BlogMetadataTemplate};
 
 #[derive(Template, Debug)]
 #[template(path = "admin/talks/talks.html")]
@@ -89,5 +89,41 @@ pub struct AdminGetBlogTemplate {
 #[derive(Template, Debug)]
 #[template(path = "admin/blogs/get_delete_blog.html")]
 pub struct AdminGetDeleteBlogTemplate {
+    pub id: i64,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/tags/tags.html")]
+pub struct AdminBlogTagsTemplate {}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/tags/list_tags.html")]
+pub struct AdminBlogTagsListTemplate {
+    pub tags: Vec<Tag>,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/tags/get_add_tag.html")]
+pub struct AdminGetAddTagTemplate {
+    pub id: i64,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/tags/get_tag.html")]
+pub struct AdminGetTagTemplate {
+    pub id: i64,
+    pub name: String,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/tags/get_edit_tag.html")]
+pub struct AdminGetEditTagTemplate {
+    pub id: i64,
+    pub name: String,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/blogs/tags/get_delete_tag.html")]
+pub struct AdminGetDeleteTagTemplate {
     pub id: i64,
 }

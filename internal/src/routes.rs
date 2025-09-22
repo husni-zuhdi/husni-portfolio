@@ -1,5 +1,7 @@
 use crate::handler::{
-    admin::blogs::{displays as bd, operations as bo},
+    admin::blogs::{
+        displays as bd, operations as bo, tags::displays as btd, tags::operations as bto,
+    },
     admin::talks::{displays as td, operations as to},
     blogs::{get_blog, get_blogs},
     talks::get_talks,
@@ -24,6 +26,7 @@ pub fn main_route(app_state: AppState) -> Router {
         .nest("/talks", talks_route())
         .nest("/admin/talks", admin_talks_route())
         .nest("/admin/blogs", admin_blogs_route())
+        .nest("/admin/blogs/tags", admin_blogs_tags_route())
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service(
             "/statics/styles.css",
@@ -68,4 +71,18 @@ fn admin_blogs_route() -> Router<AppState> {
         .route("/:blog_id/edit", put(bo::put_edit_admin_blog))
         .route("/:blog_id/delete", get(bd::get_delete_admin_blog))
         .route("/:blog_id/delete", delete(bo::delete_delete_admin_blog))
+}
+
+fn admin_blogs_tags_route() -> Router<AppState> {
+    Router::new()
+        .route("/", get(btd::get_base_admin_tags))
+        .route("/list", get(btd::get_admin_tags_list))
+        .route("/search", get(btd::get_admin_tags_search))
+        .route("/add", get(btd::get_add_admin_tag))
+        .route("/add", post(bto::post_add_admin_tag))
+        .route("/:tag_id", get(btd::get_admin_tag))
+        .route("/:tag_id/edit", get(btd::get_edit_admin_tag))
+        .route("/:tag_id/edit", put(bto::put_edit_admin_tag))
+        .route("/:tag_id/delete", get(btd::get_delete_admin_tag))
+        .route("/:tag_id/delete", delete(bto::delete_delete_admin_tag))
 }

@@ -42,7 +42,7 @@ impl TagRepo for TursoDatabase {
             name: row.get(1).unwrap(),
         })
     }
-    async fn find_all(&self) -> Option<Tags> {
+    async fn find_all_tags(&self) -> Option<Tags> {
         let prep_query = r#"
             SELECT
                 id,
@@ -58,6 +58,82 @@ impl TagRepo for TursoDatabase {
             .expect("Failed to prepare find query.");
 
         let mut rows = stmt.query(()).await.expect("Failed to query tags.");
+
+        let mut tags: Vec<Tag> = Vec::new();
+
+        while let Some(row) = rows.next().await.unwrap() {
+            debug!("Debug Row {:?}", &row);
+            tags.push(Tag {
+                id: row.get(0).unwrap(),
+                name: row.get(1).unwrap(),
+            });
+        }
+
+        Some(Tags { tags })
+    }
+    async fn find_tags(&self, params: TagsListParams) -> Option<Tags> {
+        let start_seq = params.start.unwrap();
+        let end_seq = params.end.unwrap();
+        let limit = end_seq - start_seq;
+        let prep_query = r#"
+            SELECT
+                id,
+                name
+            FROM tags
+            LIMIT ?1
+            OFFSET ?2;
+        "#;
+        debug!(
+            "Executing query {} with limit {} and start sequence {}",
+            &prep_query, limit, start_seq
+        );
+
+        let mut stmt = self
+            .conn
+            .prepare(prep_query)
+            .await
+            .expect("Failed to prepare find query.");
+
+        let mut rows = stmt
+            .query([limit, start_seq])
+            .await
+            .expect("Failed to query tags.");
+
+        let mut tags: Vec<Tag> = Vec::new();
+
+        while let Some(row) = rows.next().await.unwrap() {
+            debug!("Debug Row {:?}", &row);
+            tags.push(Tag {
+                id: row.get(0).unwrap(),
+                name: row.get(1).unwrap(),
+            });
+        }
+
+        Some(Tags { tags })
+    }
+    async fn search_tags(&self, params: TagsSearchParams) -> Option<Tags> {
+        let start_seq = params.start.unwrap();
+        let end_seq = params.end.unwrap();
+        let limit = end_seq - start_seq;
+        let prep_query = format!(
+            "SELECT id, name FROM tags WHERE name LIKE '%{}%' LIMIT ?1 OFFSET ?2;",
+            params.query
+        );
+        debug!(
+            "Executing query {} with search string {} limit {} and start sequence {}",
+            &prep_query, &params.query, limit, start_seq
+        );
+
+        let mut stmt = self
+            .conn
+            .prepare(&prep_query)
+            .await
+            .expect("Failed to prepare search_tags query.");
+
+        let mut rows = stmt
+            .query((limit, start_seq))
+            .await
+            .expect("Failed to query tags.");
 
         let mut tags: Vec<Tag> = Vec::new();
 

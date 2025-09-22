@@ -22,7 +22,11 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - So the current workaround is to add a notes in the add and edit blog pages.
     - To add a div manually in the markdown file :") Yeah it's not ideal but it's what we have.
     - Also we enabled allo dangerous html in the markdown compiler config.
-
+### Admin stories
+- [ ] As an Admin, I want to have an administrator pages to manage my contents.
+    - We have implemented the `Blogs` and `Talks` administrator pages.
+    - We have implemented the `Tags` administrator pages.
+    
 ## TODO
 ### User stories
 - [ ] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
