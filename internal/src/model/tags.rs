@@ -28,3 +28,20 @@ pub enum TagCommandStatus {
     Updated,
     Deleted,
 }
+
+/// TagsParams
+/// Axum Query struct for `/admin/blogs/tags/list` query parameters
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct TagsListParams {
+    pub start: Option<i64>,
+    pub end: Option<i64>,
+}
+
+/// TagsSearchParams
+/// Axum Query struct for `/admin/blogs/tags/search` query parameters
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct TagsSearchParams {
+    pub start: Option<i64>,
+    pub end: Option<i64>,
+    pub query: String,
+}

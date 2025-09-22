@@ -1,0 +1,21 @@
+<form 
+    hx-put="/admin/blogs/tags/{{id}}/edit"
+    hx-target="#tag_{{id}}_target"
+    hx-swap="innerHTML">
+    <button class="btn_green" type="submit">Submit</button>
+    <button class="btn_red"
+        hx-get="/admin/blogs/tags/list"
+        hx-target="#tags_target"
+        hx-swap="innerHTML">
+        Cancel
+    </button>
+    <div>
+        <label for=tag_id>Tag ID :</label>
+        <input type="text" id="tag_id" name="tag_id" value="{{id}}"
+            class="readonly" readonly>
+    </div>
+    <div class="admin_input">
+        <label for=tag_name>Name :</label>
+        <input type="text" id="tag_name" name="tag_name" value="{{name}}"><br>
+    </div>
+</form>

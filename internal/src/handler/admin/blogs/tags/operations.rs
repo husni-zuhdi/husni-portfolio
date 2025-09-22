@@ -1,8 +1,7 @@
-use crate::handler::admin::blogs::displays::get_admin_blogs;
+use crate::handler::admin::blogs::tags::displays::{get_admin_tag, get_admin_tags_list};
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
-use crate::model::blogs::BlogsParams;
-use crate::model::tags::{Tag, TagCommandStatus};
+use crate::model::tags::{Tag, TagCommandStatus, TagsListParams};
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
 use axum::response::Html;
@@ -63,13 +62,12 @@ pub async fn post_add_admin_tag(State(app_state): State<AppState>, body: String)
         }
     }
 
-    let query_params = BlogsParams {
+    let query_params = TagsListParams {
         start: None,
         end: None,
-        tags: None,
     };
 
-    get_admin_blogs(State(app_state), Query(query_params)).await
+    get_admin_tags_list(State(app_state), Query(query_params)).await
 }
 
 /// put_edit_admin_tag
@@ -114,13 +112,7 @@ pub async fn put_edit_admin_tag(
         }
     }
 
-    let query_params = BlogsParams {
-        start: None,
-        end: None,
-        tags: None,
-    };
-
-    get_admin_blogs(State(app_state), Query(query_params)).await
+    get_admin_tag(Path(path), State(app_state)).await
 }
 
 /// delete_delete_admin_tag
@@ -158,11 +150,10 @@ pub async fn delete_delete_admin_tag(
         }
     }
 
-    let query_params = BlogsParams {
+    let query_params = TagsListParams {
         start: None,
         end: None,
-        tags: None,
     };
 
-    get_admin_blogs(State(app_state), Query(query_params)).await
+    get_admin_tags_list(State(app_state), Query(query_params)).await
 }

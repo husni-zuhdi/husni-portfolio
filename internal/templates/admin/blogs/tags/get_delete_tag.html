@@ -1,0 +1,13 @@
+<form 
+    hx-delete="/admin/blogs/tags/{{id}}/delete"
+    hx-target="#tags_target"
+    hx-swap="innerHTML">
+    <button class="btn_red" type="submit">Submit</button>
+    <button class="btn_blue"
+        hx-get="/admin/blogs/tags/{{id}}"
+        hx-target="#talk_{{id}}_target"
+        hx-swap="innerHTML">
+        Cancel
+    </button>
+    <label for=talk_id> Are you sure you want to delete Tag with ID {{id}}?</label>
+</form>
