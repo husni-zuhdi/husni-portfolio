@@ -1,4 +1,4 @@
-use crate::model::talks::{Talk, TalkCommandStatus, TalkEndPage, TalkId, TalkStartPage};
+use crate::model::talks::{Talk, TalkCommandStatus, TalkId, Talks, TalksParams};
 use async_trait::async_trait;
 use dyn_clone::{clone_trait_object, DynClone};
 
@@ -7,7 +7,7 @@ clone_trait_object!(TalkRepo);
 #[async_trait]
 pub trait TalkRepo: DynClone {
     async fn find(&self, id: TalkId) -> Option<Talk>;
-    async fn find_talks(&self, start: TalkStartPage, end: TalkEndPage) -> Option<Vec<Talk>>;
+    async fn find_talks(&self, params: TalksParams) -> Option<Talks>;
     async fn get_new_id(&self) -> Option<TalkId>;
     async fn add(
         &mut self,

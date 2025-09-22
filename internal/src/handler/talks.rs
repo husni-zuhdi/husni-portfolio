@@ -2,7 +2,7 @@ use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use askama::Template;
 use axum::response::Html;
 
-use crate::model::talks::{TalkEndPage, TalkPagination, TalkStartPage};
+use crate::model::talks::TalksParams;
 use crate::model::{
     axum::AppState,
     templates::{TalkTemplate, TalksTemplate},
@@ -16,33 +16,40 @@ use tracing::{debug, error, info};
 #[debug_handler]
 pub async fn get_talks(
     State(app_state): State<AppState>,
-    pagination: Query<TalkPagination>,
+    params: Query<TalksParams>,
 ) -> Html<String> {
     match app_state.talk_usecase.lock().await.clone() {
         Some(data) => {
             // Setup Pagination
-            debug!("Pagination {:?}", &pagination);
-            let start = match pagination.0.start {
+            debug!("Params {:?}", &params);
+            let start = match params.start {
                 Some(val) => val,
                 None => {
                     debug!("Set default start to 0");
-                    TalkStartPage(0)
+                    0_i64
                 }
             };
-            let end = match pagination.0.end {
+            let end = match params.end {
                 Some(val) => val,
                 None => {
                     debug!("Set default end to 10");
-                    TalkEndPage(10)
+                    10_i64
                 }
             };
 
             // Construct TalksTemplate Struct
             let empty_value = "".to_string();
-            let result = data.talk_repo.find_talks(start.clone(), end.clone()).await;
+            let result = data
+                .talk_repo
+                .find_talks(TalksParams {
+                    start: Some(start),
+                    end: Some(end),
+                })
+                .await;
             match result {
                 Some(talks_data) => {
                     let talks: Vec<TalkTemplate> = talks_data
+                        .talks
                         .iter()
                         .map(|talk| {
                             debug!("Construct TalkTemplate for Talk Id {}", &talk.id);
@@ -86,7 +93,7 @@ pub async fn get_talks(
                 None => {
                     error!(
                         "Failed to find talks with Talk Id started at {} and ended at {}.",
-                        &start.0, &end.0
+                        start, end
                     );
                     get_500_internal_server_error()
                 }

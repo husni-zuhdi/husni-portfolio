@@ -1,4 +1,4 @@
-use crate::model::talks::{Talk, TalkCommandStatus, TalkEndPage, TalkId, TalkStartPage};
+use crate::model::talks::{Talk, TalkCommandStatus, TalkId, Talks, TalksParams};
 use crate::repo::talks::TalkRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -19,8 +19,8 @@ impl TalkRepo for TalkUseCase {
     async fn find(&self, id: TalkId) -> Option<Talk> {
         self.talk_repo.find(id).await
     }
-    async fn find_talks(&self, start: TalkStartPage, end: TalkEndPage) -> Option<Vec<Talk>> {
-        self.talk_repo.find_talks(start, end).await
+    async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
+        self.talk_repo.find_talks(params).await
     }
     async fn get_new_id(&self) -> Option<TalkId> {
         self.talk_repo.get_new_id().await

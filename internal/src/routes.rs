@@ -50,7 +50,7 @@ fn talks_route() -> Router<AppState> {
 fn admin_talks_route() -> Router<AppState> {
     Router::new()
         .route("/", get(td::get_base_admin_talks))
-        .route("/get", get(td::get_admin_talks))
+        .route("/list", get(td::get_admin_talks_list))
         .route("/add", get(td::get_add_admin_talk))
         .route("/add", post(to::post_add_admin_talk))
         .route("/:talk_id", get(td::get_admin_talk))

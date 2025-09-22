@@ -73,9 +73,9 @@ impl TalkRepo for TursoDatabase {
             org_link,
         })
     }
-    async fn find_talks(&self, start: TalkStartPage, end: TalkEndPage) -> Option<Vec<Talk>> {
-        let start_seq = start.0;
-        let end_seq = end.0;
+    async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
+        let start_seq = params.start.unwrap();
+        let end_seq = params.end.unwrap();
         let limit = end_seq - start_seq;
         let prep_query = "SELECT * FROM talks ORDER BY id LIMIT ?1 OFFSET ?2";
         debug!(
@@ -124,7 +124,7 @@ impl TalkRepo for TursoDatabase {
             });
         }
 
-        Some(talks)
+        Some(Talks { talks })
     }
     async fn add(
         &mut self,

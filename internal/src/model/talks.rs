@@ -30,22 +30,17 @@ pub struct Talk {
     pub org_link: Option<String>,
 }
 
-/// TalkStartPage
-/// Start page of Talk Pagination
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TalkStartPage(pub i32);
+pub struct Talks {
+    pub talks: Vec<Talk>,
+}
 
-/// TalkEndPage
-/// End page of Talk Pagination
+/// TalksParams
+/// Axum parameters query for pagination
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TalkEndPage(pub i32);
-
-/// TalkPagination
-/// Axum Query struct for Talk Pagination
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TalkPagination {
-    pub start: Option<TalkStartPage>,
-    pub end: Option<TalkEndPage>,
+pub struct TalksParams {
+    pub start: Option<i64>,
+    pub end: Option<i64>,
 }
 
 /// TalkCommandStatus
