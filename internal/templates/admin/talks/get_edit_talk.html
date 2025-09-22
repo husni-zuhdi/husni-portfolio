@@ -1,31 +1,44 @@
-<form hx-put="/admin/talks/{{talk.id}}/edit" hx-target="#talk_{{talk.id}}_target" hx-swap="innerHTML">
+<form 
+    hx-put="/admin/talks/{{talk.id}}/edit"
+    hx-target="#talk_{{talk.id}}_target"
+    hx-swap="innerHTML">
     <div>
         <label for=talk_id>Talk ID :</label>
-        <input type="text" id="talk_id" name="talk_id" value="{{talk.id}}" class="readonly" readonly>
+        <input type="text" id="talk_id" name="talk_id" value="{{talk.id}}"
+            class="readonly" readonly>
     </div>
     <div class="admin_input">
         <label for=talk_name>Name :</label>
-        <input type="text" id="talk_name" name="talk_name" value="{{talk.name}}"><br>
+        <input type="text" id="talk_name" name="talk_name"
+            value="{{talk.name}}"><br>
     </div>
     <div class="admin_input">
         <label for=talk_date>Date :</label>
-        <input type="date" id="talk_date" name="talk_date" value="{{talk.date}}"><br>
+        <input type="date" id="talk_date" name="talk_date"
+            value="{{talk.date}}"><br>
     </div>
     <div class="admin_input">
         <label for=talk_media_link>Media Link :</label>
-        <input type="url" id="talk_media_link" name="talk_media_link" value="{{talk.media_link}}"><br>
+        <input type="url" id="talk_media_link" name="talk_media_link"
+            value="{{talk.media_link}}"><br>
     </div>
     <div class="admin_input">
         <label for=talk_org_name>Organization Name :</label>
-        <input type="text" id="talk_org_name" name="talk_org_name" value="{{talk.org_name}}"><br>
+        <input type="text" id="talk_org_name" name="talk_org_name"
+            value="{{talk.org_name}}"><br>
     </div>
     <div class="admin_input">
         <label for=talk_org_link>Organization Link :</label>
-        <input type="url" id="talk_org_link" name="talk_org_link" value="{{talk.org_link}}"><br>
+        <input type="url" id="talk_org_link" name="talk_org_link"
+            value="{{talk.org_link}}"><br>
     </div>
     <div>
         <button class="btn_green" type="submit">Submit</button>
-        <button class="btn_red" hx-get="/admin/talks/{{talk.id}}" hx-target="#talk_{{talk.id}}_target"
-            hx-swap="innerHTML">Cancel</button>
+        <button class="btn_red"
+            hx-get="/admin/talks/{{talk.id}}"
+            hx-target="#talk_{{talk.id}}_target"
+            hx-swap="innerHTML">
+            Cancel
+        </button>
     </div>
 </form>
