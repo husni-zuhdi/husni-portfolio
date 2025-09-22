@@ -107,6 +107,10 @@
     .readonly {
         @apply bg-gray-200;
     }
+
+    .top_section {
+        @apply py-3;
+    }
 }
 
 @layer utilities {
