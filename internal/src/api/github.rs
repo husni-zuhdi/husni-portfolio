@@ -1,4 +1,4 @@
-use crate::model::blogs::{Blog, BlogId, BlogMetadata, BlogSource};
+use crate::model::blogs::{Blog, BlogMetadata, BlogSource};
 use crate::model::github::{GithubBranch, GithubOwner, GithubRepository, GithubTree, GithubTrees};
 use crate::repo::api::ApiRepo;
 use crate::utils::capitalize;
@@ -80,7 +80,7 @@ impl GithubApiUseCase {
             self.github_owner, self.github_repo, self.github_branch
         );
         let github_trees = octocrab::instance()._get(trees_endpoint).await;
-        
+
         match github_trees {
             Ok(github_trees) => {
                 let body_bytes = github_trees.into_body().collect().await.unwrap().to_bytes();
@@ -130,7 +130,7 @@ impl GithubApiUseCase {
                         );
 
                         Some(BlogMetadata {
-                            id: BlogId { id },
+                            id,
                             name: blog_name,
                             filename,
                             // TODO: remove the empty tags
@@ -163,7 +163,7 @@ impl GithubApiUseCase {
     /// Returned Optional octocrab::models::Content
     async fn fetch_github_content(&self, url: String) -> Option<Content> {
         let github_content = octocrab::instance()._get(url.clone()).await;
-        
+
         match github_content {
             Ok(content) => {
                 let body_bytes = content.into_body().collect().await.unwrap().to_bytes();

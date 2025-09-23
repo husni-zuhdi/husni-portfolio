@@ -1,57 +1,14 @@
 use crate::handler::admin::blogs::displays::get_admin_blogs;
+use crate::handler::admin::blogs::process_blog_body;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
 use crate::model::blog_tag_mappings::{BlogTagMapping, BlogTagMappingCommandStatus};
-use crate::model::blogs::{Blog, BlogCommandStatus, BlogId, BlogsParams};
+use crate::model::blogs::{BlogCommandStatus, BlogsParams};
 use crate::model::tags::Tag;
-use crate::utils::remove_whitespace;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
 use axum::response::Html;
 use tracing::{debug, error, info, warn};
-use urlencoding::decode;
-
-// Take request body String from PUT and POST operations to create a new blog
-fn process_blog_body(body: String) -> Blog {
-    // Initialize fields
-    let mut blog_id = 0_i64;
-    let mut blog_name = String::new();
-    let mut blog_body = String::new();
-    let mut blog_tags = vec![String::new()];
-
-    let req_fields: Vec<&str> = body.split("&").collect();
-    for req_field in req_fields {
-        let (key, value) = req_field.split_once("=").unwrap();
-        let value_decoded = decode(value).unwrap();
-        debug!("Request field key/value {:?}/{:?}", key, value_decoded);
-        match key {
-            "blog_id" => {
-                blog_id = value_decoded
-                    .parse::<i64>()
-                    .expect("Failed to parse path from request body")
-            }
-            "blog_name" => blog_name = value_decoded.to_string(),
-            "blog_body" => blog_body = value_decoded.to_string(),
-            "blog_tag" => {
-                let clean_tag = remove_whitespace(&value_decoded);
-                blog_tags.push(clean_tag);
-            }
-            _ => {
-                warn!("Unrecognized key/value: {:?}/{:?}", key, value_decoded);
-                continue;
-            }
-        }
-    }
-
-    Blog {
-        id: BlogId { id: blog_id },
-        name: Some(blog_name),
-        body: Some(blog_body),
-        tags: Some(blog_tags),
-        source: None,
-        filename: None,
-    }
-}
 
 /// post_add_admin_blog
 /// Serve POST add blog endpoint
@@ -113,18 +70,18 @@ pub async fn post_add_admin_blog(State(app_state): State<AppState>, body: String
             .clone()
             .unwrap()
             .blog_tag_mapping_repo
-            .add(blog.id.id, tag.id)
+            .add(blog.id, tag.id)
             .await;
         if added_mapping.is_none() {
             error!(
                 "Failed to add blog tag mapping for blog id {} and tag id {}",
-                blog.id.id.clone(),
+                blog.id.clone(),
                 tag.id.clone()
             );
             return get_500_internal_server_error();
         }
         if added_mapping.unwrap() != BlogTagMappingCommandStatus::Stored {
-            error!("Failed to add blog tag mapping for blog id {} and tag id {}. Command Status is not Stored", blog.id.id.clone(), tag.id.clone());
+            error!("Failed to add blog tag mapping for blog id {} and tag id {}. Command Status is not Stored", blog.id.clone(), tag.id.clone());
             return get_500_internal_server_error();
         }
     }
@@ -193,7 +150,7 @@ pub async fn put_edit_admin_blog(
         .tags
         .iter()
         .filter(|t| blog.tags.clone().unwrap().contains(&t.name))
-        .map(|t| t.id.clone())
+        .map(|t| t.id)
         .collect();
     debug!("Selected Tag IDs {:?}", &selected_tag_ids);
 
@@ -324,12 +281,7 @@ pub async fn delete_delete_admin_blog(
         }
     };
 
-    let delete_result = blog_uc
-        .blog_repo
-        .delete(BlogId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let delete_result = blog_uc.blog_repo.delete(id.clone().unwrap()).await;
 
     match delete_result {
         Some(blog_command_status) => {

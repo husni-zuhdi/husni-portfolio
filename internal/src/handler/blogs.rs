@@ -1,5 +1,5 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use crate::model::blogs::{BlogEndPage, BlogId, BlogStartPage, BlogsParams};
+use crate::model::blogs::{BlogEndPage, BlogStartPage, BlogsParams};
 use crate::model::{
     axum::AppState,
     templates::{BlogMetadataTemplate, BlogTemplate, BlogsTemplate},
@@ -61,7 +61,7 @@ pub async fn get_blogs(
                 .map(|blog| {
                     debug!("Construct BlogMetadataTemplate for Blog Id {}", &blog.id);
                     BlogMetadataTemplate {
-                        id: blog.id.id,
+                        id: blog.id,
                         name: blog.name.clone(),
                         tags: blog.tags.clone(),
                     }
@@ -116,12 +116,7 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
     let data = app_state.blog_usecase.lock().await;
 
     // Construct BlogTemplate Struct
-    let result = data
-        .blog_repo
-        .find(BlogId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let result = data.blog_repo.find(id.clone().unwrap()).await;
     match result {
         Some(blog_data) => {
             let raw_body = blog_data.body.unwrap();

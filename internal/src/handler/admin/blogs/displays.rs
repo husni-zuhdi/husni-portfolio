@@ -1,6 +1,6 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
-use crate::model::blogs::{BlogEndPage, BlogId, BlogStartPage, BlogsParams};
+use crate::model::blogs::{BlogEndPage, BlogStartPage, BlogsParams};
 use crate::model::templates::BlogMetadataTemplate;
 use crate::model::templates_admin::{
     AdminBlogsTemplate, AdminGetAddBlogTemplate, AdminGetBlogTemplate, AdminGetBlogsTemplate,
@@ -65,7 +65,7 @@ pub async fn get_base_admin_blogs(
                 .map(|blog| {
                     debug!("Construct BlogMetadataTemplate for Blog Id {}", &blog.id);
                     BlogMetadataTemplate {
-                        id: blog.id.id,
+                        id: blog.id,
                         name: blog.name.clone(),
                         tags: blog.tags.clone(),
                     }
@@ -148,7 +148,7 @@ pub async fn get_admin_blogs(
                 .map(|blog| {
                     debug!("Construct BlogMetadataTemplate for Blog Id {}", &blog.id);
                     BlogMetadataTemplate {
-                        id: blog.id.id,
+                        id: blog.id,
                         name: blog.name.clone(),
                         tags: blog.tags.clone(),
                     }
@@ -201,12 +201,7 @@ pub async fn get_admin_blog(
         }
     };
 
-    let result = data
-        .blog_repo
-        .find(BlogId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let result = data.blog_repo.find(id.clone().unwrap()).await;
 
     match result {
         Some(blog_data) => {
@@ -215,7 +210,7 @@ pub async fn get_admin_blog(
                 &blog_data.id
             );
             let blog_metadata = BlogMetadataTemplate {
-                id: blog_data.id.id,
+                id: blog_data.id,
                 name: blog_data.name.clone().unwrap(),
                 tags: blog_data.tags.clone().unwrap(),
             };
@@ -257,10 +252,7 @@ pub async fn get_add_admin_blog(State(app_state): State<AppState>) -> Html<Strin
         error!("Failed to get new Blog ID.");
         return get_500_internal_server_error();
     };
-    debug!(
-        "Construct AdminGetAddBlogTemplate for Blog Id {}",
-        &blog_id.id
-    );
+    debug!("Construct AdminGetAddBlogTemplate for Blog Id {}", &blog_id);
 
     let tag_uc = app_state.tag_usecase.lock().await;
     if tag_uc.is_none() {
@@ -282,7 +274,7 @@ pub async fn get_add_admin_blog(State(app_state): State<AppState>) -> Html<Strin
         .collect();
 
     let add_blog = AdminGetAddBlogTemplate {
-        id: blog_id.id,
+        id: blog_id,
         avail_tags,
     }
     .render();
@@ -320,12 +312,7 @@ pub async fn get_edit_admin_blog(
         }
     };
 
-    let blog_result = blog_uc
-        .blog_repo
-        .find(BlogId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let blog_result = blog_uc.blog_repo.find(id.clone().unwrap()).await;
 
     let Some(blog_data) = blog_result else {
         info!("Failed to find Blog with Id {}.", &path);
@@ -401,12 +388,7 @@ pub async fn get_delete_admin_blog(
         }
     };
 
-    let result = data
-        .blog_repo
-        .find(BlogId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let result = data.blog_repo.find(id.clone().unwrap()).await;
 
     match result {
         Some(blog_data) => {

@@ -1,19 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-/// BlogId
-/// Identifier of Blog
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogId {
-    pub id: i64,
-}
-
-impl Display for BlogId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.id)
-    }
-}
-
 /// BlogCommandStatus
 /// Status of Blog Command Operations:
 /// - Stored
@@ -62,7 +49,7 @@ impl Display for BlogSource {
 /// - tags: Blog tags
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Blog {
-    pub id: BlogId,
+    pub id: i64,
     pub name: Option<String>,
     pub source: Option<BlogSource>,
     pub filename: Option<String>,
@@ -94,7 +81,7 @@ pub struct BlogsParams {
 /// filename can be full filename in filesystem or url to github blog content
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogMetadata {
-    pub id: BlogId,
+    pub id: i64,
     pub name: String,
     pub filename: String,
     pub tags: Vec<String>,
