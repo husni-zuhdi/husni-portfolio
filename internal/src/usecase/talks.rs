@@ -1,4 +1,4 @@
-use crate::model::talks::{Talk, TalkCommandStatus, TalkEndPage, TalkId, TalkStartPage};
+use crate::model::talks::{Talk, TalkCommandStatus, Talks, TalksParams};
 use crate::repo::talks::TalkRepo;
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -16,18 +16,18 @@ impl Debug for dyn TalkRepo + Send + Sync {
 
 #[async_trait]
 impl TalkRepo for TalkUseCase {
-    async fn find(&self, id: TalkId) -> Option<Talk> {
+    async fn find(&self, id: i64) -> Option<Talk> {
         self.talk_repo.find(id).await
     }
-    async fn find_talks(&self, start: TalkStartPage, end: TalkEndPage) -> Option<Vec<Talk>> {
-        self.talk_repo.find_talks(start, end).await
+    async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
+        self.talk_repo.find_talks(params).await
     }
-    async fn get_new_id(&self) -> Option<TalkId> {
+    async fn get_new_id(&self) -> Option<i64> {
         self.talk_repo.get_new_id().await
     }
     async fn add(
         &mut self,
-        id: TalkId,
+        id: i64,
         name: String,
         date: String,
         media_link: Option<String>,
@@ -40,7 +40,7 @@ impl TalkRepo for TalkUseCase {
     }
     async fn update(
         &mut self,
-        id: TalkId,
+        id: i64,
         name: Option<String>,
         date: Option<String>,
         media_link: Option<String>,
@@ -51,7 +51,7 @@ impl TalkRepo for TalkUseCase {
             .update(id, name, date, media_link, org_name, org_link)
             .await
     }
-    async fn delete(&mut self, id: TalkId) -> Option<TalkCommandStatus> {
+    async fn delete(&mut self, id: i64) -> Option<TalkCommandStatus> {
         self.talk_repo.delete(id).await
     }
 }

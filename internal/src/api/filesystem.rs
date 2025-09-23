@@ -1,4 +1,4 @@
-use crate::model::blogs::{Blog, BlogId, BlogMetadata, BlogSource};
+use crate::model::blogs::{Blog, BlogMetadata, BlogSource};
 use crate::repo::api::ApiRepo;
 use crate::utils::{capitalize, convert_markdown_to_html};
 use async_trait::async_trait;
@@ -96,7 +96,7 @@ impl FilesystemApiUseCase {
         debug!("Blog Filename with Id {}: {}", &id, &filename);
 
         BlogMetadata {
-            id: BlogId { id },
+            id,
             name,
             filename,
             // TODO: remove the empty tags

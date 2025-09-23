@@ -2,13 +2,11 @@ use crate::database::turso::TursoDatabase;
 use crate::model::blogs::*;
 use crate::repo::blogs::BlogRepo;
 use async_trait::async_trait;
-use libsql::de;
 use tracing::{debug, error, info};
 
 #[async_trait]
 impl BlogRepo for TursoDatabase {
-    async fn find(&self, id: BlogId) -> Option<Blog> {
-        let blog_id = id.id;
+    async fn find(&self, id: i64) -> Option<Blog> {
         let prep_query = r#"
             SELECT 
                 blogs.id AS id,
@@ -24,7 +22,7 @@ impl BlogRepo for TursoDatabase {
             GROUP BY blogs.name
             ORDER BY blogs.id;
         "#;
-        debug!("Executing query {} for id {}", &prep_query, &blog_id);
+        debug!("Executing query {} for id {}", &prep_query, &id);
 
         let mut stmt = self
             .conn
@@ -33,7 +31,7 @@ impl BlogRepo for TursoDatabase {
             .expect("Failed to prepare find Blog query.");
 
         let res = stmt
-            .query([blog_id])
+            .query([id])
             .await
             .expect("Failed to query a blog.")
             .next()
@@ -61,9 +59,7 @@ impl BlogRepo for TursoDatabase {
                     .collect();
 
                 Some(Blog {
-                    id: BlogId {
-                        id: row.get(0).unwrap(),
-                    },
+                    id: row.get(0).unwrap(),
                     name: Some(row.get(1).unwrap()),
                     source: Some(source),
                     filename: Some(row.get(3).unwrap()),
@@ -72,7 +68,7 @@ impl BlogRepo for TursoDatabase {
                 })
             }
             None => {
-                debug!("No Blog with Id {} is available.", &blog_id);
+                debug!("No Blog with Id {} is available.", &id);
                 None
             }
         }
@@ -82,8 +78,8 @@ impl BlogRepo for TursoDatabase {
         let end = query_params.end.unwrap();
         let tags = query_params.tags.unwrap();
 
-        let start_seq = start.0;
-        let end_seq = end.0;
+        let start_seq = start;
+        let end_seq = end;
         let limit = end_seq - start_seq;
 
         let tag_names: Vec<String> = tags
@@ -150,9 +146,7 @@ impl BlogRepo for TursoDatabase {
                 .collect();
 
             blogs.push(BlogMetadata {
-                id: BlogId {
-                    id: row.get(0).unwrap(),
-                },
+                id: row.get(0).unwrap(),
                 name: row.get(1).unwrap(),
                 filename: row.get(2).unwrap(),
                 tags,
@@ -161,10 +155,9 @@ impl BlogRepo for TursoDatabase {
 
         Some(blogs)
     }
-    async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {
-        let blog_id = id.id;
+    async fn check_id(&self, id: i64) -> Option<BlogCommandStatus> {
         let prep_query = "SELECT id FROM blogs WHERE id = ?1 ORDER BY id";
-        debug!("Executing query {} for id {}", &prep_query, &blog_id);
+        debug!("Executing query {} for id {}", &prep_query, &id);
 
         let mut stmt = self
             .conn
@@ -173,7 +166,7 @@ impl BlogRepo for TursoDatabase {
             .expect("Failed to prepare find query.");
 
         let row = stmt
-            .query([blog_id])
+            .query([id])
             .await
             .expect("Failed to query blog id.")
             .next()
@@ -182,17 +175,17 @@ impl BlogRepo for TursoDatabase {
 
         match row {
             Some(val) => {
-                let id: BlogId = de::from_row(&val).unwrap();
-                info!("Blog {:?} is in Turso.", &id);
+                let checked_id: i64 = val.get(0).unwrap();
+                info!("Blog {:?} is in Turso.", &checked_id);
                 Some(BlogCommandStatus::Stored)
             }
             None => {
-                info!("Blog {} is not in Turso.", &blog_id);
+                info!("Blog {} is not in Turso.", &id);
                 None
             }
         }
     }
-    async fn get_new_id(&self) -> Option<BlogId> {
+    async fn get_new_id(&self) -> Option<i64> {
         let prep_query = "SELECT COUNT(id) AS length FROM blogs";
         debug!("Executing lenght query {}", &prep_query);
 
@@ -211,10 +204,10 @@ impl BlogRepo for TursoDatabase {
         let lenght_id: Option<i64> = row.get(0).unwrap();
         let new_id = lenght_id.unwrap() + 1;
 
-        Some(BlogId { id: new_id })
+        Some(new_id)
     }
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        let blog_id = &blog.id.id;
+        let blog_id = &blog.id;
         let blog_name = &blog.name.unwrap();
         let blog_filename = &blog.filename.unwrap_or("".to_string());
         let blog_source = if blog.source.is_none() {
@@ -251,10 +244,9 @@ impl BlogRepo for TursoDatabase {
 
         Some(BlogCommandStatus::Stored)
     }
-    async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
-        let blog_id = id.id;
+    async fn delete(&mut self, id: i64) -> Option<BlogCommandStatus> {
         let prep_query = "DELETE FROM blogs WHERE id = ?1";
-        debug!("Executing query {} for id {}", &prep_query, &blog_id);
+        debug!("Executing query {} for id {}", &prep_query, &id);
 
         let mut stmt = self
             .conn
@@ -262,22 +254,19 @@ impl BlogRepo for TursoDatabase {
             .await
             .expect("Failed to prepare delete command.");
 
-        match stmt.execute([blog_id]).await {
+        match stmt.execute([id]).await {
             Ok(val) => {
-                debug!(
-                    "Blog {} was deleted. Execution returned : {}",
-                    &blog_id, val
-                );
+                debug!("Blog {} was deleted. Execution returned : {}", &id, val);
                 Some(BlogCommandStatus::Deleted)
             }
             Err(err) => {
-                debug!("Blog {} is not deleted in Turso. Error {}", &blog_id, err);
+                debug!("Blog {} is not deleted in Turso. Error {}", &id, err);
                 None
             }
         }
     }
     async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        let blog_id = &blog.id.id;
+        let blog_id = &blog.id;
         let mut affected_col = "".to_string();
         match &blog.name {
             Some(val) => {

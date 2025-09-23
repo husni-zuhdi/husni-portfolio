@@ -1,19 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-/// BlogId
-/// Identifier of Blog
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogId {
-    pub id: i64,
-}
-
-impl Display for BlogId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.id)
-    }
-}
-
 /// BlogCommandStatus
 /// Status of Blog Command Operations:
 /// - Stored
@@ -62,7 +49,7 @@ impl Display for BlogSource {
 /// - tags: Blog tags
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Blog {
-    pub id: BlogId,
+    pub id: i64,
     pub name: Option<String>,
     pub source: Option<BlogSource>,
     pub filename: Option<String>,
@@ -70,22 +57,12 @@ pub struct Blog {
     pub tags: Option<Vec<String>>,
 }
 
-/// BlogStartPage
-/// Start page of Blog Pagination
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogStartPage(pub i64);
-
-/// BlogEndPage
-/// End page of Blog Pagination
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogEndPage(pub i64);
-
 /// BlogsParams
 /// Axum Query struct for `/blogs` query parameters
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogsParams {
-    pub start: Option<BlogStartPage>,
-    pub end: Option<BlogEndPage>,
+    pub start: Option<i64>,
+    pub end: Option<i64>,
     pub tags: Option<String>,
 }
 
@@ -94,7 +71,7 @@ pub struct BlogsParams {
 /// filename can be full filename in filesystem or url to github blog content
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogMetadata {
-    pub id: BlogId,
+    pub id: i64,
     pub name: String,
     pub filename: String,
     pub tags: Vec<String>,

@@ -12,7 +12,7 @@ pub struct MemoryBlogRepo {
 
 #[async_trait]
 impl BlogRepo for MemoryBlogRepo {
-    async fn find(&self, id: BlogId) -> Option<Blog> {
+    async fn find(&self, id: i64) -> Option<Blog> {
         let result = self.blogs.iter().find(|blog| blog.id == id);
         match result {
             Some(blog) => {
@@ -36,30 +36,30 @@ impl BlogRepo for MemoryBlogRepo {
             .map(|tag| tag.to_string())
             .collect();
 
-        let start_seq = if start.0 as usize > self.blogs.len() {
+        let start_seq = if start as usize > self.blogs.len() {
             warn!("BlogStartPage is greater than Blogs count. Will reset to 0.");
             0_i64
         } else {
-            start.0
+            start
         };
 
-        let end_seq = if (end.0 as usize > self.blogs.len()) && self.blogs.len() > 10 {
+        let end_seq = if (end as usize > self.blogs.len()) && self.blogs.len() > 10 {
             warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
             10_i64
-        } else if (end.0 as usize > self.blogs.len()) && self.blogs.len() < 10 {
+        } else if (end as usize > self.blogs.len()) && self.blogs.len() < 10 {
             warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
             self.blogs.len() as i64
-        } else if start.0 as usize > end.0 as usize {
+        } else if start as usize > end as usize {
             warn!("BlogStartPage is greater than BlogEndPage. Will reset to 10.");
             self.blogs.len() as i64
         } else {
-            end.0
+            end
         };
 
         let result: &Vec<&Blog> = &self
             .blogs
             .iter()
-            .filter(|blog| blog.id.id >= start_seq && blog.id.id < end_seq)
+            .filter(|blog| blog.id >= start_seq && blog.id < end_seq)
             .filter(|blog| {
                 // Basically we need an OR operation to determine which tags
                 // To be displayed. It's an OR operation because I want to show
@@ -70,7 +70,7 @@ impl BlogRepo for MemoryBlogRepo {
                     match &blog.tags {
                         Some(blog_tags) => {
                             if !blog_tags.contains(tag) {
-                                debug!("Tag: {} is not available in blog {}", &tag, &blog.id.id);
+                                debug!("Tag: {} is not available in blog {}", &tag, &blog.id);
                                 are_tags_matched = are_tags_matched || false;
                             }
                         }
@@ -84,7 +84,7 @@ impl BlogRepo for MemoryBlogRepo {
         if result.is_empty() {
             info!(
                 "Blogs started at {} and ended at {} were not found. Return None",
-                &start.0, &end.0
+                &start, &end
             );
             None
         } else {
@@ -102,7 +102,7 @@ impl BlogRepo for MemoryBlogRepo {
             )
         }
     }
-    async fn check_id(&self, id: BlogId) -> Option<BlogCommandStatus> {
+    async fn check_id(&self, id: i64) -> Option<BlogCommandStatus> {
         let result = self.blogs.iter().find(|blog| blog.id == id);
         match result {
             Some(blog) => {
@@ -115,16 +115,16 @@ impl BlogRepo for MemoryBlogRepo {
             }
         }
     }
-    async fn get_new_id(&self) -> Option<BlogId> {
+    async fn get_new_id(&self) -> Option<i64> {
         if self.blogs.is_empty() {
             info!("Blogs is empty. The new Blog ID is 1 in Memory.");
-            return Some(BlogId { id: 1 });
+            return Some(1_i64);
         }
 
         let result: i64 = self.blogs.len().try_into().unwrap();
         let new_id = result + 1;
         info!("The new Blog ID is {} in Memory.", &new_id);
-        Some(BlogId { id: new_id })
+        Some(new_id)
     }
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
         self.blogs.push(blog.clone());
@@ -132,7 +132,7 @@ impl BlogRepo for MemoryBlogRepo {
         debug!("Blog HTML {:?}.", &blog.body);
         Some(BlogCommandStatus::Stored)
     }
-    async fn delete(&mut self, id: BlogId) -> Option<BlogCommandStatus> {
+    async fn delete(&mut self, id: i64) -> Option<BlogCommandStatus> {
         let result = self.blogs.iter().position(|blog| blog.id == id);
         match result {
             Some(val) => {
@@ -148,9 +148,7 @@ impl BlogRepo for MemoryBlogRepo {
         }
     }
     async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        let result: Option<&mut Blog> = self
-            .blogs
-            .iter_mut().find(|blog| blog.id == blog.id);
+        let result: Option<&mut Blog> = self.blogs.iter_mut().find(|blog| blog.id == blog.id);
 
         match result {
             Some(in_mem_blog) => {

@@ -1,18 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
-
-/// TalkId
-/// Identifier of a Talk
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TalkId {
-    pub id: i64,
-}
-
-impl Display for TalkId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.id)
-    }
-}
 
 /// Talk
 /// Talk data with fields:
@@ -22,7 +8,7 @@ impl Display for TalkId {
 /// - org_link: (Optional) Talk organisation link
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Talk {
-    pub id: TalkId,
+    pub id: i64,
     pub name: String,
     pub date: String,
     pub media_link: Option<String>,
@@ -30,22 +16,17 @@ pub struct Talk {
     pub org_link: Option<String>,
 }
 
-/// TalkStartPage
-/// Start page of Talk Pagination
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TalkStartPage(pub i32);
+pub struct Talks {
+    pub talks: Vec<Talk>,
+}
 
-/// TalkEndPage
-/// End page of Talk Pagination
+/// TalksParams
+/// Axum parameters query for pagination
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TalkEndPage(pub i32);
-
-/// TalkPagination
-/// Axum Query struct for Talk Pagination
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TalkPagination {
-    pub start: Option<TalkStartPage>,
-    pub end: Option<TalkEndPage>,
+pub struct TalksParams {
+    pub start: Option<i64>,
+    pub end: Option<i64>,
 }
 
 /// TalkCommandStatus

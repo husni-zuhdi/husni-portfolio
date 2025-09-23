@@ -4,9 +4,7 @@ use crate::model::{tags::Tag, templates::BlogMetadataTemplate};
 
 #[derive(Template, Debug)]
 #[template(path = "admin/talks/talks.html")]
-pub struct AdminTalksTemplate {
-    pub talks: Vec<AdminTalkTemplate>,
-}
+pub struct AdminTalksTemplate {}
 
 #[derive(Template, Debug)]
 #[template(path = "admin/talks/get_add_talk.html")]
@@ -34,8 +32,8 @@ pub struct AdminGetTalkTemplate {
 }
 
 #[derive(Template, Debug)]
-#[template(path = "admin/talks/get_talks.html")]
-pub struct AdminGetTalksTemplate {
+#[template(path = "admin/talks/list_talks.html")]
+pub struct AdminListTalksTemplate {
     pub talks: Vec<AdminTalkTemplate>,
 }
 
@@ -51,14 +49,11 @@ pub struct AdminTalkTemplate {
 
 #[derive(Template, Debug)]
 #[template(path = "admin/blogs/blogs.html")]
-pub struct AdminBlogsTemplate {
-    pub blogs: Vec<BlogMetadataTemplate>,
-    pub active_tags: Vec<String>,
-}
+pub struct AdminBlogsTemplate {}
 
 #[derive(Template, Debug)]
-#[template(path = "admin/blogs/get_blogs.html")]
-pub struct AdminGetBlogsTemplate {
+#[template(path = "admin/blogs/list_blogs.html")]
+pub struct AdminListBlogsTemplate {
     pub blogs: Vec<BlogMetadataTemplate>,
     pub active_tags: Vec<String>,
 }
