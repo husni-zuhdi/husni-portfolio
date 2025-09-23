@@ -63,7 +63,7 @@ fn admin_talks_route() -> Router<AppState> {
 fn admin_blogs_route() -> Router<AppState> {
     Router::new()
         .route("/", get(bd::get_base_admin_blogs))
-        .route("/get", get(bd::get_admin_blogs))
+        .route("/list", get(bd::get_admin_blogs_list))
         .route("/add", get(bd::get_add_admin_blog))
         .route("/add", post(bo::post_add_admin_blog))
         .route("/:blog_id", get(bd::get_admin_blog))

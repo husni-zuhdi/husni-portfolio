@@ -78,8 +78,8 @@ impl BlogRepo for TursoDatabase {
         let end = query_params.end.unwrap();
         let tags = query_params.tags.unwrap();
 
-        let start_seq = start.0;
-        let end_seq = end.0;
+        let start_seq = start;
+        let end_seq = end;
         let limit = end_seq - start_seq;
 
         let tag_names: Vec<String> = tags

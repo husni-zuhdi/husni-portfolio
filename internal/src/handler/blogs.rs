@@ -1,5 +1,5 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use crate::model::blogs::{BlogEndPage, BlogStartPage, BlogsParams};
+use crate::model::blogs::BlogsParams;
 use crate::model::{
     axum::AppState,
     templates::{BlogMetadataTemplate, BlogTemplate, BlogsTemplate},
@@ -24,22 +24,22 @@ pub async fn get_blogs(
 
     // Setup Pagination
     debug!("Query Parameters {:?}", &params);
-    let start = match params.0.start {
+    let start = match params.start {
         Some(val) => val,
         None => {
             debug!("Set default start to 0");
-            BlogStartPage(0)
+            0_i64
         }
     };
-    let end = match params.0.end {
+    let end = match params.end {
         Some(val) => val,
         None => {
             debug!("Set default end to 10");
-            BlogEndPage(10)
+            10_i64
         }
     };
-    let tags: String = match params.0.tags {
-        Some(val) => remove_whitespace(&val),
+    let tags: String = match &params.tags {
+        Some(val) => remove_whitespace(val),
         None => {
             debug!("Set default tags to empty");
             "".to_string()
@@ -47,8 +47,8 @@ pub async fn get_blogs(
     };
 
     let query_params = BlogsParams {
-        start: Some(start.clone()),
-        end: Some(end.clone()),
+        start: Some(start),
+        end: Some(end),
         tags: Some(tags.clone()),
     };
 
@@ -86,7 +86,7 @@ pub async fn get_blogs(
         None => {
             error!(
                 "Failed to find blogs with Blog Id started at {} and ended at {}.",
-                &start.0, &end.0
+                &start, &end
             );
             get_500_internal_server_error()
         }

@@ -1,4 +1,4 @@
-use crate::handler::admin::blogs::displays::get_admin_blogs;
+use crate::handler::admin::blogs::displays::get_admin_blogs_list;
 use crate::handler::admin::blogs::process_blog_body;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
@@ -92,7 +92,7 @@ pub async fn post_add_admin_blog(State(app_state): State<AppState>, body: String
         tags: None,
     };
 
-    get_admin_blogs(State(app_state), Query(query_params)).await
+    get_admin_blogs_list(State(app_state), Query(query_params)).await
 }
 
 /// put_edit_admin_blog
@@ -258,7 +258,7 @@ pub async fn put_edit_admin_blog(
         tags: None,
     };
 
-    get_admin_blogs(State(app_state), Query(query_params)).await
+    get_admin_blogs_list(State(app_state), Query(query_params)).await
 }
 
 /// delete_delete_admin_blog
@@ -329,5 +329,5 @@ pub async fn delete_delete_admin_blog(
         tags: None,
     };
 
-    get_admin_blogs(State(app_state), Query(query_params)).await
+    get_admin_blogs_list(State(app_state), Query(query_params)).await
 }

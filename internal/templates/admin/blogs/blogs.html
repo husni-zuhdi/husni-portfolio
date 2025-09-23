@@ -9,44 +9,33 @@
         Admin Blogs
     </h1>
     <p>Manage your Blogs. Story glory berry grizly.</p>
-    <button class="btn_blue"
-        hx-get="/admin/blogs/tags"
-        hx-target="#body_target"
-        hx-swap="outerHTML"
-        hx-replace-url="true">
-        Manage Blog Tags
-    </button>
+
+    <div class="flex flex-col justify-between lg:flex-row">
+        <div class="top_section items-center">
+            <button class="btn_blue"
+                hx-get="/admin/blogs/tags"
+                hx-target="#body_target"
+                hx-swap="outerHTML"
+                hx-replace-url="true">
+                Manage Blog Tags
+            </button>
+            <button class="btn_green"
+                hx-get="/admin/blogs/add"
+                hx-target="#tags_target"
+                hx-swap="innerHTML">
+                +
+            </button>
+        </div>
+        <div class="top_section">
+            <input type="search" name="query" placeholder="Type to Search Blogs..."
+                hx-get="/admin/blogs/search"
+                hx-trigger="input changed delay:500ms, keyup[key=='Enter'], load"
+                hx-target="#tags_target">
+        </div>
+    </div>
 </div>
 <hr>
 
-<div id="blogs_target">
-    {% for blog in blogs %}
-        <h2 class="mb-2 hover:font-bold md:justify-start">
-            <div id="blog_{{blog.id}}_target">
-                <button hx-get="/admin/blogs/{{blog.id}}/edit" hx-target="#blogs_target" hx-swap="innerHTML" class="btn_blue">
-                    Edit
-                </button>
-                <button hx-get="/admin/blogs/{{blog.id}}/delete" hx-target="#blog_{{blog.id}}_target" hx-swap="innerHTML" class="btn_red">
-                    Delete
-                </button>
-                {{blog.name}}
-                {% for tag in blog.tags %}
-                    {% if tag == "" %}
-                       <!-- No tag to render  -->
-                       <!-- Skip this tag -->
-                    {% else %}
-                        <button class="inactive_tag">
-                            {{tag}}
-                        </button>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </h2>
-    {% endfor %}
-    <h2 class="mb-2 hover:font-bold md:justify-start">
-        <button hx-get="/admin/blogs/add" hx-target="#blogs_target" hx-swap="innerHTML" class="btn_green">
-            Add
-        </button>
-    </h2>
+<div id="blogs_target" hx-get="/admin/blogs/list" hx-trigger="load">
 </div>
 {% endblock content %}

@@ -1,9 +1,19 @@
-<form hx-delete="/admin/blogs/{{id}}/delete" hx-target="#blogs_target" hx-swap="innerHTML">
+<form 
+    hx-delete="/admin/blogs/{{id}}/delete" 
+    hx-target="#blogs_target"
+    hx-swap="innerHTML">
     <div>
-        <label for=talk_id> Are you sure you want to delete Blog with ID {{id}}?</label>
+        <label for=talk_id>
+            Are you sure you want to delete Blog with ID {{id}}?
+        </label>
     </div>
     <div>
-        <button class="btn_red" type="submit">Submit</button>
-        <button class="btn_blue" hx-get="/admin/blogs/{{id}}" hx-target="#blog_{{id}}_target" hx-swap="innerHTML">Cancel</button>
+        <button class="btn_red" type="submit">o</button>
+        <button class="btn_blue" 
+            hx-get="/admin/blogs/{{id}}" 
+            hx-target="#blog_{{id}}_target" 
+            hx-swap="innerHTML">
+            x
+        </button>
     </div>
 </form>

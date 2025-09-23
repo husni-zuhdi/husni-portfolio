@@ -1,0 +1,34 @@
+{% for blog in blogs %}
+    <h2 class="mb-2 hover:font-bold md:justify-start">
+        <div id="blog_{{blog.id}}_target">
+            <div id="blog_{{blog.id}}_main_target">
+                <button class="btn_blue"
+                    hx-get="/admin/blogs/{{blog.id}}/edit"
+                    hx-target="#blogs_target" 
+                    hx-swap="innerHTML">
+                    *
+                </button>
+                <button class="btn_red"
+                    hx-get="/admin/blogs/{{blog.id}}/delete" 
+                    hx-target="#blog_{{blog.id}}_target" 
+                    hx-swap="innerHTML">
+                    x
+                </button>
+                {{blog.name}}
+            </div>
+            <div id="blog_{{blog.id}}_tags_target"
+                class="flex justify-start lg:justify-end">
+                {% for tag in blog.tags %}
+                    {% if tag == "" %}
+                       <!-- No tag to render  -->
+                       <!-- Skip this tag -->
+                    {% else %}
+                        <button class="inactive_tag">
+                            {{tag}}
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </h2>
+{% endfor %}

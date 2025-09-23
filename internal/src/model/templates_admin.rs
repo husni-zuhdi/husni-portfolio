@@ -49,14 +49,11 @@ pub struct AdminTalkTemplate {
 
 #[derive(Template, Debug)]
 #[template(path = "admin/blogs/blogs.html")]
-pub struct AdminBlogsTemplate {
-    pub blogs: Vec<BlogMetadataTemplate>,
-    pub active_tags: Vec<String>,
-}
+pub struct AdminBlogsTemplate {}
 
 #[derive(Template, Debug)]
-#[template(path = "admin/blogs/get_blogs.html")]
-pub struct AdminGetBlogsTemplate {
+#[template(path = "admin/blogs/list_blogs.html")]
+pub struct AdminListBlogsTemplate {
     pub blogs: Vec<BlogMetadataTemplate>,
     pub active_tags: Vec<String>,
 }

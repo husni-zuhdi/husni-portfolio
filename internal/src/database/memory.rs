@@ -36,24 +36,24 @@ impl BlogRepo for MemoryBlogRepo {
             .map(|tag| tag.to_string())
             .collect();
 
-        let start_seq = if start.0 as usize > self.blogs.len() {
+        let start_seq = if start as usize > self.blogs.len() {
             warn!("BlogStartPage is greater than Blogs count. Will reset to 0.");
             0_i64
         } else {
-            start.0
+            start
         };
 
-        let end_seq = if (end.0 as usize > self.blogs.len()) && self.blogs.len() > 10 {
+        let end_seq = if (end as usize > self.blogs.len()) && self.blogs.len() > 10 {
             warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
             10_i64
-        } else if (end.0 as usize > self.blogs.len()) && self.blogs.len() < 10 {
+        } else if (end as usize > self.blogs.len()) && self.blogs.len() < 10 {
             warn!("BlogEndPage is greater than Blogs count. Will reset to Blogs count or 10, whichever is lesser.");
             self.blogs.len() as i64
-        } else if start.0 as usize > end.0 as usize {
+        } else if start as usize > end as usize {
             warn!("BlogStartPage is greater than BlogEndPage. Will reset to 10.");
             self.blogs.len() as i64
         } else {
-            end.0
+            end
         };
 
         let result: &Vec<&Blog> = &self
@@ -84,7 +84,7 @@ impl BlogRepo for MemoryBlogRepo {
         if result.is_empty() {
             info!(
                 "Blogs started at {} and ended at {} were not found. Return None",
-                &start.0, &end.0
+                &start, &end
             );
             None
         } else {

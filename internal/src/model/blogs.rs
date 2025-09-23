@@ -57,22 +57,12 @@ pub struct Blog {
     pub tags: Option<Vec<String>>,
 }
 
-/// BlogStartPage
-/// Start page of Blog Pagination
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogStartPage(pub i64);
-
-/// BlogEndPage
-/// End page of Blog Pagination
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct BlogEndPage(pub i64);
-
 /// BlogsParams
 /// Axum Query struct for `/blogs` query parameters
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogsParams {
-    pub start: Option<BlogStartPage>,
-    pub end: Option<BlogEndPage>,
+    pub start: Option<i64>,
+    pub end: Option<i64>,
     pub tags: Option<String>,
 }
 
