@@ -6,8 +6,8 @@ use tracing::{debug, info};
 
 #[async_trait]
 impl TalkRepo for TursoDatabase {
-    async fn get_new_id(&self) -> Option<TalkId> {
-        let prep_query = "SELECT COUNT(id) AS lenght FROM talks";
+    async fn get_new_id(&self) -> Option<i64> {
+        let prep_query = "SELECT id FROM talks ORDER BY id DESC LIMIT 1";
         debug!("Executing lenght query {}", &prep_query);
 
         let row = self
@@ -25,12 +25,11 @@ impl TalkRepo for TursoDatabase {
         let lenght_id: Option<i64> = row.get(0).unwrap();
         let new_id = lenght_id.unwrap() + 1;
 
-        Some(TalkId { id: new_id })
+        Some(new_id)
     }
-    async fn find(&self, id: TalkId) -> Option<Talk> {
-        let talk_id = id.id;
+    async fn find(&self, id: i64) -> Option<Talk> {
         let prep_query = "SELECT * FROM talks WHERE id = ?1 ORDER BY id";
-        debug!("Executing query {} for id {}", &prep_query, &talk_id);
+        debug!("Executing query {} for id {}", &prep_query, &id);
 
         let mut stmt = self
             .conn
@@ -39,7 +38,7 @@ impl TalkRepo for TursoDatabase {
             .expect("Failed to prepare find query.");
 
         let row = stmt
-            .query([talk_id])
+            .query([id])
             .await
             .expect("Failed to query talk.")
             .next()
@@ -63,9 +62,7 @@ impl TalkRepo for TursoDatabase {
         }
 
         Some(Talk {
-            id: TalkId {
-                id: row.get(0).unwrap(),
-            },
+            id: row.get(0).unwrap(),
             name: row.get(1).unwrap(),
             date: row.get(2).unwrap(),
             media_link,
@@ -113,9 +110,7 @@ impl TalkRepo for TursoDatabase {
             }
 
             talks.push(Talk {
-                id: TalkId {
-                    id: row.get(0).unwrap(),
-                },
+                id: row.get(0).unwrap(),
                 name: row.get(1).unwrap(),
                 date: row.get(2).unwrap(),
                 media_link,
@@ -128,30 +123,29 @@ impl TalkRepo for TursoDatabase {
     }
     async fn add(
         &mut self,
-        id: TalkId,
+        id: i64,
         name: String,
         date: String,
         media_link: Option<String>,
         org_name: Option<String>,
         org_link: Option<String>,
     ) -> Option<TalkCommandStatus> {
-        let talk_id = &id.id;
         let talk_name = &name;
         let talk_date = &date;
         let talk_media_link = if let Some(val) = media_link {
-            debug!("Media Link is present for talk id {}", &talk_id);
+            debug!("Media Link is present for talk id {}", &id);
             val
         } else {
             "".to_string()
         };
         let talk_org_name = if let Some(val) = org_name {
-            debug!("Organization Name is present for talk id {}", &talk_id);
+            debug!("Organization Name is present for talk id {}", &id);
             val
         } else {
             "".to_string()
         };
         let talk_org_link = if let Some(val) = org_link {
-            debug!("Organization Link is present for talk id {}", &talk_id);
+            debug!("Organization Link is present for talk id {}", &id);
             val
         } else {
             "".to_string()
@@ -159,7 +153,7 @@ impl TalkRepo for TursoDatabase {
 
         let prep_add_command =
             "INSERT INTO talks (id, name, date, media_link, org_name, org_link) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
-        debug!("Executing query {} for id {}", &prep_add_command, &talk_id);
+        debug!("Executing query {} for id {}", &prep_add_command, &id);
 
         let mut stmt = self
             .conn
@@ -171,7 +165,7 @@ impl TalkRepo for TursoDatabase {
         // Somehow it broke the complier and mess up the variables type
         let exe = stmt
             .execute((
-                *talk_id,
+                id.clone(),
                 talk_name.clone(),
                 talk_date.clone(),
                 talk_media_link.clone(),
@@ -184,10 +178,9 @@ impl TalkRepo for TursoDatabase {
 
         Some(TalkCommandStatus::Stored)
     }
-    async fn delete(&mut self, id: TalkId) -> Option<TalkCommandStatus> {
-        let talk_id = id.id;
+    async fn delete(&mut self, id: i64) -> Option<TalkCommandStatus> {
         let prep_query = "DELETE FROM talks WHERE id = ?1";
-        debug!("Executing query {} for id {}", &prep_query, &talk_id);
+        debug!("Executing query {} for id {}", &prep_query, &id);
 
         let mut stmt = self
             .conn
@@ -195,24 +188,20 @@ impl TalkRepo for TursoDatabase {
             .await
             .expect("Failed to prepare delete Talk command.");
 
-        let exe = stmt
-            .execute([talk_id])
-            .await
-            .expect("Failed to delete a Talk.");
+        let exe = stmt.execute([id]).await.expect("Failed to delete a Talk.");
 
         debug!("Delete Execution returned: {}", exe);
         Some(TalkCommandStatus::Deleted)
     }
     async fn update(
         &mut self,
-        id: TalkId,
+        id: i64,
         name: Option<String>,
         date: Option<String>,
         media_link: Option<String>,
         org_name: Option<String>,
         org_link: Option<String>,
     ) -> Option<TalkCommandStatus> {
-        let talk_id = &id.id;
         let mut affected_col = "".to_string();
         match &name {
             Some(val) => {
@@ -263,7 +252,7 @@ impl TalkRepo for TursoDatabase {
         affected_col = affected_col.as_str()[0..affected_col.len() - 1].to_string();
 
         let prep_update_query = format!("UPDATE talks SET{}WHERE id = ?1", &affected_col);
-        debug!("Executing query {} for id {}", &prep_update_query, &talk_id);
+        debug!("Executing query {} for id {}", &prep_update_query, &id);
 
         let mut stmt = self
             .conn
@@ -271,10 +260,7 @@ impl TalkRepo for TursoDatabase {
             .await
             .expect("Failed to prepare update Talk command.");
 
-        let exe = stmt
-            .execute([*talk_id])
-            .await
-            .expect("Failed to update a Talk.");
+        let exe = stmt.execute([id]).await.expect("Failed to update a Talk.");
         info!("Update Execution returned: {}", exe);
 
         Some(TalkCommandStatus::Updated)

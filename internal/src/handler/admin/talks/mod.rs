@@ -1,7 +1,7 @@
 pub mod displays;
 pub mod operations;
 
-use crate::model::talks::{Talk, TalkId, TalksParams};
+use crate::model::talks::{Talk, TalksParams};
 use axum::extract::Query;
 use tracing::{debug, warn};
 use urlencoding::decode;
@@ -82,7 +82,7 @@ fn process_talk_body(body: String) -> Talk {
     }
 
     Talk {
-        id: TalkId { id: talk_id },
+        id: talk_id,
         name: talk_name,
         date: talk_date,
         media_link: Some(talk_media_link),

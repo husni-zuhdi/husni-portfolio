@@ -1,18 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
-
-/// TalkId
-/// Identifier of a Talk
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TalkId {
-    pub id: i64,
-}
-
-impl Display for TalkId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.id)
-    }
-}
 
 /// Talk
 /// Talk data with fields:
@@ -22,7 +8,7 @@ impl Display for TalkId {
 /// - org_link: (Optional) Talk organisation link
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Talk {
-    pub id: TalkId,
+    pub id: i64,
     pub name: String,
     pub date: String,
     pub media_link: Option<String>,

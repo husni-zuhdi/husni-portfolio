@@ -1,6 +1,6 @@
 use crate::handler::admin::talks::{sanitize_params, sanitize_talk_media_org};
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use crate::model::talks::{TalkId, TalksParams};
+use crate::model::talks::TalksParams;
 use crate::model::{
     axum::AppState,
     templates_admin::{
@@ -61,7 +61,7 @@ pub async fn get_admin_talks_list(
                     let (media_link, org_name, org_link) = sanitize_talk_media_org(talk);
 
                     AdminTalkTemplate {
-                        id: talk.id.id,
+                        id: talk.id,
                         name: talk.name.clone(),
                         date: talk.date.clone(),
                         media_link,
@@ -116,12 +116,7 @@ pub async fn get_admin_talk(
         }
     };
 
-    let result = talks_uc
-        .talk_repo
-        .find(TalkId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let result = talks_uc.talk_repo.find(id.clone().unwrap()).await;
 
     match result {
         Some(talk_data) => {
@@ -170,12 +165,9 @@ pub async fn get_add_admin_talk(State(app_state): State<AppState>) -> Html<Strin
 
     match result {
         Some(talk_id) => {
-            debug!(
-                "Construct AdminGetAddTalkTemplate for Talk Id {}",
-                &talk_id.id
-            );
+            debug!("Construct AdminGetAddTalkTemplate for Talk Id {}", &talk_id);
             let add_talk = AdminGetAddTalkTemplate {
-                id: talk_id.id,
+                id: talk_id,
                 date: chrono::Local::now().format("%Y-%m-%d").to_string(),
             }
             .render();
@@ -219,12 +211,7 @@ pub async fn get_edit_admin_talk(
         }
     };
 
-    let result = talks_uc
-        .talk_repo
-        .find(TalkId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let result = talks_uc.talk_repo.find(id.clone().unwrap()).await;
 
     match result {
         Some(talk_data) => {
@@ -286,12 +273,7 @@ pub async fn get_delete_admin_talk(
         }
     };
 
-    let result = talks_uc
-        .talk_repo
-        .find(TalkId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let result = talks_uc.talk_repo.find(id.clone().unwrap()).await;
 
     match result {
         Some(talk_data) => {

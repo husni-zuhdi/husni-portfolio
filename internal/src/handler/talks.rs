@@ -67,7 +67,7 @@ pub async fn get_talks(
                                 None => empty_value.clone(),
                             };
                             TalkTemplate {
-                                id: talk.id.id,
+                                id: talk.id,
                                 name: talk.name.clone(),
                                 date: talk.date.clone(),
                                 media_link,

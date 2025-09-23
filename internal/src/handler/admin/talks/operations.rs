@@ -2,7 +2,7 @@ use crate::handler::admin::talks::displays::get_admin_talks_list;
 use crate::handler::admin::talks::{process_talk_body, sanitize_talk_media_org};
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
-use crate::model::talks::{TalkCommandStatus, TalkId, TalksParams};
+use crate::model::talks::{TalkCommandStatus, TalksParams};
 use crate::model::templates_admin::{AdminGetTalkTemplate, AdminTalkTemplate};
 use askama::Template;
 use axum::debug_handler;
@@ -156,12 +156,7 @@ pub async fn delete_delete_admin_talk(
         }
     };
 
-    let delete_result = talks_uc
-        .talk_repo
-        .delete(TalkId {
-            id: id.clone().unwrap(),
-        })
-        .await;
+    let delete_result = talks_uc.talk_repo.delete(id.clone().unwrap()).await;
 
     match delete_result {
         Some(talk_command_status) => {

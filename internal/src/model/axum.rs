@@ -7,7 +7,9 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// Axum state
-/// Consist of Config and UseCases
+/// Consist of Config and UseCases to be used in handlers
+/// Other than Blog usecase, all usecases Arc Mutex are wrapped with Option
+/// since they can be deactivated based on Database used.
 #[derive(Clone, Debug)]
 pub struct AppState {
     pub config: Config,
