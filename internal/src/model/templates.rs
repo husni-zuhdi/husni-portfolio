@@ -54,6 +54,22 @@ pub struct TalkTemplate {
 }
 
 #[derive(Template, Debug)]
+#[template(path = "auth/login.html")]
+pub struct LoginTemplate;
+
+#[derive(Template, Debug)]
+#[template(path = "auth/login_retry.html")]
+pub struct LoginRetryTemplate;
+
+#[derive(Template, Debug)]
+#[template(path = "auth/login_success.html")]
+pub struct LoginSuccessTemplate;
+
+#[derive(Template, Debug)]
+#[template(path = "auth/logout.html")]
+pub struct LogoutTemplate;
+
+#[derive(Template, Debug)]
 #[template(path = "404_not_found.html")]
 pub struct NotFoundTemplate;
 
