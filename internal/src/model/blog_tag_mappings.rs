@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Blog Tag Mapping
-/// Just blog tag with it's tag id
+/// Corelate a blog id with a tag id
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlogTagMapping {
     pub blog_id: i64,

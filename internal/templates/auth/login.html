@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+{% block description %}"Husni Portfolio Login"{% endblock %}
+
+{% block content %}
+<div id="login_top_section_target" class="top_section">
+    <h1 class="mb-4 font-semibold uppercase md:justify-start">
+        Login
+    </h1>
+</div>
+<hr>
+<div id="login_main_section_target">
+    <form 
+        hx-post="/login"
+        hx-target="#login_button_notif_target"
+        hx-swap="innerHTML">
+        <div class="admin_input">
+            <label for=login_email>Email :</label>
+            <input type="email" id="login_email" name="login_email" value=""><br>
+        </div>
+        <div class="admin_input">
+            <label for=login_password>Password :</label>
+            <input type="password" id="login_password" name="login_password"
+                value=""><br>
+        </div>
+        <div id="login_button_notif_target" class="flex-row">
+            <button class="btn_green" type="submit">Login</button>
+        </div>
+    </form>
+</div>
+{% endblock content %}

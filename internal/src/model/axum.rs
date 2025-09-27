@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::usecase::auth::AuthUseCase;
 use crate::usecase::blog_tag_mappings::BlogTagMappingUseCase;
 use crate::usecase::blogs::BlogUseCase;
 use crate::usecase::tags::TagUseCase;
@@ -17,4 +18,5 @@ pub struct AppState {
     pub talk_usecase: Arc<Mutex<Option<TalkUseCase>>>,
     pub tag_usecase: Arc<Mutex<Option<TagUseCase>>>,
     pub blog_tag_mapping_usecase: Arc<Mutex<Option<BlogTagMappingUseCase>>>,
+    pub auth_usecase: Arc<Mutex<Option<AuthUseCase>>>,
 }

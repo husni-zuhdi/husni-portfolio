@@ -111,6 +111,10 @@
     .top_section {
         @apply py-3;
     }
+
+    .notification {
+        @apply my-3 rounded text-center border-solid border-2 border-black;
+    }
 }
 
 @layer utilities {
