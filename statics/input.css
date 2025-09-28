@@ -115,6 +115,14 @@
     .notification {
         @apply my-3 rounded text-center border-solid border-2 border-black;
     }
+
+    .navbar_link {
+        @apply text-center text-base md:text-sm font-medium rounded-md px-3 py-2 hover:bg-gray-700 hover:text-white;
+    }
+
+    .svg_icon {
+        @apply me-6 [&>svg]:h-4 [&>svg]:w-4;
+    }
 }
 
 @layer utilities {
