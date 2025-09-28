@@ -1,23 +1,33 @@
 use crate::{
-    handler::status::get_404_not_found,
+    handler::{auth::process_login_header, status::get_404_not_found, HX_REDIRECT},
     model::templates::{LoginRetryTemplate, LoginSuccessTemplate, LoginTemplate, LogoutTemplate},
 };
 use askama::Template;
 use axum::{http::HeaderMap, response::Html};
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 /// get_login
 /// Serve Login HTML template
-pub async fn get_login() -> Html<String> {
+pub async fn get_login(headers: HeaderMap) -> (HeaderMap, Html<String>) {
+    let (user_agent, token) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT token processed", user_agent);
+
+    let mut resp_headers = HeaderMap::new();
+    // Redirect User if token present to Admin Blogs
+    // TODO: redirection still not work
+    if !token.is_empty() {
+        resp_headers.insert(HX_REDIRECT, "/admin/blogs".parse().unwrap());
+    }
+
     let login = LoginTemplate.render();
     match login {
         Ok(res) => {
             info!("Get Login askama template rendered.");
-            Html(res)
+            (resp_headers, Html(res))
         }
         Err(err) => {
             error!("Failed to render auth/login.html. {}", err);
-            get_404_not_found().await
+            (resp_headers, get_404_not_found().await)
         }
     }
 }
@@ -25,10 +35,9 @@ pub async fn get_login() -> Html<String> {
 /// get_login_retry
 /// Serve Login Retry HTML template
 pub async fn get_login_retry(header_map: Option<HeaderMap>) -> (HeaderMap, Html<String>) {
-    let header_map_final = if header_map.is_none() {
-        HeaderMap::new()
-    } else {
-        header_map.unwrap()
+    let header_map_final = match header_map {
+        Some(hm) => hm,
+        None => HeaderMap::new(),
     };
 
     let login_retry = LoginRetryTemplate.render();
@@ -47,10 +56,9 @@ pub async fn get_login_retry(header_map: Option<HeaderMap>) -> (HeaderMap, Html<
 /// get_login_success
 /// Serve Login Success HTML template
 pub async fn get_login_sucess(header_map: Option<HeaderMap>) -> (HeaderMap, Html<String>) {
-    let header_map_final = if header_map.is_none() {
-        HeaderMap::new()
-    } else {
-        header_map.unwrap()
+    let header_map_final = match header_map {
+        Some(hm) => hm,
+        None => HeaderMap::new(),
     };
     let login_success = LoginSuccessTemplate.render();
     match login_success {

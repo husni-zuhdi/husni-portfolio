@@ -2,6 +2,10 @@ pub mod displays;
 pub mod operations;
 
 use argon2::Argon2;
+use axum::http::{
+    header::{COOKIE, USER_AGENT},
+    HeaderMap,
+};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use password_hash::{PasswordHash, PasswordVerifier};
 use regex::Regex;
@@ -31,6 +35,29 @@ fn process_login_body(body: &str) -> Option<(String, String)> {
         }
     }
     Some((email, password))
+}
+
+// Take HeaderMap from GET login
+fn process_login_header(header: HeaderMap) -> Option<(String, String)> {
+    // Initialize fields
+    let mut user_agent = String::new();
+    let mut token = String::new();
+
+    for (key, value) in header.iter() {
+        match *key {
+            USER_AGENT => user_agent = value.to_str().unwrap().to_string(),
+            COOKIE => {
+                let (_, tkn) = value.to_str().unwrap().split_once("token=").unwrap();
+                token = tkn.to_string()
+            }
+            _ => {
+                warn!("Unrecognized key/value: {:?}/{:?}", key, value);
+                continue;
+            }
+        }
+    }
+
+    Some((user_agent, token))
 }
 
 /// sanitize_email
