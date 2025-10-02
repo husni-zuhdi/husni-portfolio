@@ -101,7 +101,7 @@ pub async fn get_admin_blogs_list(
                     Html(res)
                 }
                 Err(err) => {
-                    error!("Failed to render admin/blogs/get_blogs.html. {}", err);
+                    error!("Failed to render admin/blogs/list_blogs.html. {}", err);
                     get_500_internal_server_error()
                 }
             }

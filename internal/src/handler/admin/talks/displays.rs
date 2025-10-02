@@ -28,7 +28,7 @@ pub async fn get_base_admin_talks() -> Html<String> {
             Html(res)
         }
         Err(err) => {
-            error!("Failed to render admin/talks.html. {}", err);
+            error!("Failed to render admin/talks/talks.html. {}", err);
             get_500_internal_server_error()
         }
     }
@@ -79,7 +79,7 @@ pub async fn get_admin_talks_list(
                     Html(res)
                 }
                 Err(err) => {
-                    error!("Failed to render admin/get_talks.html. {}", err);
+                    error!("Failed to render admin/talks/list_talks.html. {}", err);
                     get_500_internal_server_error()
                 }
             }
@@ -143,7 +143,7 @@ pub async fn get_admin_talk(
                     Html(res)
                 }
                 Err(err) => {
-                    error!("Failed to render admin/get_talk.html. {}", err);
+                    error!("Failed to render admin/talks/get_talk.html. {}", err);
                     get_500_internal_server_error()
                 }
             }
@@ -179,7 +179,7 @@ pub async fn get_add_admin_talk(State(app_state): State<AppState>) -> Html<Strin
                     Html(res)
                 }
                 Err(err) => {
-                    error!("Failed to render admin/get_add_talk.html. {}", err);
+                    error!("Failed to render admin/talks/get_add_talk.html. {}", err);
                     get_500_internal_server_error()
                 }
             }
@@ -241,7 +241,7 @@ pub async fn get_edit_admin_talk(
                     Html(res)
                 }
                 Err(err) => {
-                    error!("Failed to render admin/get_edit_talk.html. {}", err);
+                    error!("Failed to render admin/talks/get_edit_talk.html. {}", err);
                     get_500_internal_server_error()
                 }
             }
@@ -292,7 +292,7 @@ pub async fn get_delete_admin_talk(
                     Html(res)
                 }
                 Err(err) => {
-                    error!("Failed to render admin/get_delete_talk.html. {}", err);
+                    error!("Failed to render admin/talks/get_delete_talk.html. {}", err);
                     get_500_internal_server_error()
                 }
             }
