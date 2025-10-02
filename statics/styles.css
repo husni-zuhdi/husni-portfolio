@@ -919,6 +919,11 @@ blockquote {
   margin-right: 1.5rem;
 }
 
+.my-3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 .mb-1 {
   margin-bottom: 0.25rem;
 }
@@ -967,12 +972,20 @@ blockquote {
   display: none;
 }
 
+.h-32 {
+  height: 8rem;
+}
+
 .h-full {
   height: 100%;
 }
 
 .min-h-full {
   min-height: 100%;
+}
+
+.w-32 {
+  width: 8rem;
 }
 
 .w-auto {
@@ -1264,6 +1277,10 @@ blockquote {
 
   .md\:flex-row {
     flex-direction: row;
+  }
+
+  .md\:flex-col {
+    flex-direction: column;
   }
 
   .md\:items-stretch {
