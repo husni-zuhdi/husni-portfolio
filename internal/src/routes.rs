@@ -4,6 +4,7 @@ use crate::handler::{
             displays as bd, operations as bo,
             tags::{displays as btd, operations as bto},
         },
+        displays as add,
         talks::{displays as td, operations as to},
     },
     auth::{displays as ad, operations as ao},
@@ -25,7 +26,7 @@ pub fn main_route(app_state: AppState) -> Router {
         .route("/version", get(version::get_version))
         .route("/login", get(ad::get_login))
         .route("/login", post(ao::post_login))
-        .route("/logout", get(ad::get_logout))
+        .route("/logout", delete(ao::delete_logout))
         .route("/etc/passwd", get(status::get_418_i_am_a_teapot))
         .nest("/blogs", blogs_route())
         .nest("/talks", talks_route())
@@ -53,6 +54,7 @@ fn talks_route() -> Router<AppState> {
 
 fn admin_route() -> Router<AppState> {
     Router::new()
+        .route("/", get(add::get_base_admin))
         .nest("/talks", admin_talks_route())
         .nest("/blogs", admin_blogs_route())
 }
