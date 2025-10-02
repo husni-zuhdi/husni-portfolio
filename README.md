@@ -9,6 +9,7 @@ My Portfolio webiste
 * [Octocrab](https://github.com/XAMPPRocky/octocrab)
 * [Taskfile](https://taskfile.dev/)
 * [TailwindCSS](https://tailwindcss.com/)
+* [Turso](https://turso.tech/)
 
 ## How to develop
 
@@ -20,6 +21,9 @@ task run
 
 # Run unit test
 task test
+
+# Linting
+task lint
 
 # Build docker image
 task docker-build

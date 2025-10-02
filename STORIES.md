@@ -27,6 +27,12 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - We have implemented the `Blogs` and `Talks` administrator pages.
     - We have implemented the `Tags` administrator pages.
     - Updated UI and core components
+    - Admin pages are created.
+- [x] As an Admin, I want to have a safe way to access my admin pages.
+    - I think we can use authentication like `google` that match our google account only.
+    - It's the frist time we play with authentication service. So excited! lol
+    - For the initial step, we are implemented password-bassed auth with JWT
+    - We can try to implement OAuth 2.0 next time
     
 ## TODO
 ### User stories
@@ -49,9 +55,6 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - I just want to make something that worth my time and effort!
 
 ### Admin stories
-- [ ] As an Admin, I want to have a safe way to access my admin pages.
-    - I think we can use authentication like `google` that match our google account only.
-    - It's the frist time we play with authentication service. So excited! lol
 
 ### Engineering stories
 - [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
