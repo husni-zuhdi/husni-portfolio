@@ -70,13 +70,17 @@ pub struct LoginSuccessTemplate;
 pub struct LogoutTemplate;
 
 #[derive(Template, Debug)]
-#[template(path = "404_not_found.html")]
+#[template(path = "statuses/401_unauthorized.html")]
+pub struct UnauthorizedTemplate;
+
+#[derive(Template, Debug)]
+#[template(path = "statuses/404_not_found.html")]
 pub struct NotFoundTemplate;
 
 #[derive(Template, Debug)]
-#[template(path = "418_i_am_a_teapot.html")]
+#[template(path = "statuses/418_i_am_a_teapot.html")]
 pub struct IamATeapotTemplate;
 
 #[derive(Template, Debug)]
-#[template(path = "500_internal_server_error.html")]
+#[template(path = "statuses/500_internal_server_error.html")]
 pub struct InternalServerErrorTemplate;
