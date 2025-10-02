@@ -1,12 +1,15 @@
 use crate::handler::{
-    admin::blogs::{
-        displays as bd, operations as bo, tags::displays as btd, tags::operations as bto,
+    admin::{
+        blogs::{
+            displays as bd, operations as bo,
+            tags::{displays as btd, operations as bto},
+        },
+        displays as add,
+        talks::{displays as td, operations as to},
     },
-    admin::talks::{displays as td, operations as to},
-    blogs::{get_blog, get_blogs},
-    talks::get_talks,
+    auth::{displays as ad, operations as ao},
 };
-use crate::handler::{profile, status, version};
+use crate::handler::{blogs, profile, status, talks, version};
 use crate::model::axum::AppState;
 use axum::routing::get_service;
 use axum::{
@@ -21,15 +24,17 @@ pub fn main_route(app_state: AppState) -> Router {
     Router::new()
         .route("/", get(profile::get_profile))
         .route("/version", get(version::get_version))
+        .route("/login", get(ad::get_login))
+        .route("/login", post(ao::post_login))
+        .route("/logout", delete(ao::delete_logout))
         .route("/etc/passwd", get(status::get_418_i_am_a_teapot))
         .nest("/blogs", blogs_route())
         .nest("/talks", talks_route())
-        .nest("/admin/talks", admin_talks_route())
-        .nest("/admin/blogs", admin_blogs_route())
-        .nest("/admin/blogs/tags", admin_blogs_tags_route())
+        .nest("/admin", admin_route())
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
+        .nest_service("/icons", get_service(ServeDir::new("./statics/icons/")))
         .nest_service(
-            "/statics/styles.css",
+            "/styles.css",
             get_service(ServeFile::new("./statics/styles.css")),
         )
         .with_state(app_state)
@@ -39,12 +44,19 @@ pub fn main_route(app_state: AppState) -> Router {
 
 fn blogs_route() -> Router<AppState> {
     Router::new()
-        .route("/", get(get_blogs))
-        .route("/:blog_id", get(get_blog))
+        .route("/", get(blogs::get_blogs))
+        .route("/:blog_id", get(blogs::get_blog))
 }
 
 fn talks_route() -> Router<AppState> {
-    Router::new().route("/", get(get_talks))
+    Router::new().route("/", get(talks::get_talks))
+}
+
+fn admin_route() -> Router<AppState> {
+    Router::new()
+        .route("/", get(add::get_base_admin))
+        .nest("/talks", admin_talks_route())
+        .nest("/blogs", admin_blogs_route())
 }
 
 fn admin_talks_route() -> Router<AppState> {
@@ -71,6 +83,7 @@ fn admin_blogs_route() -> Router<AppState> {
         .route("/:blog_id/edit", put(bo::put_edit_admin_blog))
         .route("/:blog_id/delete", get(bd::get_delete_admin_blog))
         .route("/:blog_id/delete", delete(bo::delete_delete_admin_blog))
+        .nest("/tags", admin_blogs_tags_route())
 }
 
 fn admin_blogs_tags_route() -> Router<AppState> {

@@ -38,7 +38,7 @@ tasks:
   docker-run:
     summary: Run Docker Image
     cmds:
-      - docker run --name husni-portfolio-$(date +'%Y-%m-%d-%H-%M-%S') -it -d --env-file=.env husni-portfolio:$(cat version.json | jq --raw-output '.version')
+      - docker run --name husni-portfolio-$(date +'%Y-%m-%d-%H-%M-%S') -it -d -p 8080:8080 --env-file=.env husni-portfolio:$(cat version.json | jq --raw-output '.version')
   docker-compose-up:
     summary: Run application in docker compose with database
     deps:

@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod axum;
 pub mod blog_tag_mappings;
 pub mod blogs;

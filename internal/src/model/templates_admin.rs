@@ -1,6 +1,9 @@
+use crate::model::{tags::Tag, templates::BlogMetadataTemplate};
 use askama::Template;
 
-use crate::model::{tags::Tag, templates::BlogMetadataTemplate};
+#[derive(Template, Debug)]
+#[template(path = "admin/admin.html")]
+pub struct AdminTemplate {}
 
 #[derive(Template, Debug)]
 #[template(path = "admin/talks/talks.html")]

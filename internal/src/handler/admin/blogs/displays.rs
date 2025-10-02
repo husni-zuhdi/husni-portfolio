@@ -1,3 +1,5 @@
+use crate::handler::auth::{process_login_header, verify_jwt};
+use crate::handler::status::get_401_unauthorized;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
 use crate::model::blogs::BlogsParams;
@@ -7,10 +9,10 @@ use crate::model::templates_admin::{
     AdminGetEditBlogTemplate, AdminListBlogsTemplate,
 };
 use crate::utils::remove_whitespace;
-
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
+use axum::http::HeaderMap;
 use axum::response::Html;
 use tracing::{debug, error, info, warn};
 
@@ -19,7 +21,18 @@ use tracing::{debug, error, info, warn};
 /// Under endpoint /admin/blogs
 /// It's the base of Admin Blogs feature
 #[debug_handler]
-pub async fn get_base_admin_blogs() -> Html<String> {
+pub async fn get_base_admin_blogs(
+    State(app_state): State<AppState>,
+    headers: HeaderMap,
+) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     let blogs_res = AdminBlogsTemplate {}.render();
     match blogs_res {
         Ok(res) => {
@@ -40,8 +53,17 @@ pub async fn get_base_admin_blogs() -> Html<String> {
 #[debug_handler]
 pub async fn get_admin_blogs_list(
     State(app_state): State<AppState>,
+    headers: HeaderMap,
     params: Query<BlogsParams>,
 ) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     // Locking Mutex
     let data = app_state.blog_usecase.lock().await;
 
@@ -101,7 +123,7 @@ pub async fn get_admin_blogs_list(
                     Html(res)
                 }
                 Err(err) => {
-                    error!("Failed to render admin/blogs/get_blogs.html. {}", err);
+                    error!("Failed to render admin/blogs/list_blogs.html. {}", err);
                     get_500_internal_server_error()
                 }
             }
@@ -123,7 +145,16 @@ pub async fn get_admin_blogs_list(
 pub async fn get_admin_blog(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
+    headers: HeaderMap,
 ) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     let data = app_state.blog_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
@@ -177,7 +208,18 @@ pub async fn get_admin_blog(
 /// get_add_admin_blog
 /// Serve GET add blog HTML file in a form format.
 #[debug_handler]
-pub async fn get_add_admin_blog(State(app_state): State<AppState>) -> Html<String> {
+pub async fn get_add_admin_blog(
+    State(app_state): State<AppState>,
+    headers: HeaderMap,
+) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     // Locking Mutex
     let blog_uc = app_state.blog_usecase.lock().await;
 
@@ -234,7 +276,16 @@ pub async fn get_add_admin_blog(State(app_state): State<AppState>) -> Html<Strin
 pub async fn get_edit_admin_blog(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
+    headers: HeaderMap,
 ) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     let blog_uc = app_state.blog_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
@@ -309,7 +360,16 @@ pub async fn get_edit_admin_blog(
 pub async fn get_delete_admin_blog(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
+    headers: HeaderMap,
 ) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     // Locking Mutex
     let data = app_state.blog_usecase.lock().await.clone();
     // Sanitize `path`

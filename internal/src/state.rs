@@ -5,6 +5,7 @@ use crate::database::turso::TursoDatabase;
 use crate::model::axum::AppState;
 use crate::repo::api::ApiRepo;
 use crate::repo::blogs::BlogRepo;
+use crate::usecase::auth::AuthUseCase;
 use crate::usecase::blog_tag_mappings::BlogTagMappingUseCase;
 use crate::usecase::blogs::BlogUseCase;
 use crate::usecase::tags::TagUseCase;
@@ -24,36 +25,39 @@ pub async fn state_factory(config: Config) -> AppState {
     let github_api_is_enabled =
         !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty();
 
-    let (mut blog_uc, talk_uc, tag_uc, blog_tag_mapping_uc) = if data_source_is_configured_sqlite {
-        let repo = TursoDatabase::new(
-            config.data_source.clone(),
-            config.database_url.clone(),
-            None,
-        )
-        .await;
-        (
-            BlogUseCase::new(Box::new(repo.clone())),
-            Some(TalkUseCase::new(Box::new(repo.clone()))),
-            Some(TagUseCase::new(Box::new(repo.clone()))),
-            Some(BlogTagMappingUseCase::new(Box::new(repo))),
-        )
-    } else if data_source_is_configured_turso {
-        let repo = TursoDatabase::new(
-            config.data_source.clone(),
-            config.database_url.clone(),
-            Some(config.turso_auth_token.clone()),
-        )
-        .await;
-        (
-            BlogUseCase::new(Box::new(repo.clone())),
-            Some(TalkUseCase::new(Box::new(repo.clone()))),
-            Some(TagUseCase::new(Box::new(repo.clone()))),
-            Some(BlogTagMappingUseCase::new(Box::new(repo))),
-        )
-    } else {
-        let repo = MemoryBlogRepo::default();
-        (BlogUseCase::new(Box::new(repo)), None, None, None)
-    };
+    let (mut blog_uc, talk_uc, tag_uc, blog_tag_mapping_uc, auth_uc) =
+        if data_source_is_configured_sqlite {
+            let repo = TursoDatabase::new(
+                config.data_source.clone(),
+                config.database_url.clone(),
+                None,
+            )
+            .await;
+            (
+                BlogUseCase::new(Box::new(repo.clone())),
+                Some(TalkUseCase::new(Box::new(repo.clone()))),
+                Some(TagUseCase::new(Box::new(repo.clone()))),
+                Some(BlogTagMappingUseCase::new(Box::new(repo.clone()))),
+                Some(AuthUseCase::new(Box::new(repo))),
+            )
+        } else if data_source_is_configured_turso {
+            let repo = TursoDatabase::new(
+                config.data_source.clone(),
+                config.database_url.clone(),
+                Some(config.turso_auth_token.clone()),
+            )
+            .await;
+            (
+                BlogUseCase::new(Box::new(repo.clone())),
+                Some(TalkUseCase::new(Box::new(repo.clone()))),
+                Some(TagUseCase::new(Box::new(repo.clone()))),
+                Some(BlogTagMappingUseCase::new(Box::new(repo.clone()))),
+                Some(AuthUseCase::new(Box::new(repo))),
+            )
+        } else {
+            let repo = MemoryBlogRepo::default();
+            (BlogUseCase::new(Box::new(repo)), None, None, None, None)
+        };
 
     if !config.filesystem_dir.is_empty() {
         let fs_usecase = FilesystemApiUseCase::new(config.filesystem_dir.clone()).await;
@@ -74,6 +78,7 @@ pub async fn state_factory(config: Config) -> AppState {
     let talk_usecase = Arc::new(Mutex::new(talk_uc));
     let tag_usecase = Arc::new(Mutex::new(tag_uc));
     let blog_tag_mapping_usecase = Arc::new(Mutex::new(blog_tag_mapping_uc));
+    let auth_usecase = Arc::new(Mutex::new(auth_uc));
 
     AppState {
         config,
@@ -81,13 +86,14 @@ pub async fn state_factory(config: Config) -> AppState {
         talk_usecase,
         tag_usecase,
         blog_tag_mapping_usecase,
+        auth_usecase,
     }
 }
 
 async fn populate_blog(api_uc: Box<dyn ApiRepo + Send + Sync>, blog_uc: &mut BlogUseCase) {
     let blogs_metadata = api_uc.list_metadata().await.unwrap();
     for metadata in blogs_metadata {
-        let blog_is_not_stored = blog_uc.check_id(metadata.id.clone()).await.is_none();
+        let blog_is_not_stored = blog_uc.check_id(metadata.id).await.is_none();
         if blog_is_not_stored {
             info!("Start to populate Blog {}.", &metadata.id);
             debug!("Start to fetch Blog {}.", &metadata.id);

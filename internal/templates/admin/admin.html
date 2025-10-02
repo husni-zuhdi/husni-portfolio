@@ -1,0 +1,36 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Husni Zuhdi Administrator{% endblock %}
+{% block description %}"Husni Zuhdi Administrator"{% endblock %}
+
+{% block content %}
+<div id="admin_target" class="my-3 flex flex-col md:flex-row justify-between items-center text-center">
+    <div id="blogs_admin_target" class="flex flex-row md:flex-col bg-gray-100">
+        <a href="/admin/blogs" class="svg_icon">
+          <img src="/icons/blogs-solid-full.svg" alt="Admin Blogs" class="h-32 w-32"/>
+        </a>
+        <div>
+            <h2>Admin Blogs</h2>
+            <p>Manage your blogs</p>
+        </div>
+    </div>
+    <div id="blog_tags_admin_target" class="flex flex-row md:flex-col bg-gray-100">
+        <a href="/admin/blogs/tags" class="svg_icon">
+          <img src="/icons/tags-solid-full.svg" alt="Admin Tags" class="h-32 w-32"/>
+        </a>
+        <div>
+            <h2>Admin Tags</h2>
+            <p>Manage your blog tags</p>
+        </div>
+    </div>
+    <div id="talks_admin_target" class="flex flex-row md:flex-col bg-gray-100">
+        <a href="/admin/talks" class="svg_icon">
+          <img src="/icons/talks-solid-full.svg" alt="Admin Talks" class="h-32 w-32"/>
+        </a>
+        <div>
+            <h2>Admin Talks</h2>
+            <p>Manage your talks</p>
+        </div>
+    </div>
+</div>
+{% endblock content %}

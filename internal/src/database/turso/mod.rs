@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod blog_tag_mappings;
 pub mod blogs;
 pub mod tags;
@@ -85,6 +86,23 @@ impl TursoDatabase {
                     tag_ref INTEGER NOT NULL
                     );"#,
             ),
+            (
+                "2025-09-23 User Migration",
+                r#"CREATE TABLE IF NOT EXISTS users (
+                    id TEXT NOT NULL,
+                    email TEXT NOT NULL,
+                    hashed_password TEXT NOT NULL
+                )"#,
+            ),
+            (
+                "2025-09-23 Session Migration",
+                r#"CREATE TABLE IF NOT EXISTS sessions (
+                    id TEXT NOT NULL,
+                    user_id TEXT NOT NULL,
+                    token TEXT NOT NULL,
+                    expire TEXT NOT NULL
+                )"#,
+            ),
         ]);
 
         for (mig_name, mig_command) in &migration_commands {
@@ -98,4 +116,9 @@ impl TursoDatabase {
 
         TursoDatabase { conn }
     }
+}
+
+/// Trimming the last ',' for UPDATE command
+fn trim_update_fields(affected_columns: &str) -> String {
+    affected_columns[0..affected_columns.len() - 1].to_string()
 }

@@ -34,6 +34,7 @@ pub struct TalksParams {
 /// - Stored
 /// - Updated
 /// - Deleted
+///
 /// I think you should wrap this with Option so you can check if it `None`
 /// then check the value of the status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
