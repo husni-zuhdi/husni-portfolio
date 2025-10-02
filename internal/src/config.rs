@@ -15,6 +15,7 @@ pub struct Config {
     pub gh_owner: String,
     pub gh_repo: String,
     pub gh_branch: String,
+    pub jwt_secret: String,
 }
 
 impl Default for Config {
@@ -32,6 +33,7 @@ impl Default for Config {
         let gh_owner: String = "".to_string();
         let gh_repo: String = "".to_string();
         let gh_branch: String = "".to_string();
+        let jwt_secret: String = "secret".to_string();
 
         Self {
             svc_endpoint,
@@ -45,6 +47,7 @@ impl Default for Config {
             gh_owner,
             gh_repo,
             gh_branch,
+            jwt_secret,
         }
     }
 }
@@ -74,6 +77,8 @@ impl Config {
             .expect("Failed to load SVC_ENDPOINT environment variable. Double check your config");
         let svc_port: String = env::var("SVC_PORT")
             .expect("failed to load SVC_PORT environment variable. Double check your config");
+        let jwt_secret: String = env::var("JWT_SECRET")
+            .expect("failed to load JWT_SECRET environment variable. Double check your config");
 
         // Optional
         let log_level = parse_log_level();
@@ -98,6 +103,7 @@ impl Config {
             gh_owner,
             gh_repo,
             gh_branch,
+            jwt_secret,
         }
     }
 }
@@ -164,6 +170,7 @@ mod test {
         let gh_owner: String = "".to_string();
         let gh_repo: String = "".to_string();
         let gh_branch: String = "".to_string();
+        let jwt_secret: String = "secret".to_string();
 
         let result = Config::default();
 
@@ -178,6 +185,7 @@ mod test {
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
+        assert_eq!(result.jwt_secret, jwt_secret);
     }
 
     #[test]
@@ -196,6 +204,7 @@ mod test {
         let gh_owner = "";
         let gh_repo = "";
         let gh_branch = "";
+        let jwt_secret = "secret";
 
         set_envars(Config {
             svc_endpoint: svc_endpoint.to_string(),
@@ -209,6 +218,7 @@ mod test {
             gh_owner: gh_owner.to_string(),
             gh_repo: gh_repo.to_string(),
             gh_branch: gh_branch.to_string(),
+            jwt_secret: jwt_secret.to_string(),
         });
 
         let result = Config::from_envar();
@@ -224,6 +234,7 @@ mod test {
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
+        assert_eq!(result.jwt_secret, jwt_secret);
 
         remove_envars()
     }
@@ -242,6 +253,7 @@ mod test {
         let gh_owner = "husni-zuhdi";
         let gh_repo = "husni-blog-resources";
         let gh_branch = "main";
+        let jwt_secret = "secret";
 
         set_envars(Config {
             svc_endpoint: svc_endpoint.to_string(),
@@ -255,6 +267,7 @@ mod test {
             gh_owner: gh_owner.to_string(),
             gh_repo: gh_repo.to_string(),
             gh_branch: gh_branch.to_string(),
+            jwt_secret: jwt_secret.to_string(),
         });
 
         let result = Config::from_envar();
@@ -270,6 +283,7 @@ mod test {
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
+        assert_eq!(result.jwt_secret, jwt_secret);
 
         remove_envars()
     }
@@ -286,6 +300,7 @@ mod test {
         env::set_var("GITHUB_OWNER", config.gh_owner);
         env::set_var("GITHUB_REPO", config.gh_repo);
         env::set_var("GITHUB_BRANCH", config.gh_branch);
+        env::set_var("JWT_SECRET", config.jwt_secret);
     }
 
     fn remove_envars() {
@@ -300,5 +315,6 @@ mod test {
         env::remove_var("GITHUB_OWNER");
         env::remove_var("GITHUB_REPO");
         env::remove_var("GITHUB_BRANCH");
+        env::remove_var("JWT_SECRET");
     }
 }
