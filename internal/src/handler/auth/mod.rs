@@ -1,6 +1,7 @@
 pub mod displays;
 pub mod operations;
 
+use crate::{model::auth::Claims, utils::remove_whitespace};
 use argon2::Argon2;
 use axum::http::{
     header::{COOKIE, USER_AGENT},
@@ -13,8 +14,6 @@ use password_hash::{PasswordHash, PasswordVerifier};
 use regex::Regex;
 use tracing::{debug, error, warn};
 use urlencoding::decode as url_decode;
-
-use crate::{model::auth::Claims, utils::remove_whitespace};
 
 /// Take request body String from POST login to get email and password
 fn process_login_body(body: &str) -> Option<(String, String)> {
@@ -40,7 +39,7 @@ fn process_login_body(body: &str) -> Option<(String, String)> {
 }
 
 /// Take HeaderMap from GET login to produce user agent and JWT token
-fn process_login_header(header: HeaderMap) -> Option<(String, String)> {
+pub fn process_login_header(header: HeaderMap) -> Option<(String, String)> {
     // Initialize fields
     let mut user_agent = String::new();
     let mut token = String::new();
@@ -139,7 +138,7 @@ fn create_jwt(secret: &str) -> Option<String> {
 
 /// verify_jwt
 /// Return bool of verified JWT
-fn verify_jwt(token: &str, secret: &str) -> bool {
+pub fn verify_jwt(token: &str, secret: &str) -> bool {
     if token.is_empty() {
         debug!("JWT is empty. Skip JWT verification.");
         return false;

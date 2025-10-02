@@ -51,7 +51,7 @@ pub async fn post_login(State(app_state): State<AppState>, body: String) -> impl
     let mut header_map = HeaderMap::new();
     let jwt_token_cookie = format!("token={}; Secure; HttpOnly; SameSite=Lax", token.unwrap());
     header_map.insert(SET_COOKIE, jwt_token_cookie.parse().unwrap());
-    header_map.insert(HX_REDIRECT, "/admin/blogs".parse().unwrap());
+    header_map.insert(HX_REDIRECT, "/admin".parse().unwrap());
 
     // Render HTML with header to set JWT Token in header
     get_login_sucess(Some(header_map)).await

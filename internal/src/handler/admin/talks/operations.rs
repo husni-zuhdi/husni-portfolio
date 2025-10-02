@@ -1,5 +1,7 @@
 use crate::handler::admin::talks::displays::get_admin_talks_list;
 use crate::handler::admin::talks::{process_talk_body, sanitize_talk_media_org};
+use crate::handler::auth::{process_login_header, verify_jwt};
+use crate::handler::status::get_401_unauthorized;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
 use crate::model::talks::{TalkCommandStatus, TalksParams};
@@ -7,13 +9,26 @@ use crate::model::templates_admin::{AdminGetTalkTemplate, AdminTalkTemplate};
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
+use axum::http::HeaderMap;
 use axum::response::Html;
 use tracing::{debug, error, info, warn};
 
 /// post_add_admin_talk
 /// Serve POST add talk endpoint
 #[debug_handler]
-pub async fn post_add_admin_talk(State(app_state): State<AppState>, body: String) -> Html<String> {
+pub async fn post_add_admin_talk(
+    State(app_state): State<AppState>,
+    headers: HeaderMap,
+    body: String,
+) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers.clone()).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     let mut talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
     let talk = process_talk_body(body);
 
@@ -46,7 +61,7 @@ pub async fn post_add_admin_talk(State(app_state): State<AppState>, body: String
         start: None,
         end: None,
     };
-    get_admin_talks_list(State(app_state), Query(params)).await
+    get_admin_talks_list(State(app_state), headers, Query(params)).await
 }
 
 /// put_edit_admin_talk
@@ -55,8 +70,17 @@ pub async fn post_add_admin_talk(State(app_state): State<AppState>, body: String
 pub async fn put_edit_admin_talk(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
+    headers: HeaderMap,
     body: String,
 ) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     let mut talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
@@ -142,7 +166,16 @@ pub async fn put_edit_admin_talk(
 pub async fn delete_delete_admin_talk(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
+    headers: HeaderMap,
 ) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers.clone()).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     let mut talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
@@ -174,5 +207,5 @@ pub async fn delete_delete_admin_talk(
         start: None,
         end: None,
     };
-    get_admin_talks_list(State(app_state), Query(params)).await
+    get_admin_talks_list(State(app_state), headers, Query(params)).await
 }

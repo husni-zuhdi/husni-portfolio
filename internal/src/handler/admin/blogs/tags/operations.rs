@@ -1,48 +1,33 @@
 use crate::handler::admin::blogs::tags::displays::{get_admin_tag, get_admin_tags_list};
+use crate::handler::admin::blogs::tags::process_tag_body;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
-use crate::model::tags::{Tag, TagCommandStatus, TagsListParams};
+use crate::model::tags::{TagCommandStatus, TagsListParams};
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
 use axum::response::Html;
 use tracing::{debug, error, info, warn};
-use urlencoding::decode;
 
-// Take request tag String from PUT and POST operations to create a new tag
-fn process_tag_body(body: String) -> Tag {
-    // Initialize fields
-    let mut tag_id = 0_i64;
-    let mut tag_name = String::new();
-
-    let req_fields: Vec<&str> = body.split("&").collect();
-    for req_field in req_fields {
-        let (key, value) = req_field.split_once("=").unwrap();
-        let value_decoded = decode(value).unwrap();
-        debug!("Request field key/value {:?}/{:?}", key, value_decoded);
-        match key {
-            "tag_id" => {
-                tag_id = value_decoded
-                    .parse::<i64>()
-                    .expect("Failed to parse path from request body")
-            }
-            "tag_name" => tag_name = value_decoded.to_string(),
-            _ => {
-                warn!("Unrecognized key/value: {:?}/{:?}", key, value_decoded);
-                continue;
-            }
-        }
-    }
-
-    Tag {
-        id: tag_id,
-        name: tag_name,
-    }
-}
+use crate::handler::auth::{process_login_header, verify_jwt};
+use crate::handler::status::get_401_unauthorized;
+use axum::http::HeaderMap;
 
 /// post_add_admin_tag
 /// Serve POST add tag endpoint
 #[debug_handler]
-pub async fn post_add_admin_tag(State(app_state): State<AppState>, body: String) -> Html<String> {
+pub async fn post_add_admin_tag(
+    State(app_state): State<AppState>,
+    headers: HeaderMap,
+    body: String,
+) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers.clone()).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     // Locking Mutex
     let tag_uc = app_state.tag_usecase.lock().await.clone();
 
@@ -67,7 +52,7 @@ pub async fn post_add_admin_tag(State(app_state): State<AppState>, body: String)
         end: None,
     };
 
-    get_admin_tags_list(State(app_state), Query(query_params)).await
+    get_admin_tags_list(State(app_state), headers, Query(query_params)).await
 }
 
 /// put_edit_admin_tag
@@ -76,8 +61,17 @@ pub async fn post_add_admin_tag(State(app_state): State<AppState>, body: String)
 pub async fn put_edit_admin_tag(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
+    headers: HeaderMap,
     body: String,
 ) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers.clone()).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     let tag_uc = app_state.tag_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
@@ -112,7 +106,7 @@ pub async fn put_edit_admin_tag(
         }
     }
 
-    get_admin_tag(Path(path), State(app_state)).await
+    get_admin_tag(Path(path), State(app_state), headers).await
 }
 
 /// delete_delete_admin_tag
@@ -121,7 +115,16 @@ pub async fn put_edit_admin_tag(
 pub async fn delete_delete_admin_tag(
     Path(path): Path<String>,
     State(app_state): State<AppState>,
+    headers: HeaderMap,
 ) -> Html<String> {
+    let (user_agent, token) = process_login_header(headers.clone()).unwrap();
+    info!("User Agent: {} and JWT processed", user_agent);
+
+    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+        info!("Unauthorized access.");
+        return get_401_unauthorized().await;
+    }
+
     let tag_uc = app_state.tag_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
@@ -155,5 +158,5 @@ pub async fn delete_delete_admin_tag(
         end: None,
     };
 
-    get_admin_tags_list(State(app_state), Query(query_params)).await
+    get_admin_tags_list(State(app_state), headers, Query(query_params)).await
 }
