@@ -7,32 +7,6 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 2. To make a cool project.
 
 ## Work in Progress
-## 0.3.2
-### User stories
-- [x] As an User, I want to see whole code snippet without it's breaking the website in mobile.
-    - This issue appear when you want to read blogs in mobile. The code snippet can be longer than the mobile screen widht.
-    - What I think we can do are:
-        1. Dynamically change the font size
-        2. Add a limit on how long paragraph can go.
-        3. In a code snippet, make it so we can horizontally scroll the snippet.
-    - Applied the 2 and 3 suggestions by implementing `overflow: auto` on `<pre>` type.
-    - We also encounter similar issue with `<table>` type but with different approach.
-    - Table need to be wraped inside a div to make it responsive [ref](https://www.w3schools.com/howto/howto_css_table_responsive.asp)
-    - However we can't alter the markdown rendering to wrap table inside a div.
-    - So the current workaround is to add a notes in the add and edit blog pages.
-    - To add a div manually in the markdown file :") Yeah it's not ideal but it's what we have.
-    - Also we enabled allo dangerous html in the markdown compiler config.
-### Admin stories
-- [x] As an Admin, I want to have an administrator pages to manage my contents.
-    - We have implemented the `Blogs` and `Talks` administrator pages.
-    - We have implemented the `Tags` administrator pages.
-    - Updated UI and core components
-    - Admin pages are created.
-- [x] As an Admin, I want to have a safe way to access my admin pages.
-    - I think we can use authentication like `google` that match our google account only.
-    - It's the frist time we play with authentication service. So excited! lol
-    - For the initial step, we are implemented password-bassed auth with JWT
-    - We can try to implement OAuth 2.0 next time
     
 ## TODO
 ### User stories
@@ -59,6 +33,33 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 ### Engineering stories
 - [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
     - We can use [git-cliff](https://git-cliff.org/) but we need to upgrade the rust version to 1.8.3 or newer
+
+## 0.3.2 2025-10-03
+### User stories
+- [x] As an User, I want to see whole code snippet without it's breaking the website in mobile.
+    - This issue appear when you want to read blogs in mobile. The code snippet can be longer than the mobile screen widht.
+    - What I think we can do are:
+        1. Dynamically change the font size
+        2. Add a limit on how long paragraph can go.
+        3. In a code snippet, make it so we can horizontally scroll the snippet.
+    - Applied the 2 and 3 suggestions by implementing `overflow: auto` on `<pre>` type.
+    - We also encounter similar issue with `<table>` type but with different approach.
+    - Table need to be wraped inside a div to make it responsive [ref](https://www.w3schools.com/howto/howto_css_table_responsive.asp)
+    - However we can't alter the markdown rendering to wrap table inside a div.
+    - So the current workaround is to add a notes in the add and edit blog pages.
+    - To add a div manually in the markdown file :") Yeah it's not ideal but it's what we have.
+    - Also we enabled allo dangerous html in the markdown compiler config.
+### Admin stories
+- [x] As an Admin, I want to have an administrator pages to manage my contents.
+    - We have implemented the `Blogs` and `Talks` administrator pages.
+    - We have implemented the `Tags` administrator pages.
+    - Updated UI and core components
+    - Admin pages are created.
+- [x] As an Admin, I want to have a safe way to access my admin pages.
+    - I think we can use authentication like `google` that match our google account only.
+    - It's the frist time we play with authentication service. So excited! lol
+    - For the initial step, we are implemented password-bassed auth with JWT
+    - We can try to implement OAuth 2.0 next time
 
 ## 0.3.1 2025-08-15
 ### User stories
