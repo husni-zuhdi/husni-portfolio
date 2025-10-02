@@ -1,6 +1,7 @@
-use crate::handler::auth::displays::{get_login_retry, get_login_sucess};
+use crate::handler::auth::displays::{get_login_retry, get_login_sucess, get_logout};
 use crate::handler::auth::{
-    create_jwt_token, is_password_match, process_login_body, sanitize_email, sanitize_password,
+    create_jwt, is_password_match, process_login_body, process_login_header, sanitize_email,
+    sanitize_password,
 };
 use crate::handler::HX_REDIRECT;
 use crate::model::axum::AppState;
@@ -10,7 +11,7 @@ use axum::extract::State;
 use axum::http::header::SET_COOKIE;
 use axum::http::HeaderMap;
 use axum::response::IntoResponse;
-use tracing::warn;
+use tracing::{info, warn};
 
 /// post_login
 /// Serve POST login endpoint.
@@ -41,7 +42,7 @@ pub async fn post_login(State(app_state): State<AppState>, body: String) -> impl
     }
 
     // Create JWT (Claim and) Token
-    let token = create_jwt_token();
+    let token = create_jwt(&app_state.config.jwt_secret);
     if token.is_none() {
         warn!("Rendering login retry. Failed to generate JWT Token");
         return get_login_retry(None).await;
@@ -54,4 +55,22 @@ pub async fn post_login(State(app_state): State<AppState>, body: String) -> impl
 
     // Render HTML with header to set JWT Token in header
     get_login_sucess(Some(header_map)).await
+}
+
+/// delete_logout
+/// Serve DELETE logout endpoint.
+/// Remove JWT from client cookie
+pub async fn delete_logout(headers: HeaderMap) -> impl IntoResponse {
+    let (user_agent, _) = process_login_header(headers).unwrap();
+    info!("User Agent: {} and JWT token processed", user_agent);
+
+    let mut resp_headers = HeaderMap::new();
+    // Redirect User if token present to Admin Blogs
+    resp_headers.insert(
+        SET_COOKIE,
+        "token=; Secure; HttpOnly; SameSite=Lax".parse().unwrap(),
+    );
+    resp_headers.insert(HX_REDIRECT, "/".parse().unwrap());
+
+    get_logout(resp_headers).await
 }
