@@ -6,15 +6,17 @@ use axum::http::{
     header::{COOKIE, USER_AGENT},
     HeaderMap,
 };
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{
+    decode as jwt_decode, encode as jwt_encode, DecodingKey, EncodingKey, Header, Validation,
+};
 use password_hash::{PasswordHash, PasswordVerifier};
 use regex::Regex;
 use tracing::{debug, error, warn};
-use urlencoding::decode;
+use urlencoding::decode as url_decode;
 
 use crate::{model::auth::Claims, utils::remove_whitespace};
 
-// Take request body String from POST login
+/// Take request body String from POST login to get email and password
 fn process_login_body(body: &str) -> Option<(String, String)> {
     // Initialize fields
     let mut email = String::new();
@@ -23,7 +25,7 @@ fn process_login_body(body: &str) -> Option<(String, String)> {
     let req_fields: Vec<&str> = body.split("&").collect();
     for req_field in req_fields {
         let (key, value) = req_field.split_once("=").unwrap();
-        let value_decoded = decode(value).unwrap();
+        let value_decoded = url_decode(value).unwrap();
         debug!("Request field key/value {:?}/{:?}", key, value_decoded);
         match key {
             "login_email" => email = value_decoded.to_string(),
@@ -37,7 +39,7 @@ fn process_login_body(body: &str) -> Option<(String, String)> {
     Some((email, password))
 }
 
-// Take HeaderMap from GET login
+/// Take HeaderMap from GET login to produce user agent and JWT token
 fn process_login_header(header: HeaderMap) -> Option<(String, String)> {
     // Initialize fields
     let mut user_agent = String::new();
@@ -51,7 +53,7 @@ fn process_login_header(header: HeaderMap) -> Option<(String, String)> {
                 token = tkn.to_string()
             }
             _ => {
-                warn!("Unrecognized key/value: {:?}/{:?}", key, value);
+                debug!("Unrecognized key/value: {:?}/{:?}", key, value);
                 continue;
             }
         }
@@ -113,25 +115,46 @@ fn is_password_match(password: &str, hashed_passwrod: &str) -> bool {
     }
 }
 
-/// create_jwt_token
+/// create_jwt
 /// Create JWT Claim and token
-fn create_jwt_token() -> Option<String> {
+fn create_jwt(secret: &str) -> Option<String> {
     let now = chrono::Utc::now().timestamp() as usize;
     let three_hour_in_s = 10800_usize;
     let my_claims = Claims {
         exp: now + three_hour_in_s,
         iat: now,
     };
-    match encode(
+    match jwt_encode(
         &Header::default(),
         &my_claims,
-        // TODO: remove hard-coded secret
-        &EncodingKey::from_secret("secret".as_ref()),
+        &EncodingKey::from_secret(secret.as_ref()),
     ) {
         Ok(token) => Some(token),
         Err(e) => {
             error!("Failed to create JWT Token. {:?}", e);
             None
+        }
+    }
+}
+
+/// verify_jwt
+/// Return bool of verified JWT
+fn verify_jwt(token: &str, secret: &str) -> bool {
+    if token.is_empty() {
+        debug!("JWT is empty. Skip JWT verification.");
+        return false;
+    }
+
+    let token = jwt_decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret.as_ref()),
+        &Validation::default(),
+    );
+    match token {
+        Ok(_) => true,
+        Err(e) => {
+            warn!("Failed to verify JWT Token. {:?}", e);
+            false
         }
     }
 }

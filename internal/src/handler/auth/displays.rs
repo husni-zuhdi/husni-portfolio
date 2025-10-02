@@ -1,21 +1,29 @@
+use crate::model::axum::AppState;
 use crate::{
-    handler::{auth::process_login_header, status::get_404_not_found, HX_REDIRECT},
+    handler::{
+        auth::{process_login_header, verify_jwt},
+        status::get_404_not_found,
+        HX_REDIRECT,
+    },
     model::templates::{LoginRetryTemplate, LoginSuccessTemplate, LoginTemplate, LogoutTemplate},
 };
 use askama::Template;
+use axum::extract::State;
 use axum::{http::HeaderMap, response::Html};
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 /// get_login
 /// Serve Login HTML template
-pub async fn get_login(headers: HeaderMap) -> (HeaderMap, Html<String>) {
+pub async fn get_login(
+    State(app_state): State<AppState>,
+    headers: HeaderMap,
+) -> (HeaderMap, Html<String>) {
     let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT token processed", user_agent);
+    info!("User Agent: {} and JWT processed", user_agent);
 
     let mut resp_headers = HeaderMap::new();
-    // Redirect User if token present to Admin Blogs
-    // TODO: redirection still not work
-    if !token.is_empty() {
+    // Redirect User to Admin Blog when token is verified
+    if verify_jwt(&token, &app_state.config.jwt_secret) {
         resp_headers.insert(HX_REDIRECT, "/admin/blogs".parse().unwrap());
     }
 
@@ -75,16 +83,16 @@ pub async fn get_login_sucess(header_map: Option<HeaderMap>) -> (HeaderMap, Html
 
 /// get_logout
 /// Serve Logout HTML template
-pub async fn get_logout() -> Html<String> {
+pub async fn get_logout(headers: HeaderMap) -> (HeaderMap, Html<String>) {
     let login = LogoutTemplate.render();
     match login {
         Ok(res) => {
             info!("Get Logout askama template rendered.");
-            Html(res)
+            (headers, Html(res))
         }
         Err(err) => {
             error!("Failed to render auth/logout.html. {}", err);
-            get_404_not_found().await
+            (headers, get_404_not_found().await)
         }
     }
 }
