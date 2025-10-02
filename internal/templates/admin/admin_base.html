@@ -32,7 +32,15 @@
                 </div>
                 <!-- Logout -->
                 <div class="flex flex-col md:flex-row md:mx-3 md:space-x-4">
-                    <a href="/logout" class="navbar_link">Logout</a>
+                    <!-- <a href="/logout" class="navbar_link">Logout</a> -->
+                    <form 
+                        hx-delete="/logout"
+                        hx-target="#main_body_target"
+                        hx-swap="innerHTML">
+                        <div id="logout_button_notif_target" class="flex-row">
+                            <button class="btn_red" type="submit">Logout</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </nav>
