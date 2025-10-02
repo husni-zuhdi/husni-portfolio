@@ -165,7 +165,7 @@ impl TalkRepo for TursoDatabase {
         // Somehow it broke the complier and mess up the variables type
         let exe = stmt
             .execute((
-                id.clone(),
+                id,
                 talk_name.clone(),
                 talk_date.clone(),
                 talk_media_link.clone(),

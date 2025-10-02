@@ -93,7 +93,7 @@ impl BlogRepo for MemoryBlogRepo {
                 result
                     .iter()
                     .map(|blog| BlogMetadata {
-                        id: blog.id.clone(),
+                        id: blog.id,
                         name: blog.name.clone().unwrap(),
                         filename: blog.filename.clone().unwrap(),
                         tags: blog.tags.clone().unwrap(),
@@ -148,7 +148,7 @@ impl BlogRepo for MemoryBlogRepo {
         }
     }
     async fn update(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        let result: Option<&mut Blog> = self.blogs.iter_mut().find(|blog| blog.id == blog.id);
+        let result: Option<&mut Blog> = self.blogs.iter_mut().find(|b| b.id == blog.id);
 
         match result {
             Some(in_mem_blog) => {

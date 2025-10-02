@@ -35,7 +35,7 @@ pub async fn post_add_admin_talk(
     let add_result = talks_uc
         .talk_repo
         .add(
-            talk.id.clone(),
+            talk.id,
             talk.name,
             talk.date,
             talk.media_link,
@@ -99,7 +99,7 @@ pub async fn put_edit_admin_talk(
     let result = talks_uc
         .talk_repo
         .update(
-            talk.id.clone(),
+            talk.id,
             Some(talk.name.clone()),
             Some(talk.date.clone()),
             talk.media_link.clone(),
@@ -121,7 +121,7 @@ pub async fn put_edit_admin_talk(
         }
     }
 
-    let get_result = talks_uc.talk_repo.find(talk.id.clone()).await;
+    let get_result = talks_uc.talk_repo.find(talk.id).await;
 
     match get_result {
         Some(talk_data) => {

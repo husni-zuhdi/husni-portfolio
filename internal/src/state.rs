@@ -93,7 +93,7 @@ pub async fn state_factory(config: Config) -> AppState {
 async fn populate_blog(api_uc: Box<dyn ApiRepo + Send + Sync>, blog_uc: &mut BlogUseCase) {
     let blogs_metadata = api_uc.list_metadata().await.unwrap();
     for metadata in blogs_metadata {
-        let blog_is_not_stored = blog_uc.check_id(metadata.id.clone()).await.is_none();
+        let blog_is_not_stored = blog_uc.check_id(metadata.id).await.is_none();
         if blog_is_not_stored {
             info!("Start to populate Blog {}.", &metadata.id);
             debug!("Start to fetch Blog {}.", &metadata.id);

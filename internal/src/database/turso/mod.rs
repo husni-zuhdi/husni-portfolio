@@ -119,6 +119,6 @@ impl TursoDatabase {
 }
 
 /// Trimming the last ',' for UPDATE command
-fn trim_update_fields(affected_columns: &String) -> String {
+fn trim_update_fields(affected_columns: &str) -> String {
     affected_columns[0..affected_columns.len() - 1].to_string()
 }
