@@ -10,7 +10,7 @@ pub struct BlogTagMappingUseCase {
 
 impl Debug for dyn BlogTagMappingRepo + Send + Sync {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "BlogTagMappingRepo{:?}", self)
+        write!(f, "BlogTagMappingRepo")
     }
 }
 

@@ -10,7 +10,7 @@ pub struct TalkUseCase {
 
 impl Debug for dyn TalkRepo + Send + Sync {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "TalkRepo{:?}", self)
+        write!(f, "TalkRepo")
     }
 }
 

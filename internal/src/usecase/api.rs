@@ -10,7 +10,7 @@ pub struct ApiUseCase {
 
 impl Debug for dyn ApiRepo + Send + Sync {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ApiRepo{:?}", self)
+        write!(f, "ApiRepo",)
     }
 }
 
