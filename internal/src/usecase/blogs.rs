@@ -10,7 +10,7 @@ pub struct BlogUseCase {
 
 impl Debug for dyn BlogRepo + Send + Sync {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "BlogRepo{:?}", self)
+        write!(f, "BlogRepo")
     }
 }
 

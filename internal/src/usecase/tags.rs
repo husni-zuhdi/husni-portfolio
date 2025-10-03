@@ -10,7 +10,7 @@ pub struct TagUseCase {
 
 impl Debug for dyn TagRepo + Send + Sync {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "TagRepo{:?}", self)
+        write!(f, "TagRepo")
     }
 }
 

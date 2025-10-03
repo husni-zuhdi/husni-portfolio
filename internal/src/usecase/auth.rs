@@ -10,7 +10,7 @@ pub struct AuthUseCase {
 
 impl Debug for dyn AuthRepo + Send + Sync {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "AuthRepo{:?}", self)
+        write!(f, "AuthRepo")
     }
 }
 
