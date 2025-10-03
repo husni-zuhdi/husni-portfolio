@@ -21,17 +21,17 @@
             </button>
             <button class="btn_green"
                 hx-get="/admin/blogs/add"
-                hx-target="#tags_target"
+                hx-target="#blogs_target"
                 hx-swap="innerHTML">
                 +
             </button>
         </div>
-        <div class="top_section">
-            <input type="search" name="query" placeholder="Type to Search Blogs..."
-                hx-get="/admin/blogs/search"
-                hx-trigger="input changed delay:500ms, keyup[key=='Enter'], load"
-                hx-target="#tags_target">
-        </div>
+        <!-- <div class="top_section"> -->
+        <!--     <input type="search" name="query" placeholder="Type to Search Blogs..." -->
+        <!--         hx-get="/admin/blogs/search" -->
+        <!--         hx-trigger="input changed delay:500ms, keyup[key=='Enter'], load" -->
+        <!--         hx-target="#blogs_target"> -->
+        <!-- </div> -->
     </div>
 </div>
 <hr>
