@@ -1,5 +1,5 @@
+use google_cloud_storage::client::Storage;
 use std::env;
-use tracing::{error, warn};
 
 /// Struct Config for setup environment variables
 #[derive(PartialEq, Debug, Clone)]
@@ -28,23 +28,10 @@ pub struct Config {
     /// `sqlite` and `turso` required DATABASE_URL envar to be set.
     /// `turso` required TURSO_AUTH_TOKEN envar to be set.
     pub data_source: String,
-    /// JWT Secret.
-    /// Secret to encode JWT in authenticated-pages.
-    /// Default to `secret` but highly advised to provide your own value.
-    pub jwt_secret: String,
-    /// Database URL (Optional)
-    /// Database URL (or Path). **Required** if you use `sqlite` or `turso`
-    /// as DATA_SOURCE.
-    /// Example:
-    ///     - sqlite:husni-portfolio.db
-    ///     - libsql://husni-portfolio.asia.turso.io
-    /// Default to None.
-    pub database_url: Option<String>,
-    /// Turso Auth Token (Optional)
-    /// Authentication token for turso database. **Required** if you use
-    /// `turso` as DATA_SOURCE..
-    /// Default to None
-    pub turso_auth_token: Option<String>,
+    /// Secrets
+    /// Collection of secrets. Can be load from environment variables or
+    /// Google Cloud Storage (GSM)
+    pub secrets: Secrets,
     /// Filesystem Dir (Optional; Deprecated)
     /// Directory of blog markdown files.
     /// Default to None.
@@ -61,13 +48,16 @@ pub struct Config {
     /// Branch of blog github repository.
     /// Default to None.
     pub gh_branch: Option<String>,
-    /// Google Cloud Storage (GCS) Bukcet Name (Optional)
-    /// GCS bucket name.
+    /// Google Cloud Storage (GCS) Bukcet Name (Optional; Secret)
+    /// Secret GCS bucket name. Required `SECRETS_OBJECT` to use GCS
+    /// as Secret source.
+    /// Example: my-secret-bucket
     /// Default to None.
-    pub bucket_name: Option<String>,
-    /// Google Cloud Storage (GCS) Secret URI (Optional)
-    /// GCS URI of secret file. An alternative to load secretive envars
+    pub secrets_bucket: Option<String>,
+    /// Google Cloud Storage (GCS) Secret Object Name (Optional)
+    /// GCS object name of secret file. An alternative to load secretive envars
     /// other than Google Secret Manager.
+    /// Required `SECRETS_BUCKET` to use GCS as Secret source.
     /// If set, will override config secrets.
     /// List of secrets:
     /// - JWT_SECRET
@@ -75,15 +65,38 @@ pub struct Config {
     /// - TURSO_AUTH_TOKEN
     /// - BUCKET_NAME
     ///
-    /// Example: gs://husni-portfolio-bucket/secret/secret
+    /// Example: secret/my-secret
     /// Default to None.
-    pub secret_uri: Option<String>,
+    pub secrets_object: Option<String>,
 }
 
+/// Environment Type
 #[derive(PartialEq, Debug, Clone)]
 pub enum Environment {
     Development,
     Release,
+}
+
+/// Collection of secrets
+#[derive(PartialEq, Debug, Clone)]
+pub struct Secrets {
+    /// JWT Secret (Secret)
+    /// Secret to encode JWT in authenticated-pages.
+    /// Default to `secret` but highly advised to provide your own value.
+    pub jwt_secret: String,
+    /// Database URL (Optional; Secret)
+    /// Database URL (or Path). **Required** if you use `sqlite` or `turso`
+    /// as DATA_SOURCE.
+    /// Example:
+    ///     - sqlite:husni-portfolio.db
+    ///     - libsql://husni-portfolio.asia.turso.io
+    /// Default to None.
+    pub database_url: Option<String>,
+    /// Turso Auth Token (Optional; Secret)
+    /// Authentication token for turso database. **Required** if you use
+    /// `turso` as DATA_SOURCE..
+    /// Default to None
+    pub turso_auth_token: Option<String>,
 }
 
 impl std::fmt::Display for Environment {
@@ -109,22 +122,24 @@ impl Default for Config {
             log_level,
             environment,
             data_source,
-            jwt_secret,
-            database_url: None,
-            turso_auth_token: None,
+            secrets: Secrets {
+                jwt_secret,
+                database_url: None,
+                turso_auth_token: None,
+            },
             filesystem_dir: None,
             gh_owner: None,
             gh_repo: None,
             gh_branch: None,
-            bucket_name: None,
-            secret_uri: None,
+            secrets_bucket: None,
+            secrets_object: None,
         }
     }
 }
 
 impl Config {
     /// Setup config from environment variables
-    pub fn from_envar() -> Self {
+    pub async fn from_envar() -> Self {
         // Required
         let svc_endpoint: String = env::var("SVC_ENDPOINT")
             .expect("Failed to load SVC_ENDPOINT environment variable. Double check your config");
@@ -133,22 +148,42 @@ impl Config {
         let log_level = Self::parse_log_level();
         let environment = Self::parse_environment();
         let data_source = Self::parse_data_source();
-        let mut jwt_secret: String = env::var("JWT_SECRET")
-            .expect("failed to load JWT_SECRET environment variable. Double check your config");
 
         // Optional
-        let mut database_url = Self::parse_optional("DATABASE_URL");
-        let mut turso_auth_token = Self::parse_optional("TURSO_AUTH_TOKEN");
         let filesystem_dir = Self::parse_optional("FILESYSTEM_DIR");
         let gh_owner = Self::parse_optional("GITHUB_OWNER");
         let gh_repo = Self::parse_optional("GITHUB_REPO");
         let gh_branch = Self::parse_optional("GITHUB_BRANCH");
-        let mut bucket_name = Self::parse_optional("BUCKET_NAME");
-        let secret_uri = Self::parse_optional("SECRET_URI");
+        let secrets_bucket = Self::parse_optional("SECRETS_BUCKET");
+        let secrets_object = Self::parse_optional("SECRETS_OBJECT");
 
-        // TODO
-        // Check SECRET_URI
+        // Check SECRETS_BUCKET and SECRETS_OBJECT
         // If set, try to load the secret then override all secrets.
+        let (jwt_secret, database_url, turso_auth_token) = if secrets_bucket.is_some()
+            && secrets_object.is_some()
+        {
+            let secrets = Self::load_gcs_secrets(
+                &secrets_bucket.clone().unwrap(),
+                &secrets_object.clone().unwrap(),
+            )
+            .await;
+
+            (
+                secrets.jwt_secret,
+                secrets.database_url,
+                secrets.turso_auth_token,
+            )
+        } else {
+            // Fallback to environment variables
+            // Required Secrets
+            let jwt_secret = env::var("JWT_SECRET")
+                .expect("failed to load JWT_SECRET environment variable. Double check your config");
+            // Optional Secrets
+            let database_url = Self::parse_optional("DATABASE_URL");
+            let turso_auth_token = Self::parse_optional("TURSO_AUTH_TOKEN");
+
+            (jwt_secret, database_url, turso_auth_token)
+        };
 
         Self {
             svc_endpoint,
@@ -156,22 +191,73 @@ impl Config {
             log_level,
             environment,
             data_source,
-            database_url,
-            turso_auth_token,
+            secrets: Secrets {
+                jwt_secret,
+                database_url,
+                turso_auth_token,
+            },
             filesystem_dir,
             gh_owner,
             gh_repo,
             gh_branch,
+            secrets_bucket,
+            secrets_object,
+        }
+    }
+    async fn load_gcs_secrets(secrets_bucket: &str, secrets_object: &str) -> Secrets {
+        let client = Storage::builder()
+            .build()
+            .await
+            .expect("Failed to build GCS client");
+        let mut reader = client
+            .read_object(
+                format!("projects/_/buckets/{}", &secrets_bucket),
+                secrets_object,
+            )
+            .send()
+            .await
+            .expect("Failed to read secret object");
+        let mut contents = Vec::new();
+        while let Some(chunk) = reader
+            .next()
+            .await
+            .transpose()
+            .expect("Failed to read chunk")
+        {
+            contents.extend_from_slice(&chunk);
+        }
+        let data = String::from_utf8(contents.clone()).unwrap();
+        let mut jwt_secret = String::new();
+        let mut database_url: Option<String> = None;
+        let mut turso_auth_token: Option<String> = None;
+
+        for secret in data.split("\n").collect::<Vec<&str>>() {
+            if secret.split_once("=").is_none() {
+                continue;
+            }
+            let (key, value) = secret.split_once("=").unwrap();
+            let secret_v = value.to_string();
+            match key {
+                "JWT_SECRET" => jwt_secret = secret_v,
+                "DATABASE_URL" => database_url = Some(secret_v),
+                "TURSO_AUTH_TOKEN" => turso_auth_token = Some(secret_v),
+                _ => {
+                    println!("Unused secret {} is detected.", &key)
+                }
+            }
+        }
+
+        Secrets {
             jwt_secret,
-            bucket_name,
-            secret_uri,
+            database_url,
+            turso_auth_token,
         }
     }
     /// Parse Optional environment variables
     fn parse_optional(envar: &str) -> Option<String> {
         match env::var(envar) {
             Err(e) => {
-                warn!(
+                println!(
                     "Failed to load {} environment variable. Set default to None. Error {}",
                     &envar, e
                 );
@@ -187,7 +273,7 @@ impl Config {
     fn parse_environment() -> Environment {
         match env::var("ENVIRONMENT") {
             Err(e) => {
-                warn!(
+                println!(
                 "Failed to load ENVIRONMENT environment variable. Set default to 'Release'. Error {}",
                 e
             );
@@ -204,7 +290,7 @@ impl Config {
     fn parse_log_level() -> tracing::Level {
         match env::var("LOG_LEVEL") {
             Err(e) => {
-                warn!(
+                println!(
                 "Failed to load LOG_LEVEL environment variable. Set default to 'info'. Error {}",
                 e
             );
@@ -224,7 +310,7 @@ impl Config {
     fn parse_data_source() -> String {
         match env::var("DATA_SOURCE") {
             Err(e) => {
-                warn!(
+                println!(
                 "Failed to load DATA_SOURCE environment variable. Set default to 'memory'. Error {}", e
                 );
                 "memory".to_string()
@@ -232,7 +318,7 @@ impl Config {
             Ok(val) => match val.as_str() {
                 "memory" | "sqlite" | "turso" => val,
                 _ => {
-                    error!(
+                    println!(
                         "Data Source type {} is not supported! Default to 'memory'.",
                         val
                     );
@@ -263,18 +349,19 @@ mod test {
         assert_eq!(result.log_level, log_level);
         assert_eq!(result.environment, environment);
         assert_eq!(result.data_source, data_source);
-        assert_eq!(result.jwt_secret, jwt_secret);
-        assert_eq!(result.database_url, None);
-        assert_eq!(result.turso_auth_token, None);
+        assert_eq!(result.secrets.jwt_secret, jwt_secret);
+        assert_eq!(result.secrets.database_url, None);
+        assert_eq!(result.secrets.turso_auth_token, None);
         assert_eq!(result.filesystem_dir, None);
         assert_eq!(result.gh_owner, None);
         assert_eq!(result.gh_repo, None);
         assert_eq!(result.gh_branch, None);
-        assert_eq!(result.bucket_name, None);
+        assert_eq!(result.secrets_bucket, None);
+        assert_eq!(result.secrets_object, None);
     }
 
-    #[test]
-    fn test_from_envar_without_optionals() {
+    #[tokio::test]
+    async fn test_from_envar_without_optionals() {
         let svc_endpoint = "localhost";
         let svc_port = "8080";
         let log_level = tracing::Level::INFO;
@@ -292,53 +379,55 @@ mod test {
             log_level,
             environment,
             data_source: data_source.to_string(),
-            jwt_secret: jwt_secret.to_string(),
-            database_url: empty.clone(),
-            turso_auth_token: empty.clone(),
+            secrets: Secrets {
+                jwt_secret: jwt_secret.to_string(),
+                database_url: empty.clone(),
+                turso_auth_token: empty.clone(),
+            },
             filesystem_dir: empty.clone(),
             gh_owner: empty.clone(),
             gh_repo: empty.clone(),
             gh_branch: empty.clone(),
-            bucket_name: empty.clone(),
-            secret_uri: empty,
+            secrets_bucket: empty.clone(),
+            secrets_object: empty,
         });
 
-        let result = Config::from_envar();
+        let result = Config::from_envar().await;
 
         assert_eq!(result.svc_endpoint, svc_endpoint);
         assert_eq!(result.svc_port, svc_port);
         assert_eq!(result.log_level, expected_log_level);
         assert_eq!(result.environment, expected_environment);
         assert_eq!(result.data_source, expected_data_source);
-        assert_eq!(result.jwt_secret, jwt_secret);
-        assert_eq!(result.database_url, None);
-        assert_eq!(result.turso_auth_token, None);
+        assert_eq!(result.secrets.jwt_secret, jwt_secret);
+        assert_eq!(result.secrets.database_url, None);
+        assert_eq!(result.secrets.turso_auth_token, None);
         assert_eq!(result.filesystem_dir, None);
         assert_eq!(result.gh_owner, None);
         assert_eq!(result.gh_repo, None);
         assert_eq!(result.gh_branch, None);
-        assert_eq!(result.bucket_name, None);
-        assert_eq!(result.secret_uri, None);
+        assert_eq!(result.secrets_bucket, None);
+        assert_eq!(result.secrets_object, None);
 
         remove_envars()
     }
 
-    #[test]
-    fn test_from_envar_with_optionals() {
+    #[tokio::test]
+    async fn test_from_envar_with_optionals() {
         let svc_endpoint = "localhost";
         let svc_port = "8080";
         let expected_log_level = tracing::Level::INFO;
         let environment = Environment::Development;
         let data_source = "sqlite";
         let jwt_secret = "secret";
-        let database_url = Some("sqlite:husni-portfolio.db".to_string());
+        let database_url = Some("libsql://husni-portfolio.asia.turso.io".to_string());
         let turso_auth_token = Some("turso_token_123456".to_string());
         let filesystem_dir = Some("/tmp/blogs".to_string());
         let gh_owner = Some("husni-zuhdi".to_string());
         let gh_repo = Some("husni-blog-resources".to_string());
         let gh_branch = Some("main".to_string());
-        let bucket_name = Some("".to_string());
-        let secret_uri = Some("".to_string());
+        let secrets_bucket = Some("".to_string());
+        let secrets_object = Some("".to_string());
 
         set_envars(Config {
             svc_endpoint: svc_endpoint.to_string(),
@@ -346,33 +435,35 @@ mod test {
             log_level: tracing::Level::INFO,
             environment: Environment::Development,
             data_source: data_source.to_string(),
-            jwt_secret: jwt_secret.to_string(),
-            database_url: database_url.clone(),
-            turso_auth_token: turso_auth_token.clone(),
+            secrets: Secrets {
+                jwt_secret: jwt_secret.to_string(),
+                database_url: database_url.clone(),
+                turso_auth_token: turso_auth_token.clone(),
+            },
             filesystem_dir: filesystem_dir.clone(),
             gh_owner: gh_owner.clone(),
             gh_repo: gh_repo.clone(),
             gh_branch: gh_branch.clone(),
-            bucket_name,
-            secret_uri,
+            secrets_bucket,
+            secrets_object,
         });
 
-        let result = Config::from_envar();
+        let result = Config::from_envar().await;
 
         assert_eq!(result.svc_endpoint, svc_endpoint);
         assert_eq!(result.svc_port, svc_port);
         assert_eq!(result.log_level, expected_log_level);
         assert_eq!(result.environment, environment);
         assert_eq!(result.data_source, data_source);
-        assert_eq!(result.jwt_secret, jwt_secret);
-        assert_eq!(result.database_url, database_url);
-        assert_eq!(result.turso_auth_token, turso_auth_token);
+        assert_eq!(result.secrets.jwt_secret, jwt_secret);
+        assert_eq!(result.secrets.database_url, database_url);
+        assert_eq!(result.secrets.turso_auth_token, turso_auth_token);
         assert_eq!(result.filesystem_dir, filesystem_dir);
         assert_eq!(result.gh_owner, gh_owner);
         assert_eq!(result.gh_repo, gh_repo);
         assert_eq!(result.gh_branch, gh_branch);
-        assert_eq!(result.bucket_name, None);
-        assert_eq!(result.secret_uri, None);
+        assert_eq!(result.secrets_bucket, None);
+        assert_eq!(result.secrets_object, None);
 
         remove_envars()
     }
@@ -383,15 +474,15 @@ mod test {
         env::set_var("LOG_LEVEL", config.log_level.to_string());
         env::set_var("ENVIRONMENT", config.environment.to_string());
         env::set_var("DATA_SOURCE", config.data_source);
-        env::set_var("JWT_SECRET", config.jwt_secret);
-        env::set_var("DATABASE_URL", config.database_url.unwrap());
-        env::set_var("TURSO_AUTH_TOKEN", config.turso_auth_token.unwrap());
+        env::set_var("JWT_SECRET", config.secrets.jwt_secret);
+        env::set_var("DATABASE_URL", config.secrets.database_url.unwrap());
+        env::set_var("TURSO_AUTH_TOKEN", config.secrets.turso_auth_token.unwrap());
         env::set_var("FILESYSTEM_DIR", config.filesystem_dir.unwrap());
         env::set_var("GITHUB_OWNER", config.gh_owner.unwrap());
         env::set_var("GITHUB_REPO", config.gh_repo.unwrap());
         env::set_var("GITHUB_BRANCH", config.gh_branch.unwrap());
-        env::set_var("BUCKET_NAME", config.bucket_name.unwrap());
-        env::set_var("SECRET_URI", config.secret_uri.unwrap());
+        env::set_var("SECRETS_BUCKET", config.secrets_bucket.unwrap());
+        env::set_var("SECRETS_OBJECT", config.secrets_object.unwrap());
     }
 
     fn remove_envars() {
@@ -400,14 +491,14 @@ mod test {
         env::remove_var("LOG_LEVEL");
         env::remove_var("ENVIRONMENT");
         env::remove_var("DATA_SOURCE");
+        env::remove_var("JWT_SECRET");
         env::remove_var("DATABASE_URL");
         env::remove_var("TURSO_AUTH_TOKEN");
         env::remove_var("FILESYSTEM_DIR");
         env::remove_var("GITHUB_OWNER");
         env::remove_var("GITHUB_REPO");
         env::remove_var("GITHUB_BRANCH");
-        env::remove_var("JWT_SECRET");
-        env::remove_var("BUCKET_NAME");
-        env::remove_var("SECRET_URI");
+        env::remove_var("SECRETS_BUCKET");
+        env::remove_var("SECRETS_OBJECT");
     }
 }
