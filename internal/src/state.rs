@@ -18,10 +18,10 @@ use tracing::{debug, info};
 pub async fn state_factory(config: Config) -> AppState {
     // Setup blog use case
     let data_source_is_configured_sqlite =
-        config.data_source == "sqlite" && config.database_url.is_some();
+        config.data_source == "sqlite" && config.secrets.database_url.is_some();
     let data_source_is_configured_turso = config.data_source == "turso"
-        && config.database_url.is_some()
-        && config.turso_auth_token.is_some();
+        && config.secrets.database_url.is_some()
+        && config.secrets.turso_auth_token.is_some();
     let github_api_is_enabled =
         config.gh_owner.is_some() && config.gh_repo.is_some() && config.gh_branch.is_some();
 
@@ -29,7 +29,7 @@ pub async fn state_factory(config: Config) -> AppState {
         if data_source_is_configured_sqlite {
             let repo = TursoDatabase::new(
                 config.data_source.clone(),
-                config.database_url.clone().unwrap(),
+                config.secrets.database_url.clone().unwrap(),
                 None,
             )
             .await;
@@ -43,8 +43,8 @@ pub async fn state_factory(config: Config) -> AppState {
         } else if data_source_is_configured_turso {
             let repo = TursoDatabase::new(
                 config.data_source.clone(),
-                config.database_url.clone().unwrap(),
-                config.turso_auth_token.clone(),
+                config.secrets.database_url.clone().unwrap(),
+                config.secrets.turso_auth_token.clone(),
             )
             .await;
             (

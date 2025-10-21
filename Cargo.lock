@@ -1710,6 +1710,7 @@ dependencies = [
  "askama",
  "async-trait",
  "axum 0.7.9",
+ "bytes",
  "chrono",
  "dyn-clone",
  "google-cloud-storage",

@@ -18,7 +18,7 @@ pub async fn get_base_admin(State(app_state): State<AppState>, headers: HeaderMa
     info!("User Agent: {} and JWT processed", user_agent);
 
     // Display 401 when User doesn't provide a JWT
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }

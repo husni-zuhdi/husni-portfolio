@@ -24,7 +24,7 @@ pub async fn post_add_admin_talk(
     let (user_agent, token) = process_login_header(headers.clone()).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
@@ -76,7 +76,7 @@ pub async fn put_edit_admin_talk(
     let (user_agent, token) = process_login_header(headers).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
@@ -171,7 +171,7 @@ pub async fn delete_delete_admin_talk(
     let (user_agent, token) = process_login_header(headers.clone()).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
