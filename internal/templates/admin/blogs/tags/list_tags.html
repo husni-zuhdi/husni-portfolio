@@ -1,13 +1,13 @@
 {% for tag in tags %}
 <h2 class="hover:font-bold">
     <div id="tag_{{tag.id}}_target">
-        <button class="btn_blue"
+        <button class="btn_text btn_blue"
             hx-get="/admin/blogs/tags/{{tag.id}}/edit"
             hx-target="#tag_{{tag.id}}_target"
             hx-swap="innerHTML">
             *
         </button>
-        <button class="btn_red"
+        <button class="btn_text btn_red"
             hx-get="/admin/blogs/tags/{{tag.id}}/delete"
             hx-target="#tag_{{tag.id}}_target"
             hx-swap="innerHTML">
