@@ -557,16 +557,9 @@ pre {
   --tw-border-opacity: 1;
   border-color: rgb(107 114 128 / var(--tw-border-opacity));
   --tw-bg-opacity: 1;
-  background-color: rgb(243 244 246 / var(--tw-bg-opacity));
+  background-color: rgb(46 52 64 / var(--tw-bg-opacity));
   padding-left: 1rem;
   padding-right: 1rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  pre {
-    --tw-bg-opacity: 1;
-    background-color: rgb(46 52 64 / var(--tw-bg-opacity));
-  }
 }
 
 table {
@@ -675,23 +668,17 @@ select {
   padding-bottom: 0.25rem;
 }
 
+select:focus {
+  --tw-border-opacity: 1;
+  border-color: rgb(59 130 246 / var(--tw-border-opacity));
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(59 130 246 / var(--tw-ring-opacity));
+}
+
 @media (prefers-color-scheme: dark) {
   select {
     --tw-bg-opacity: 1;
     background-color: rgb(30 41 59 / var(--tw-bg-opacity));
-  }
-}
-
-option {
-  border-radius: 0.375rem;
-  --tw-bg-opacity: 1;
-  background-color: rgb(229 231 235 / var(--tw-bg-opacity));
-}
-
-@media (prefers-color-scheme: dark) {
-  option {
-    --tw-bg-opacity: 1;
-    background-color: rgb(51 65 85 / var(--tw-bg-opacity));
   }
 }
 

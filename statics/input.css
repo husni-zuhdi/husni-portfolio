@@ -38,7 +38,7 @@
     }
 
     pre {
-        @apply overflow-x-auto my-1 px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-gray-100 dark:bg-nord;
+        @apply overflow-x-auto my-1 px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-nord;
     }
 
     table {
@@ -70,11 +70,7 @@
     }
 
     select {
-        @apply rounded-md border-solid border-2 border-gray-500 px-3 py-1 bg-gray-100 dark:bg-slate-800;
-    }
-
-    option {
-        @apply rounded-md bg-gray-200 dark:bg-slate-700;
+        @apply rounded-md border-solid border-2 border-gray-500 px-3 py-1 bg-gray-100 dark:bg-slate-800 focus:ring-blue-500 focus:border-blue-500;
     }
 
     textarea {
