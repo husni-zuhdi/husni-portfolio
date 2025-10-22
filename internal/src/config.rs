@@ -162,6 +162,7 @@ impl Config {
         let (jwt_secret, database_url, turso_auth_token) = if secrets_bucket.is_some()
             && secrets_object.is_some()
         {
+            println!("Pulling secrets from Google Cloud Storage");
             let secrets = Self::load_gcs_secrets(
                 &secrets_bucket.clone().unwrap(),
                 &secrets_object.clone().unwrap(),
@@ -174,7 +175,6 @@ impl Config {
                 secrets.turso_auth_token,
             )
         } else {
-            // Fallback to environment variables
             // Required Secrets
             let jwt_secret = env::var("JWT_SECRET")
                 .expect("failed to load JWT_SECRET environment variable. Double check your config");
