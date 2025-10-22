@@ -42,7 +42,7 @@ pub async fn post_login(State(app_state): State<AppState>, body: String) -> impl
     }
 
     // Create JWT (Claim and) Token
-    let token = create_jwt(&app_state.config.jwt_secret);
+    let token = create_jwt(&app_state.config.secrets.jwt_secret);
     if token.is_none() {
         warn!("Rendering login retry. Failed to generate JWT Token");
         return get_login_retry(None).await;

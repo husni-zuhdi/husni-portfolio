@@ -6,7 +6,7 @@ use tracing::info;
 /// Run the axum web application
 pub async fn app() {
     // Setup Config
-    let config = Config::from_envar();
+    let config = Config::from_envar().await;
     let endpoint = format!("{}:{}", &config.svc_endpoint, &config.svc_port);
 
     // Initialize Tracing

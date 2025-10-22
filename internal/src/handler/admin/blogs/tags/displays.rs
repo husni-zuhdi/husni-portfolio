@@ -25,7 +25,7 @@ pub async fn get_base_admin_tags(
     let (user_agent, token) = process_login_header(headers).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
@@ -58,7 +58,7 @@ pub async fn get_admin_tags_list(
     let (user_agent, token) = process_login_header(headers).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
@@ -130,7 +130,7 @@ pub async fn get_admin_tags_search(
     let (user_agent, token) = process_login_header(headers).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
@@ -202,7 +202,7 @@ pub async fn get_admin_tag(
     let (user_agent, token) = process_login_header(headers).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
@@ -257,7 +257,7 @@ pub async fn get_add_admin_tag(
     let (user_agent, token) = process_login_header(headers).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
@@ -300,7 +300,7 @@ pub async fn get_edit_admin_tag(
     let (user_agent, token) = process_login_header(headers).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }
@@ -363,7 +363,7 @@ pub async fn get_delete_admin_tag(
     let (user_agent, token) = process_login_header(headers).unwrap();
     info!("User Agent: {} and JWT processed", user_agent);
 
-    if !verify_jwt(&token, &app_state.config.jwt_secret) {
+    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         info!("Unauthorized access.");
         return get_401_unauthorized().await;
     }

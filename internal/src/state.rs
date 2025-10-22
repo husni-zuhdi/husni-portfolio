@@ -18,18 +18,18 @@ use tracing::{debug, info};
 pub async fn state_factory(config: Config) -> AppState {
     // Setup blog use case
     let data_source_is_configured_sqlite =
-        config.data_source == "sqlite" && !config.database_url.is_empty();
+        config.data_source == "sqlite" && config.secrets.database_url.is_some();
     let data_source_is_configured_turso = config.data_source == "turso"
-        && !config.database_url.is_empty()
-        && !config.turso_auth_token.is_empty();
+        && config.secrets.database_url.is_some()
+        && config.secrets.turso_auth_token.is_some();
     let github_api_is_enabled =
-        !config.gh_owner.is_empty() && !config.gh_repo.is_empty() && !config.gh_branch.is_empty();
+        config.gh_owner.is_some() && config.gh_repo.is_some() && config.gh_branch.is_some();
 
     let (mut blog_uc, talk_uc, tag_uc, blog_tag_mapping_uc, auth_uc) =
         if data_source_is_configured_sqlite {
             let repo = TursoDatabase::new(
                 config.data_source.clone(),
-                config.database_url.clone(),
+                config.secrets.database_url.clone().unwrap(),
                 None,
             )
             .await;
@@ -43,8 +43,8 @@ pub async fn state_factory(config: Config) -> AppState {
         } else if data_source_is_configured_turso {
             let repo = TursoDatabase::new(
                 config.data_source.clone(),
-                config.database_url.clone(),
-                Some(config.turso_auth_token.clone()),
+                config.secrets.database_url.clone().unwrap(),
+                config.secrets.turso_auth_token.clone(),
             )
             .await;
             (
@@ -59,16 +59,16 @@ pub async fn state_factory(config: Config) -> AppState {
             (BlogUseCase::new(Box::new(repo)), None, None, None, None)
         };
 
-    if !config.filesystem_dir.is_empty() {
-        let fs_usecase = FilesystemApiUseCase::new(config.filesystem_dir.clone()).await;
+    if config.filesystem_dir.is_some() {
+        let fs_usecase = FilesystemApiUseCase::new(config.filesystem_dir.clone().unwrap()).await;
         let _ = populate_blog(Box::new(fs_usecase), &mut blog_uc).await;
     }
 
     if github_api_is_enabled {
         let github_usecase = GithubApiUseCase::new(
-            config.gh_owner.clone(),
-            config.gh_repo.clone(),
-            config.gh_branch.clone(),
+            config.gh_owner.clone().unwrap(),
+            config.gh_repo.clone().unwrap(),
+            config.gh_branch.clone().unwrap(),
         )
         .await;
         let _ = populate_blog(Box::new(github_usecase), &mut blog_uc).await;

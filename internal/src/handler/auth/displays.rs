@@ -23,7 +23,7 @@ pub async fn get_login(
 
     let mut resp_headers = HeaderMap::new();
     // Redirect User to Admin Blog when token is verified
-    if verify_jwt(&token, &app_state.config.jwt_secret) {
+    if verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
         resp_headers.insert(HX_REDIRECT, "/admin".parse().unwrap());
     }
 
