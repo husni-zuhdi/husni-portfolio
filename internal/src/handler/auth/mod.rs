@@ -48,8 +48,12 @@ pub fn process_login_header(header: HeaderMap) -> Option<(String, String)> {
         match *key {
             USER_AGENT => user_agent = value.to_str().unwrap().to_string(),
             COOKIE => {
-                let (_, tkn) = value.to_str().unwrap().split_once("token=").unwrap();
-                token = tkn.to_string()
+                let tkn = value.to_str().unwrap().split_once("token=");
+                if tkn.is_none() {
+                    debug!("No token in cookie");
+                    continue;
+                }
+                token = tkn.unwrap().1.to_string()
             }
             _ => {
                 debug!("Unrecognized key/value: {:?}/{:?}", key, value);

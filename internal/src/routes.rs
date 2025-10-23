@@ -34,6 +34,10 @@ pub fn main_route(app_state: AppState) -> Router {
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service("/icons", get_service(ServeDir::new("./statics/icons/")))
         .nest_service(
+            "/theme.js",
+            get_service(ServeFile::new("./statics/theme.js")),
+        )
+        .nest_service(
             "/styles.css",
             get_service(ServeFile::new("./statics/styles.css")),
         )

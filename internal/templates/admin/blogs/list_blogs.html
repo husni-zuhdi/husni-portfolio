@@ -2,13 +2,13 @@
     <h2 class="mb-2 hover:font-bold md:justify-start">
         <div id="blog_{{blog.id}}_target">
             <div id="blog_{{blog.id}}_main_target">
-                <button class="btn_blue"
+                <button class="btn_text btn_blue"
                     hx-get="/admin/blogs/{{blog.id}}/edit"
                     hx-target="#blogs_target" 
                     hx-swap="innerHTML">
                     *
                 </button>
-                <button class="btn_red"
+                <button class="btn_text btn_red"
                     hx-get="/admin/blogs/{{blog.id}}/delete" 
                     hx-target="#blog_{{blog.id}}_target" 
                     hx-swap="innerHTML">
