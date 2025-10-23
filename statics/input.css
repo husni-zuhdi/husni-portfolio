@@ -62,7 +62,7 @@
     }
 
     button {
-        @apply rounded-md border-solid border-2 border-gray-500 px-3 py-1 bg-gray-200 hover:bg-gray-700 text-black hover:text-white;
+        @apply rounded-md border-solid border-2 border-gray-500 px-3 py-1 bg-gray-200 hover:bg-gray-700 text-black hover:text-white dark:text-white dark:hover:text-black;
     }
 
     input {
@@ -105,7 +105,7 @@
     }
 
     .active_tag {
-        @apply bg-gray-700 text-white;
+        @apply bg-gray-700 text-white hover:text-red-300;
     }
 
     .inactive_tag {
