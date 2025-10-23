@@ -105,11 +105,11 @@
     }
 
     .active_tag {
-        @apply bg-gray-700 text-white hover:text-red-300;
+        @apply bg-gray-700 text-white hover:text-red-300 dark:hover:text-red-300;
     }
 
     .inactive_tag {
-        @apply bg-gray-200 hover:bg-gray-700 text-black hover:text-white;
+        @apply text-black hover:text-white dark:text-black dark:hover:text-white;
     }
 
     .btn_text {
