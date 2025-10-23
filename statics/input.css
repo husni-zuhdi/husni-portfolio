@@ -38,7 +38,7 @@
     }
 
     pre {
-        @apply overflow-x-auto my-1 px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-nord;
+        @apply overflow-x-auto my-1 px-4 text-wrap rounded border-solid border-2 border-gray-500 bg-nord dark:bg-slate-900;
     }
 
     table {
