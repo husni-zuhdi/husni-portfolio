@@ -5,11 +5,10 @@
 
 {% block content %}
     <!-- Syntax  Highlithing -->
-    <!-- <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.11.1/styles/default.min.css"> -->
     <link href="https://unpkg.com/nord-highlightjs@0.1.0/dist/nord.css" rel="stylesheet" type="text/css" />
     <script src="https://unpkg.com/@highlightjs/cdn-assets@11.11.1/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
-    <!-- MathJax Disabled for now-->
+    <!-- MathJax-->
     <script id="MathJax-script" async
         src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js">
     </script>
@@ -23,7 +22,11 @@
                <!-- No tag to render  -->
                <!-- Skip this tag -->
             {% else %}
-                <button hx-get="/blogs?tags={{tag}}" hx-target="#body_target" hx-swap="innerHTML" hx-replace-url="true">
+                <button hx-get="/blogs?tags={{tag}}"
+                    hx-target="#body_target"
+                    hx-swap="innerHTML"
+                    hx-replace-url="true"
+                    class="inactive_tag">
                     {{tag}}
                 </button>
             {% endif %}
