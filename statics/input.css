@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+@import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
@@ -81,7 +81,7 @@
         @apply p-4 my-4 border-s-4 border-gray-500 bg-gray-50 dark:bg-nord;
     }
 
-    html {
+    body {
         @apply text-black bg-gray-100 dark:text-slate-300 dark:bg-slate-800 font-mono;
     }
 
@@ -162,6 +162,10 @@
 
     .footer_nav {
         @apply px-6 lg:px-64 py-4 text-center lg:text-left;
+    }
+
+    .btn_theme {
+        @apply bg-gray-50 hover:bg-gray-50 dark:bg-slate-900 dark:hover:bg-slate-900;
     }
 }
 
