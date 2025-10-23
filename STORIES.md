@@ -7,16 +7,9 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 2. To make a cool project.
 
 ## Work in Progress
-- [ ] As an Engineer, I want to reduce my Google Secret Manager (GSM) billing by move all environment variables to Google Cloud Storage (GCS).
-    - GSM cost ~1k IDR per secrets. The cost will linearly increasing with number of envars.
-    - Turns out, GSM only have free tier for the first 6 months.
-    - Previously we didn't pay a dime but now? We need to pay estimated ~100k IDR per year. I don't like it.
-    - In version 0.3.2, we have three envars stored in GSM and we will do a PoC moving to GCS.
-    - This can be a starting learning process to host our static files (image, css, svg, video, etc).
     
 ## TODO
 ### User stories
-- [ ] As an User, I want to have a dark mode button in my site.
 - [ ] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
     - We can improve our web speed by introducing in-memory caching on server-side.
     - Currently, `/blogs` took around 500ms to load while `/talks` took around 300ms.
@@ -40,6 +33,20 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 ### Engineering stories
 - [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
     - We can use [git-cliff](https://git-cliff.org/) but we need to upgrade the rust version to 1.8.3 or newer
+
+## 0.3.3 2025-10-24
+### Engineering stories
+- [x] As an Engineer, I want to reduce my Google Secret Manager (GSM) billing by move all environment variables to Google Cloud Storage (GCS).
+    - GSM cost ~1k IDR per secrets. The cost will linearly increasing with number of envars.
+    - Turns out, GSM only have free tier for the first 6 months.
+    - Previously we didn't pay a dime but now? We need to pay estimated ~100k IDR per year. I don't like it.
+    - In version 0.3.2, we have three envars stored in GSM and we will do a PoC moving to GCS.
+    - This can be a starting learning process to host our static files (image, css, svg, video, etc).
+    - GCS secrets implemented.
+
+### User stories
+- [x] As an User, I want to have a dark mode button in my site.
+    - Dark mode implemented with tailwindcss.
 
 ## 0.3.2 2025-10-03
 ### User stories

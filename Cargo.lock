@@ -593,7 +593,7 @@ dependencies = [
 
 [[package]]
 name = "cmd"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "internal",
  "tokio",
@@ -1703,7 +1703,7 @@ dependencies = [
 
 [[package]]
 name = "internal"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "anyhow",
  "argon2",
