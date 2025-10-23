@@ -23,10 +23,8 @@
             var is_window_dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
             if (is_theme_dark || (!is_theme_in_local_storage && is_window_dark)) {
-                console.log("Enable Dark Mode");
                 document.documentElement.classList.add('dark');
             } else {
-                console.log("Enable Light Mode");
                 document.documentElement.classList.remove('dark')
             }
         </script>
