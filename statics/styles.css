@@ -558,6 +558,11 @@ pre {
   padding-right: 1rem;
 }
 
+pre:is(.dark *) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(15 23 42 / var(--tw-bg-opacity));
+}
+
 table {
   table-layout: auto;
   border-radius: 0.25rem;
