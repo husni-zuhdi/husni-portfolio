@@ -1,0 +1,52 @@
+name: Rust Continuous Integration
+
+on:
+  push:
+    pull_request:
+      types:
+        - opened
+    paths: 
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - '**.rs'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  unit_test:
+    name: Unit Test
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@1.88.0
+    - run: cargo test --all-features --locked -- --test-threads=1
+  
+  format:
+    name: Formatting
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@1.88.0
+      with:
+        components: rustfmt
+    - run: cargo fmt --check
+  
+  clippy:
+    name: Clippy Linting
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@1.88.0
+      with:
+        components: clippy
+    - run: cargo clippy --locked -- -D warnings
+  
+  coverage:
+    name: Code coverage
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install cargo-tarpaulin --version 0.34.1
+      - run: cargo tarpaulin --ignore-tests --locked
