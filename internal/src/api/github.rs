@@ -199,7 +199,7 @@ impl GithubApiUseCase {
         // then followed by '/' (must use escape character)
         let re_href = Regex::new(r"href=.\.\/").expect("Failed to build regex href");
 
-        let replaced_str_href = format!("href=\"{}/", gh_blog_link);
+        let replaced_str_href = format!("href=\"{gh_blog_link}/");
         debug!("Replaced str: {}", &replaced_str_href);
 
         let res_href = re_href
@@ -214,7 +214,7 @@ impl GithubApiUseCase {
         // then followed by '/' (must use escape character)
         let re_src = Regex::new(r"src=.\.\/").expect("Failed to build regex src");
 
-        let replaced_str_src = format!("src=\"{}/", gh_raw_blog_link);
+        let replaced_str_src = format!("src=\"{gh_raw_blog_link}/");
         debug!("Replaced str: {}", &replaced_str_src);
 
         let body = re_src

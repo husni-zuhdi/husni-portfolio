@@ -84,13 +84,13 @@ impl BlogRepo for TursoDatabase {
 
         let tag_names: Vec<String> = tags
             .split(",")
-            .map(|tag| format!(" tags.name='{}' ", tag))
+            .map(|tag| format!(" tags.name='{tag}' "))
             .collect();
         let tag_names_joined = tag_names.join("OR");
         let tags_query = if tags.is_empty() {
             String::new()
         } else {
-            format!("WHERE {}", tag_names_joined)
+            format!("WHERE {tag_names_joined}")
         };
         let prep_query = format!(
             r#"
@@ -98,7 +98,7 @@ impl BlogRepo for TursoDatabase {
                 SELECT blog_ref AS blog_id
                 FROM blog_tag_mapping
                 JOIN tags ON tag_ref=tags.id
-                {}
+                {tags_query}
                 GROUP BY blog_ref
             )
             SELECT 
@@ -114,8 +114,7 @@ impl BlogRepo for TursoDatabase {
             ORDER BY blog_ref
             LIMIT ?1
             OFFSET ?2;
-        "#,
-            tags_query
+        "#
         );
         debug!(
             "Executing query {} for start {}, end {}, limit {}",

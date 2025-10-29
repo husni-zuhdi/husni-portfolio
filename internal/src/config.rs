@@ -101,7 +101,7 @@ pub struct Secrets {
 
 impl std::fmt::Display for Environment {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -274,8 +274,7 @@ impl Config {
         match env::var("ENVIRONMENT") {
             Err(e) => {
                 println!(
-                "Failed to load ENVIRONMENT environment variable. Set default to 'Release'. Error {}",
-                e
+                "Failed to load ENVIRONMENT environment variable. Set default to 'Release'. Error {e}"
             );
                 Environment::Release
             }
@@ -291,8 +290,7 @@ impl Config {
         match env::var("LOG_LEVEL") {
             Err(e) => {
                 println!(
-                "Failed to load LOG_LEVEL environment variable. Set default to 'info'. Error {}",
-                e
+                "Failed to load LOG_LEVEL environment variable. Set default to 'info'. Error {e}"
             );
                 tracing::Level::INFO
             }
@@ -311,17 +309,14 @@ impl Config {
         match env::var("DATA_SOURCE") {
             Err(e) => {
                 println!(
-                "Failed to load DATA_SOURCE environment variable. Set default to 'memory'. Error {}", e
+                "Failed to load DATA_SOURCE environment variable. Set default to 'memory'. Error {e}"
                 );
                 "memory".to_string()
             }
             Ok(val) => match val.as_str() {
                 "memory" | "sqlite" | "turso" => val,
                 _ => {
-                    println!(
-                        "Data Source type {} is not supported! Default to 'memory'.",
-                        val
-                    );
+                    println!("Data Source type {val} is not supported! Default to 'memory'.");
                     "memory".to_string()
                 }
             },
