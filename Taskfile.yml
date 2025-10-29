@@ -10,7 +10,19 @@ tasks:
   test:
     summary: Run unit test with logs
     cmds:
-      - RUST_LOG=debug cargo test -- --nocapture --test-threads=1
+      - RUST_LOG=debug cargo test --all-features -- --test-threads=1
+  coverage:
+    summary: Run tarpaulin for code coverage and produce html output
+    cmds:
+      - cargo tarpaulin --ignore-tests --follow-exec --out Html
+  fmt:
+    summary: Run rust formatting with fmt
+    cmds:
+      - cargo fmt
+  audit:
+    summary: Run rust audit with cargo-deny
+    cmds:
+      - cargo deny check deny advisories
   run:
     summary: Run application with hot-reload
     cmds:
