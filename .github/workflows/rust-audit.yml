@@ -21,6 +21,6 @@ jobs:
       with:
         rust-version: "1.88.0"
         log-level: warn
-        command: check deny advisories
+        command: check advisories
         arguments: --all-features
 
