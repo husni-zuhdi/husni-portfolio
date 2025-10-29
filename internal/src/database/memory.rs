@@ -71,7 +71,7 @@ impl BlogRepo for MemoryBlogRepo {
                         Some(blog_tags) => {
                             if !blog_tags.contains(tag) {
                                 debug!("Tag: {} is not available in blog {}", &tag, &blog.id);
-                                are_tags_matched = are_tags_matched || false;
+                                are_tags_matched = false;
                             }
                         }
                         None => continue,
