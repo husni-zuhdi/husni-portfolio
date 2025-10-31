@@ -29,6 +29,11 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - I just want to make something that worth my time and effort!
 
 ### Admin stories
+- [ ] As an Admin, I want to have a page to update my profile.
+    - In the admin management page, we can add `Profile` section to edit profile.
+    - I think it's better to have some kind of *versioning* for profile.
+    - For example by set the `datetime` as profile_id. We can roll-back or see the historical profile.
+    - The versioning can be implemented in another features like `Blogs` too.
 
 ### Engineering stories
 - [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
