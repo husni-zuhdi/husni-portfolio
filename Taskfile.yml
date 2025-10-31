@@ -82,7 +82,7 @@ tasks:
       - |
         cat <<EOF> version.json
         {
-          "version": "$(cat cmd/Cargo.toml| grep '^version' | awk -F '=' '{print $2}' | sed 's/[[:space:]|\"]//g')",
+          "version": "$(cat Cargo.toml| grep '^version' | awk -F '=' '{print $2}' | sed 's/[[:space:]|\"]//g')",
           "build_date": "$(date +%F)",
           "build_hash": "$(git rev-parse HEAD)"
         }

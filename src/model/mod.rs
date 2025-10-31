@@ -2,7 +2,6 @@ pub mod auth;
 pub mod axum;
 pub mod blog_tag_mappings;
 pub mod blogs;
-pub mod github;
 pub mod tags;
 pub mod talks;
 pub mod templates;

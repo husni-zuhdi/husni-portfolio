@@ -32,22 +32,6 @@ pub struct Config {
     /// Collection of secrets. Can be load from environment variables or
     /// Google Cloud Storage (GSM)
     pub secrets: Secrets,
-    /// Filesystem Dir (Optional; Deprecated)
-    /// Directory of blog markdown files.
-    /// Default to None.
-    pub filesystem_dir: Option<String>,
-    /// Github Owner (Optional; Deprecated)
-    /// Github owner of blogs repository.
-    /// Default to None.
-    pub gh_owner: Option<String>,
-    /// Github Repository (Optional; Deprecated)
-    /// Github repository name.
-    /// Default to None.
-    pub gh_repo: Option<String>,
-    /// Github Branch (Optional; Deprecated)
-    /// Branch of blog github repository.
-    /// Default to None.
-    pub gh_branch: Option<String>,
     /// Google Cloud Storage (GCS) Bukcet Name (Optional; Secret)
     /// Secret GCS bucket name. Required `SECRETS_OBJECT` to use GCS
     /// as Secret source.
@@ -127,10 +111,6 @@ impl Default for Config {
                 database_url: None,
                 turso_auth_token: None,
             },
-            filesystem_dir: None,
-            gh_owner: None,
-            gh_repo: None,
-            gh_branch: None,
             secrets_bucket: None,
             secrets_object: None,
         }
@@ -150,10 +130,6 @@ impl Config {
         let data_source = Self::parse_data_source();
 
         // Optional
-        let filesystem_dir = Self::parse_optional("FILESYSTEM_DIR");
-        let gh_owner = Self::parse_optional("GITHUB_OWNER");
-        let gh_repo = Self::parse_optional("GITHUB_REPO");
-        let gh_branch = Self::parse_optional("GITHUB_BRANCH");
         let secrets_bucket = Self::parse_optional("SECRETS_BUCKET");
         let secrets_object = Self::parse_optional("SECRETS_OBJECT");
 
@@ -196,10 +172,6 @@ impl Config {
                 database_url,
                 turso_auth_token,
             },
-            filesystem_dir,
-            gh_owner,
-            gh_repo,
-            gh_branch,
             secrets_bucket,
             secrets_object,
         }
@@ -347,10 +319,6 @@ mod test {
         assert_eq!(result.secrets.jwt_secret, jwt_secret);
         assert_eq!(result.secrets.database_url, None);
         assert_eq!(result.secrets.turso_auth_token, None);
-        assert_eq!(result.filesystem_dir, None);
-        assert_eq!(result.gh_owner, None);
-        assert_eq!(result.gh_repo, None);
-        assert_eq!(result.gh_branch, None);
         assert_eq!(result.secrets_bucket, None);
         assert_eq!(result.secrets_object, None);
     }
@@ -379,10 +347,6 @@ mod test {
                 database_url: empty.clone(),
                 turso_auth_token: empty.clone(),
             },
-            filesystem_dir: empty.clone(),
-            gh_owner: empty.clone(),
-            gh_repo: empty.clone(),
-            gh_branch: empty.clone(),
             secrets_bucket: empty.clone(),
             secrets_object: empty,
         });
@@ -397,10 +361,6 @@ mod test {
         assert_eq!(result.secrets.jwt_secret, jwt_secret);
         assert_eq!(result.secrets.database_url, None);
         assert_eq!(result.secrets.turso_auth_token, None);
-        assert_eq!(result.filesystem_dir, None);
-        assert_eq!(result.gh_owner, None);
-        assert_eq!(result.gh_repo, None);
-        assert_eq!(result.gh_branch, None);
         assert_eq!(result.secrets_bucket, None);
         assert_eq!(result.secrets_object, None);
 
@@ -417,10 +377,6 @@ mod test {
         let jwt_secret = "secret";
         let database_url = Some("libsql://husni-portfolio.asia.turso.io".to_string());
         let turso_auth_token = Some("turso_token_123456".to_string());
-        let filesystem_dir = Some("/tmp/blogs".to_string());
-        let gh_owner = Some("husni-zuhdi".to_string());
-        let gh_repo = Some("husni-blog-resources".to_string());
-        let gh_branch = Some("main".to_string());
         let secrets_bucket = Some("".to_string());
         let secrets_object = Some("".to_string());
 
@@ -435,10 +391,6 @@ mod test {
                 database_url: database_url.clone(),
                 turso_auth_token: turso_auth_token.clone(),
             },
-            filesystem_dir: filesystem_dir.clone(),
-            gh_owner: gh_owner.clone(),
-            gh_repo: gh_repo.clone(),
-            gh_branch: gh_branch.clone(),
             secrets_bucket,
             secrets_object,
         });
@@ -453,10 +405,6 @@ mod test {
         assert_eq!(result.secrets.jwt_secret, jwt_secret);
         assert_eq!(result.secrets.database_url, database_url);
         assert_eq!(result.secrets.turso_auth_token, turso_auth_token);
-        assert_eq!(result.filesystem_dir, filesystem_dir);
-        assert_eq!(result.gh_owner, gh_owner);
-        assert_eq!(result.gh_repo, gh_repo);
-        assert_eq!(result.gh_branch, gh_branch);
         assert_eq!(result.secrets_bucket, None);
         assert_eq!(result.secrets_object, None);
 
@@ -472,10 +420,6 @@ mod test {
         env::set_var("JWT_SECRET", config.secrets.jwt_secret);
         env::set_var("DATABASE_URL", config.secrets.database_url.unwrap());
         env::set_var("TURSO_AUTH_TOKEN", config.secrets.turso_auth_token.unwrap());
-        env::set_var("FILESYSTEM_DIR", config.filesystem_dir.unwrap());
-        env::set_var("GITHUB_OWNER", config.gh_owner.unwrap());
-        env::set_var("GITHUB_REPO", config.gh_repo.unwrap());
-        env::set_var("GITHUB_BRANCH", config.gh_branch.unwrap());
         env::set_var("SECRETS_BUCKET", config.secrets_bucket.unwrap());
         env::set_var("SECRETS_OBJECT", config.secrets_object.unwrap());
     }
@@ -489,10 +433,6 @@ mod test {
         env::remove_var("JWT_SECRET");
         env::remove_var("DATABASE_URL");
         env::remove_var("TURSO_AUTH_TOKEN");
-        env::remove_var("FILESYSTEM_DIR");
-        env::remove_var("GITHUB_OWNER");
-        env::remove_var("GITHUB_REPO");
-        env::remove_var("GITHUB_BRANCH");
         env::remove_var("SECRETS_BUCKET");
         env::remove_var("SECRETS_OBJECT");
     }
