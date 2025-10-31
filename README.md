@@ -39,5 +39,5 @@ task docker-build
 1. Build the docker image by push a new tag on this repo.
 2. Push to your docker registry (or use this push and build pipeline).
 3. (Optional) If you use `turso`, setup your sqlite database.
-4. (Optional) If you store secrets in `Google Cloud Storage`, setup your bucket.
+4. (Optional) If you store secrets in `Google Cloud Storage`, setup your bucket and Google Cloud Platform credentials [[example for local device]](https://docs.cloud.google.com/docs/authentication/set-up-adc-local-dev-environment).
 4. Set your container service (cloud-run, k8s, fargate, linode, docker swarm, etc) to use this image and set the environment varaibles in the [env.example](./env.example) file.
