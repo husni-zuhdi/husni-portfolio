@@ -867,13 +867,47 @@ svg:is(.dark *) {
   --tw-contain-style:  ;
 }
 
+.main_navbar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .main_navbar {
+    flex-direction: row;
+    padding-left: 10rem;
+    padding-right: 10rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main_navbar {
+    padding-left: 16rem;
+    padding-right: 16rem;
+  }
+}
+
 .main_body {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
   text-align: left;
 }
 
 @media (min-width: 768px) {
+  .main_body {
+    padding-left: 10rem;
+    padding-right: 10rem;
+  }
+}
+
+@media (min-width: 1024px) {
   .main_body {
     padding-left: 16rem;
     padding-right: 16rem;
@@ -1083,8 +1117,8 @@ svg:is(.dark *) {
   justify-content: center;
   --tw-bg-opacity: 1;
   background-color: rgb(249 250 251 / var(--tw-bg-opacity));
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
 }
@@ -1096,23 +1130,32 @@ svg:is(.dark *) {
 
 @media (min-width: 768px) {
   .footer_social_network {
-    padding-left: 16rem;
-    padding-right: 16rem;
+    padding-left: 10rem;
+    padding-right: 10rem;
   }
 }
 
 @media (min-width: 1024px) {
   .footer_social_network {
     justify-content: space-between;
+    padding-left: 16rem;
+    padding-right: 16rem;
   }
 }
 
 .footer_nav {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
   text-align: center;
+}
+
+@media (min-width: 768px) {
+  .footer_nav {
+    padding-left: 10rem;
+    padding-right: 10rem;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -1141,10 +1184,6 @@ svg:is(.dark *) {
 .btn_theme:hover:is(.dark *) {
   --tw-bg-opacity: 1;
   background-color: rgb(15 23 42 / var(--tw-bg-opacity));
-}
-
-.relative {
-  position: relative;
 }
 
 .my-10 {
@@ -1315,11 +1354,6 @@ svg:is(.dark *) {
   padding-right: 0.75rem;
 }
 
-.px-6 {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-
 .py-24 {
   padding-top: 6rem;
   padding-bottom: 6rem;
@@ -1328,11 +1362,6 @@ svg:is(.dark *) {
 .py-3 {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
-}
-
-.py-4 {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
 }
 
 .text-center {
@@ -1433,11 +1462,6 @@ svg:is(.dark *) {
     --tw-space-x-reverse: 0;
     margin-right: calc(1rem * var(--tw-space-x-reverse));
     margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
-  }
-
-  .md\:px-64 {
-    padding-left: 16rem;
-    padding-right: 16rem;
   }
 
   .md\:py-0 {

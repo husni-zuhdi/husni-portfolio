@@ -100,8 +100,12 @@
 }
 
 @layer components {
+    .main_navbar {
+        @apply px-8 md:px-40 lg:px-64 py-4 relative flex flex-col md:flex-row items-center justify-between;
+    }
+
     .main_body {
-        @apply px-6 md:px-64 text-left;
+        @apply px-8 md:px-40 lg:px-64 text-left;
     }
 
     .active_tag {
@@ -157,11 +161,11 @@
     }
 
     .footer_social_network {
-        @apply px-6 md:px-64 py-4 flex items-center justify-center lg:justify-between bg-gray-50 dark:bg-slate-900;
+        @apply px-8 md:px-40 lg:px-64 py-4 flex items-center justify-center lg:justify-between bg-gray-50 dark:bg-slate-900;
     }
 
     .footer_nav {
-        @apply px-6 lg:px-64 py-4 text-center lg:text-left;
+        @apply px-8 md:px-40 lg:px-64 py-4 text-center lg:text-left;
     }
 
     .btn_theme {
