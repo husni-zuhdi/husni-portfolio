@@ -33,6 +33,9 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 ### Engineering stories
 - [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
     - We can use [git-cliff](https://git-cliff.org/) but we need to upgrade the rust version to 1.8.3 or newer
+- [ ] As an Engineer, I want to increase my code quiality by implementing test.
+    - We have a bit of unit test for `config` and `state`.
+    - I think we want to gradually increase the test coverage.
 
 ## 0.3.3 2025-10-24
 ### Engineering stories
