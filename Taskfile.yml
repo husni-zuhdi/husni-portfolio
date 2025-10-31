@@ -76,6 +76,19 @@ tasks:
     summary: Build tailwindcss
     cmds:
       - tailwindcss -i ./statics/input.css -o ./statics/styles.css
+
+  update-gcs-secret:
+    summary: Update Turso Auth token in GCS secrets. Please set TURSO_AUTH_TOKEN envar
+    cmds:
+      - |
+        if [[ -z "$TURSO_AUTH_TOKEN" ]]; then
+          echo "Please set TURSO_AUTH_TOKEN envar"
+          echo 'export TURSO_AUTH_TOKEN=$(turso db tokens create your-db-name -e 7d)'
+          return 1;
+        fi
+        gsutil cp gs://$SECRETS_BUCKET/$SECRETS_OBJECT secrets
+        sed -i -e "s/TURSO_AUTH_TOKEN=.*/TURSO_AUTH_TOKEN=$TURSO_AUTH_TOKEN/g" secrets
+        gsutil cp secrets gs://$SECRETS_BUCKET/$SECRETS_OBJECT
   update-version:
     summary: Update version manifest
     cmds:
