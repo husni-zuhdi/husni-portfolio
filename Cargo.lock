@@ -557,14 +557,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cmd"
-version = "0.3.3"
-dependencies = [
- "internal",
- "tokio",
-]
-
-[[package]]
 name = "colorchoice"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1329,6 +1321,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "husni-portfolio"
+version = "0.3.3"
+dependencies = [
+ "anyhow",
+ "argon2",
+ "askama",
+ "async-trait",
+ "axum 0.7.9",
+ "bytes",
+ "chrono",
+ "dyn-clone",
+ "google-cloud-storage",
+ "http-body-util",
+ "jsonwebtoken",
+ "libsql",
+ "markdown",
+ "password-hash",
+ "regex",
+ "serde",
+ "serde_json",
+ "test-log",
+ "tokio",
+ "tower 0.4.13",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "urlencoding",
+ "vergen",
+]
+
+[[package]]
 name = "hyper"
 version = "0.14.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1622,37 +1645,6 @@ checksum = "879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01"
 dependencies = [
  "block-padding",
  "generic-array",
-]
-
-[[package]]
-name = "internal"
-version = "0.3.3"
-dependencies = [
- "anyhow",
- "argon2",
- "askama",
- "async-trait",
- "axum 0.7.9",
- "bytes",
- "chrono",
- "dyn-clone",
- "google-cloud-storage",
- "http-body-util",
- "jsonwebtoken",
- "libsql",
- "markdown",
- "password-hash",
- "regex",
- "serde",
- "serde_json",
- "test-log",
- "tokio",
- "tower 0.4.13",
- "tower-http 0.5.2",
- "tracing",
- "tracing-subscriber",
- "urlencoding",
- "vergen",
 ]
 
 [[package]]
