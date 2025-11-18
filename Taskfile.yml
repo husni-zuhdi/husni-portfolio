@@ -87,8 +87,13 @@ tasks:
           return 1;
         fi
         gsutil cp gs://$SECRETS_BUCKET/$SECRETS_OBJECT secrets
-        sed -i -e "s/TURSO_AUTH_TOKEN=.*/TURSO_AUTH_TOKEN=$TURSO_AUTH_TOKEN/g" secrets
+        if [[ "$OSTYPE" =~ "darwin*" || $(uname) == "Darwin" ]]; then
+          sed -i "" "s/TURSO_AUTH_TOKEN=.*/TURSO_AUTH_TOKEN=$TURSO_AUTH_TOKEN/" secrets
+        else
+          sed -i "s/TURSO_AUTH_TOKEN=.*/TURSO_AUTH_TOKEN=$TURSO_AUTH_TOKEN/" secrets
+        fi
         gsutil cp secrets gs://$SECRETS_BUCKET/$SECRETS_OBJECT
+        rm secrets
   update-version:
     summary: Update version manifest
     cmds:
