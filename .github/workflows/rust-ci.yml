@@ -15,6 +15,8 @@ env:
   CARGO_TERM_COLOR: always
   CARGO_PROFILE_DEV_DEBUG: 0
   CARGO_PROFILE_DEV_STRIP: debuginfo
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
 
 jobs:
   unit_test:
@@ -23,7 +25,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@1.89.0
-    - run: cargo test --all-features --locked -- --test-threads=1
+    - uses: mozilla-actions/sccache-action@v0.0.9
+      with:
+        version: "v0.12.0"
+    - name: Compile
+      run: cargo check --locked
+    - name: Test
+      run: cargo test --all-features --locked -- --test-threads=1
   
   nextest_unit_test:
     name: Nextest
