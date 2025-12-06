@@ -33,7 +33,7 @@ jobs:
     - uses: dtolnay/rust-toolchain@1.89.0
     - uses: taiki-e/install-action@nextest
     - name: Compile
-      run: cargo checked --locked
+      run: cargo check --locked
     - name: Nextest
       run: cargo nextest run --locked
   
