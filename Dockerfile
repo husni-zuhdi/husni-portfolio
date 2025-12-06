@@ -1,6 +1,6 @@
 FROM rust:1.88.0-bookworm AS builder
 COPY . .
-RUN cargo build --release
+RUN cargo build --release --locked
 
 FROM gcr.io/distroless/cc
 COPY --from=builder ./target/release/cmd /husni-portfolio
