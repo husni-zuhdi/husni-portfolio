@@ -26,13 +26,16 @@ jobs:
     - run: cargo test --all-features --locked -- --test-threads=1
   
   nextest_unit_test:
-    name: Nextest Unit Test
+    name: Nextest
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@1.89.0
-    - run: cargo install cargo-nextest --locked
-    - run: cargo nextest run --locked
+    - uses: taiki-e/install-action@nextest
+    - name: Compile
+      run: cargo checked --locked
+    - name: Nextest
+      run: cargo nextest run --locked
   
   format:
     name: Formatting
