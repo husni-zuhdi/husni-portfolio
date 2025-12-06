@@ -25,6 +25,15 @@ jobs:
     - uses: dtolnay/rust-toolchain@1.88.0
     - run: cargo test --all-features --locked -- --test-threads=1
   
+  nextest_unit_test:
+    name: Nextest Unit Test
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@1.88.0
+    - run: cargo install cargo-nextest --version 0.9.114
+    - run: cargo nextest run --locked
+  
   format:
     name: Formatting
     runs-on: ubuntu-22.04
