@@ -5,15 +5,18 @@
   ],
   "packageRules": [
   {
-    "matchFiles": ["Dockerfile"],
+    "matchFileNames": ["Dockerfile"],
+    "description": "Ignore Dockerfile",
     "enabled": false
   },
   {
-    "matchFiles": ["build/*"],
+    "matchFileNames": ["build/*"],
+    "description": "Ignore Docker-compose",
     "enabled": false
   },
   {
-    "matchFiles": [".github/*"],
+    "matchFileNames": [".github/*"],
+    "description": "Ignore Github Action",
     "enabled": false
   }
   ]
