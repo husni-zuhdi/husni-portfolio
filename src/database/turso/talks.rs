@@ -74,7 +74,7 @@ impl TalkRepo for TursoDatabase {
         let start_seq = params.start.unwrap();
         let end_seq = params.end.unwrap();
         let limit = end_seq - start_seq;
-        let prep_query = "SELECT * FROM talks ORDER BY id LIMIT ?1 OFFSET ?2";
+        let prep_query = "SELECT * FROM talks ORDER BY id DESC LIMIT ?1 OFFSET ?2";
         debug!(
             "Executing query {} for start {}, end {}, limit {}",
             &prep_query, &start_seq, &end_seq, &limit

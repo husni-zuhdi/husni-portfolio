@@ -12,7 +12,12 @@ on:
       - '.github/workflows/rust-ci.yml'
 
 env:
-  CARGO_TERM_COLOR: always
+  CARGO_TERM_COLOR: "always"
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_DEV_STRIP: "debuginfo"
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
 
 jobs:
   unit_test:
@@ -20,15 +25,32 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@1.88.0
+    - uses: dtolnay/rust-toolchain@1.89.0
+    - uses: mozilla-actions/sccache-action@v0.0.9
+      with:
+        version: "v0.12.0"
     - run: cargo test --all-features --locked -- --test-threads=1
+  
+  nextest_unit_test:
+    name: Nextest
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@1.89.0
+    - uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-nextest@0.9.114
+    - uses: mozilla-actions/sccache-action@v0.0.9
+      with:
+        version: "v0.12.0"
+    - run: cargo nextest run --locked
   
   format:
     name: Formatting
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@1.88.0
+    - uses: dtolnay/rust-toolchain@1.89.0
       with:
         components: rustfmt
     - run: cargo fmt --check
@@ -38,16 +60,24 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@1.88.0
+    - uses: dtolnay/rust-toolchain@1.89.0
       with:
         components: clippy
+    - uses: mozilla-actions/sccache-action@v0.0.9
+      with:
+        version: "v0.12.0"
     - run: cargo clippy --locked -- -D warnings
   
   coverage:
     name: Code coverage
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo install cargo-tarpaulin --version 0.34.1
-      - run: cargo tarpaulin --ignore-tests --follow-exec --locked --coveralls ${{ secrets.COVERALLS_REPO_TOKEN }}
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@1.89.0
+    - uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-tarpaulin@0.34.1
+    - uses: mozilla-actions/sccache-action@v0.0.9
+      with:
+        version: "v0.12.0"
+    - run: cargo tarpaulin --ignore-tests --follow-exec --locked --coveralls ${{ secrets.COVERALLS_REPO_TOKEN }}
