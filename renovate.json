@@ -3,5 +3,18 @@
   "extends": [
     "config:recommended"
   ],
-  "platform": "github"
+  "packageRules": [
+  {
+    "matchFiles": ["Dockerfile"],
+    "enabled": false
+  },
+  {
+    "matchFiles": ["build/*"],
+    "enabled": false
+  },
+  {
+    "matchFiles": [".github/*"],
+    "enabled": false
+  }
+  ]
 }
