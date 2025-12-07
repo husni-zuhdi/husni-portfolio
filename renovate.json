@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+  {
+    "matchManagers": ["docker-compose", "dockerfile", "github-actions"],
+    "description": "Ignore Dockerfile, Docker-compose, and Github Actions",
+    "enabled": false
+  }
+  ]
+}
