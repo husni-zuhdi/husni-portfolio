@@ -5,7 +5,7 @@
   ],
   "packageRules": [
   {
-    "matchPackageNames": ["docker-compose", "dockerfile", "github-actions"],
+    "matchManagers": ["docker-compose", "dockerfile", "github-actions"],
     "description": "Ignore Dockerfile, Docker-compose, and Github Actions",
     "enabled": false
   }
