@@ -1,13 +1,28 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
-  "packageRules": [
-  {
-    "matchManagers": ["docker-compose", "dockerfile", "github-actions"],
-    "description": "Ignore Dockerfile, Docker-compose, and Github Actions",
-    "enabled": false
-  }
-  ]
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"config:recommended"
+	],
+	"packageRules": [
+		{
+			"groupName": "All non-major Rust dependencies",
+			"groupSlug": "all-rust-minor-patch",
+			"matchManagers": [
+				"cargo"
+			],
+			"matchUpdateTypes": [
+				"minor",
+				"patch"
+			]
+		},
+		{
+			"matchManagers": [
+				"docker-compose",
+				"dockerfile",
+				"github-actions"
+			],
+			"description": "Ignore Dockerfile, Docker-compose, and Github Actions",
+			"enabled": false
+		}
+	]
 }
