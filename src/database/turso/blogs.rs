@@ -24,7 +24,7 @@ impl BlogRepo for TursoDatabase {
         "#;
         debug!("Executing query {} for id {}", &prep_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -121,7 +121,7 @@ impl BlogRepo for TursoDatabase {
             &prep_query, &start_seq, &end_seq, &limit
         );
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(&prep_query)
             .await
@@ -158,7 +158,7 @@ impl BlogRepo for TursoDatabase {
         let prep_query = "SELECT id FROM blogs WHERE id = ?1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -223,7 +223,7 @@ impl BlogRepo for TursoDatabase {
             "INSERT INTO blogs (id, name, filename, source, body) VALUES (?1, ?2, ?3, ?4, ?5)";
         debug!("Executing query {} for id {}", &prep_add_query, &blog_id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_add_query)
             .await
@@ -247,7 +247,7 @@ impl BlogRepo for TursoDatabase {
         let prep_query = "DELETE FROM blogs WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -312,7 +312,7 @@ impl BlogRepo for TursoDatabase {
         let prep_update_query = format!("UPDATE blogs SET{}WHERE id = ?1", &affected_col);
         debug!("Executing query {} for id {}", &prep_update_query, &blog_id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(&prep_update_query)
             .await
