@@ -16,7 +16,7 @@ impl BlogTagMappingRepo for TursoDatabase {
         "#;
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -49,7 +49,7 @@ impl BlogTagMappingRepo for TursoDatabase {
         "#;
         debug!("Executing query {} for id {}", &prep_query, &tag_id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -79,7 +79,7 @@ impl BlogTagMappingRepo for TursoDatabase {
             &prep_add_command, &blog_id, &tag_id
         );
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_add_command)
             .await
@@ -100,7 +100,7 @@ impl BlogTagMappingRepo for TursoDatabase {
             &prep_delete_command, &blog_id
         );
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_delete_command)
             .await
@@ -126,7 +126,7 @@ impl BlogTagMappingRepo for TursoDatabase {
             &prep_delete_command, &blog_id, &tag_id
         );
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_delete_command)
             .await

@@ -31,7 +31,7 @@ impl TalkRepo for TursoDatabase {
         let prep_query = "SELECT * FROM talks WHERE id = ?1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -80,7 +80,7 @@ impl TalkRepo for TursoDatabase {
             &prep_query, &start_seq, &end_seq, &limit
         );
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -155,7 +155,7 @@ impl TalkRepo for TursoDatabase {
             "INSERT INTO talks (id, name, date, media_link, org_name, org_link) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
         debug!("Executing query {} for id {}", &prep_add_command, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_add_command)
             .await
@@ -182,7 +182,7 @@ impl TalkRepo for TursoDatabase {
         let prep_query = "DELETE FROM talks WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -254,7 +254,7 @@ impl TalkRepo for TursoDatabase {
         let prep_update_query = format!("UPDATE talks SET{}WHERE id = ?1", &affected_col);
         debug!("Executing query {} for id {}", &prep_update_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(&prep_update_query)
             .await

@@ -10,7 +10,7 @@ impl AuthRepo for TursoDatabase {
         let prep_query = "SELECT id, email, hashed_password FROM users WHERE id=?1 LIMIT 1";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -40,7 +40,7 @@ impl AuthRepo for TursoDatabase {
         let prep_query = "SELECT id, email, hashed_password FROM users WHERE email=?1 LIMIT 1";
         debug!("Executing query {} for email {}", &prep_query, &email);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -75,7 +75,7 @@ impl AuthRepo for TursoDatabase {
         let prep_add_command = "INSERT INTO users (id, email, hashed_password) VALUES (?1, ?2, ?3)";
         debug!("Executing query {} for id {}", &prep_add_command, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_add_command)
             .await
@@ -119,7 +119,7 @@ impl AuthRepo for TursoDatabase {
         let prep_update_query = format!("UPDATE users SET{}WHERE id = ?1", &affected_col);
         debug!("Executing query {} for id {}", &prep_update_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(&prep_update_query)
             .await
@@ -134,7 +134,7 @@ impl AuthRepo for TursoDatabase {
         let prep_delete_command = "DELETE FROM users WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_delete_command, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_delete_command)
             .await
@@ -149,7 +149,7 @@ impl AuthRepo for TursoDatabase {
         let prep_query = "SELECT id, user_id, token, expire FROM sessions WHERE id=?1 LIMIT 1";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -187,7 +187,7 @@ impl AuthRepo for TursoDatabase {
             "INSERT INTO sessions (id, user_id, token, expire) VALUES (?1, ?2, ?3, ?4)";
         debug!("Executing query {} for id {}", &prep_add_command, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_add_command)
             .await
@@ -205,7 +205,7 @@ impl AuthRepo for TursoDatabase {
         let prep_delete_command = "DELETE FROM sessions WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_delete_command, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_delete_command)
             .await

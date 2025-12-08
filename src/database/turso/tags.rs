@@ -17,7 +17,7 @@ impl TagRepo for TursoDatabase {
         "#;
         debug!("Executing query {} for id {}", &prep_query, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -51,7 +51,7 @@ impl TagRepo for TursoDatabase {
         "#;
         debug!("Executing query {}", &prep_query);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -88,7 +88,7 @@ impl TagRepo for TursoDatabase {
             &prep_query, limit, start_seq
         );
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_query)
             .await
@@ -124,7 +124,7 @@ impl TagRepo for TursoDatabase {
             &prep_query, &params.query, limit, start_seq
         );
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(&prep_query)
             .await
@@ -172,7 +172,7 @@ impl TagRepo for TursoDatabase {
         let prep_add_command = "INSERT INTO tags (id, name) VALUES (?1, ?2)";
         debug!("Executing query {} for id {}", &prep_add_command, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_add_command)
             .await
@@ -190,7 +190,7 @@ impl TagRepo for TursoDatabase {
         let prep_delete_command = "DELETE FROM tags WHERE id = ?1";
         debug!("Executing query {} for id {}", &prep_delete_command, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(prep_delete_command)
             .await
@@ -218,7 +218,7 @@ impl TagRepo for TursoDatabase {
         let prep_update_command = format!("UPDATE tags SET{}WHERE id = ?1", &affected_col);
         debug!("Executing query {} for id {}", &prep_update_command, &id);
 
-        let mut stmt = self
+        let stmt = self
             .conn
             .prepare(&prep_update_command)
             .await
