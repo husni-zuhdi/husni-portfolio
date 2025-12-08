@@ -22,6 +22,6 @@ jobs:
       with:
         rust-version: "1.89.0"
         log-level: warn
-        command: check advisories
+        command: all
         arguments: "--all-features --locked"
 
