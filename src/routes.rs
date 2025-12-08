@@ -48,7 +48,7 @@ pub fn main_route(app_state: AppState) -> Router {
 fn blogs_route() -> Router<AppState> {
     Router::new()
         .route("/", get(blogs::get_blogs))
-        .route("/:blog_id", get(blogs::get_blog))
+        .route("/{blog_id}", get(blogs::get_blog))
 }
 
 fn talks_route() -> Router<AppState> {
@@ -68,11 +68,11 @@ fn admin_talks_route() -> Router<AppState> {
         .route("/list", get(td::get_admin_talks_list))
         .route("/add", get(td::get_add_admin_talk))
         .route("/add", post(to::post_add_admin_talk))
-        .route("/:talk_id", get(td::get_admin_talk))
-        .route("/:talk_id/edit", get(td::get_edit_admin_talk))
-        .route("/:talk_id/edit", put(to::put_edit_admin_talk))
-        .route("/:talk_id/delete", get(td::get_delete_admin_talk))
-        .route("/:talk_id/delete", delete(to::delete_delete_admin_talk))
+        .route("/{talk_id}", get(td::get_admin_talk))
+        .route("/{talk_id}/edit", get(td::get_edit_admin_talk))
+        .route("/{talk_id}/edit", put(to::put_edit_admin_talk))
+        .route("/{talk_id}/delete", get(td::get_delete_admin_talk))
+        .route("/{talk_id}/delete", delete(to::delete_delete_admin_talk))
 }
 
 fn admin_blogs_route() -> Router<AppState> {
@@ -81,11 +81,11 @@ fn admin_blogs_route() -> Router<AppState> {
         .route("/list", get(bd::get_admin_blogs_list))
         .route("/add", get(bd::get_add_admin_blog))
         .route("/add", post(bo::post_add_admin_blog))
-        .route("/:blog_id", get(bd::get_admin_blog))
-        .route("/:blog_id/edit", get(bd::get_edit_admin_blog))
-        .route("/:blog_id/edit", put(bo::put_edit_admin_blog))
-        .route("/:blog_id/delete", get(bd::get_delete_admin_blog))
-        .route("/:blog_id/delete", delete(bo::delete_delete_admin_blog))
+        .route("/{blog_id}", get(bd::get_admin_blog))
+        .route("/{blog_id}/edit", get(bd::get_edit_admin_blog))
+        .route("/{blog_id}/edit", put(bo::put_edit_admin_blog))
+        .route("/{blog_id}/delete", get(bd::get_delete_admin_blog))
+        .route("/{blog_id}/delete", delete(bo::delete_delete_admin_blog))
         .nest("/tags", admin_blogs_tags_route())
 }
 
@@ -96,9 +96,9 @@ fn admin_blogs_tags_route() -> Router<AppState> {
         .route("/search", get(btd::get_admin_tags_search))
         .route("/add", get(btd::get_add_admin_tag))
         .route("/add", post(bto::post_add_admin_tag))
-        .route("/:tag_id", get(btd::get_admin_tag))
-        .route("/:tag_id/edit", get(btd::get_edit_admin_tag))
-        .route("/:tag_id/edit", put(bto::put_edit_admin_tag))
-        .route("/:tag_id/delete", get(btd::get_delete_admin_tag))
-        .route("/:tag_id/delete", delete(bto::delete_delete_admin_tag))
+        .route("/{tag_id}", get(btd::get_admin_tag))
+        .route("/{tag_id}/edit", get(btd::get_edit_admin_tag))
+        .route("/{tag_id}/edit", put(bto::put_edit_admin_tag))
+        .route("/{tag_id}/delete", get(btd::get_delete_admin_tag))
+        .route("/{tag_id}/delete", delete(bto::delete_delete_admin_tag))
 }

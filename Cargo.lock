@@ -1342,7 +1342,7 @@ dependencies = [
  "serde_json",
  "test-log",
  "tokio",
- "tower 0.4.13",
+ "tower 0.5.2",
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
