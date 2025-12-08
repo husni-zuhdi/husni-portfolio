@@ -1,13 +1,10 @@
 use anyhow::Result;
-use vergen::EmitBuilder;
+use vergen_gitcl::{BuildBuilder, Emitter};
 
 pub fn main() -> Result<()> {
-    // NOTE: This will output only a build timestamp and long SHA from git.
-    // NOTE: This set requires the build and git features.
-    // NOTE: See the EmitBuilder documentation for configuration options.
-    EmitBuilder::builder()
-        .build_timestamp()
-        .git_sha(false)
-        .emit()?;
-    Ok(())
+    let timestamp_builder = BuildBuilder::default().build_timestamp(true).build()?;
+
+    Emitter::default()
+        .add_instructions(&timestamp_builder)?
+        .emit()
 }
