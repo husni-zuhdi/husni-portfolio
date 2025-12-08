@@ -25,7 +25,7 @@ tasks:
   audit:
     summary: Run rust audit with cargo-deny
     cmds:
-      - cargo deny check deny advisories
+      - cargo deny check advisories
   run:
     summary: Run application with hot-reload
     cmds:
