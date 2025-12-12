@@ -18,7 +18,7 @@
 		{
 			"groupName": "All Github Actions dependencies except ubuntu",
 			"groupSlug": "all-github-actions",
-            "ignoreDeps": ["ubuntu"]
+            "ignoreDeps": ["ubuntu"],
 			"matchManagers": [
 				"github-actions"
 			]
