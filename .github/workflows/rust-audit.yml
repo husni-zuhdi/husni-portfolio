@@ -1,4 +1,4 @@
-name: Rust Security audit
+name: Rust Security Audit
 on:
   schedule:
     - cron: '0 0 * * 0'
