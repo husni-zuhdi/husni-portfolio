@@ -1,0 +1,409 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.3.3](https://github.com/husni-zuhdi/husni-portfolio/releases/tag/v0.3.3) - 2025-12-12
+
+### Added
+
+- add theme.js script and integrate theme button
+- implement dark mode on html and css files
+- add GCS implementation and restructure Config
+- revamp config and add gcs library
+- add 401 page and tidy up statuses pages
+- add verify_jwt func and fix the logging out flow. also update naming
+- implement DELETE logout handler
+- add /admin page html and model
+- add icons and update styles
+- update bases and try to implement redirection
+- add login and logout UI and update style
+- implement login and logout auth with JWT token
+- implement auth on db
+- add auth repo and uc
+- add session and jwt token auth models. add auth ui. fix stuff
+- standardize design language for admin buttons
+- implement tags administrator pages
+- implement tags operations API
+- add syntax highlight
+- implement PUT edit blogs. still on progress
+- finalize edit and tune the other pages
+- implement handlers for admin blogs. also tidy up admin tags handlers
+- add blogs and tags database impl
+- add add, get, and delete blog templates
+- add tags and blog_tag_mappings database impl
+- add blog template and initial things
+- add blog_tag_mapping structure
+- add tags structure
+- initiate admin blogs handler
+- add new admin blogs template and update blogs
+- cleanup admin talks handlers and split into displays and opeartions files
+- update admin talks html rendering structs
+- add get_new_id talks usecase in turso
+- add get_new_id talks usecase
+- add CRUD html for admin talks and fix the HTMX swapping target issues
+- update css styling
+- implement PUT edit admin talk
+- initial implementation of admin endpoint
+- add talks admin html templates
+- *(tags)* update get_blog(s) frontend implementation to add tags
+- *(tags)* implement MVP for tag on fe, be, and db
+- wip add tags on memory database adapter
+- update get_blog handler, template, and css files
+- implement blog tags on database level
+- update fe implementation and fix some edge cases related to missing/unavailable paths
+- update database implementation for blogs and update migration
+- update blogs hex thing interface
+- update blog and blog template models
+- return 404 on /talks when using in-memory db
+- implement talks page to use database
+- add date and org_name fields
+- add talks turso/sqlite database implementation
+- add compression layer from axum/tower middleware
+- bump idna version from 0.5.0 -> 1.0.3 to mitigate security issue discovered by dependabot
+- bump rust docker image source version to 1.81.0
+- *(cicd)* pin workflow runner os to ubuntu-22.04 and bump rust toolchain version to 1.81.0
+- add talks page
+- add filesystem_dir envar to accomodate blogs filesystem direcotry envar
+- update all port, repo, and usecase method to return option
+- add state factory
+- separate state factory from app and integrate tracing
+- derive clone to AppState
+- tidy up envars setup and removal. update traing log Level
+- enable tracing and remove logs
+- implement Debug for dyn repo
+- update state_factory to implement new api usecases
+- add check_id method
+- add check_id method and remove api-related implementation
+- add type related to GithubTree and enable access data on several struct type
+- add BlogMetadata, BlogStored, and implement FromRow for BlogId
+- add chekc_id method for blog
+- add implementation of api usecase for github and filesystem
+- add api port, repo, and usecase
+- improve pagionation on memory repo
+- add inital sqlite migration
+- add debug_handler, improve pagination, and apply tokio mutex
+- update config::from_envar implementation
+- change std mutex to tokio mutex and update FromRow BlogSource implementation
+- remove postgre envar and add sqlite/data envar
+- add sqlite db layer and update memory db to use async fn
+- implement FromRow for Blog and add BlogPagination for query param
+- update blog hexagonal arch to support async_trait
+- add axum macro feature to help debug handler
+- update naming and implement Arc Mutex
+- implement dyn-clone lib
+- update router, handler, github api, and utils
+- update data model and add memory as database
+- implement hexagonal architecture for husni-portfolio
+- initial migrations for sqlite
+- add InternalServerError html template
+- migrate to axum
+- remove actix-web dependencies
+- remove actix-web dependencies
+- bump rust version from 1.73 => 1.74
+- add 500 internal server error and update 404 not found html files
+- minimal axum migration
+- wip move handler function to use axum
+- change actix-web -> axum handlers
+- introduce axum
+- modify relative link in github blogs
+- add gh link replacer helper function
+- add regex
+- update tailwindcss input and output
+- add octocrab and http-body-util dependencies
+- set postgres envar as optional and add github-related envar
+- update BlogsData implementation to include github based on envar
+- add github tree struct and implement github api to BlogsData struct
+- add github api implementation
+- add postman collection for testing
+- add 404 not found page
+- integrate html files with tailwindcss
+- update input and output css files
+- *(css)* add tailwind config, input file, and output file
+- *(/version)* add handler and template for /version path
+- *(config)* update config usage on handler
+- *(model)* add version model struct
+- *(utils)* add read version manifest helper function
+- *(BlogsData)* update implementation of BlogsData in handler and router
+- *(BlogsData)* move BlogsData creation from utils to model/data under BlogsData implementation. Also add unit test for creation of BlogsData with custom directory (still bugged for default)
+- *(internal)* add test-log to enable logging in unit test
+- *(template)* update blog template to show blog body and another update
+- *(router)* integrate markdown rendering to router
+- *(model)* add filename and body on the model
+- *(router)* implement blogs and blog finding. Also add model data since I don't know how to handle with static lifetime :'')
+- feat(): add Blogs data to webserver and utils to create BlogsData
+- *(templates)* update blog(s) template to link to each blog
+- *(config)* add log_level configuration
+- *(css)* update flex-container to align to left and start from top
+- *(handler+router)* create new handler for blog(s)
+- *(templates)* add new html template for blog(s) and update base html
+- *(templates)* add new model for blog(s)
+- *(markdown)* add markdown parser lib
+- initial commit
+
+### Fixed
+
+- *(deps)* update all non-major tower and tower-http deps([#78](https://github.com/husni-zuhdi/husni-portfolio/pull/78))
+- *(deps)* update rust crate jsonwebtoken to v10 ([#76](https://github.com/husni-zuhdi/husni-portfolio/pull/76))
+- *(deps)* update rust crate tower-http to 0.6.0 ([#73](https://github.com/husni-zuhdi/husni-portfolio/pull/73))
+- *(deps)* update rust crate tower to 0.5 ([#72](https://github.com/husni-zuhdi/husni-portfolio/pull/72))
+- *(deps)* update rust crate libsql to 0.9.0 ([#71](https://github.com/husni-zuhdi/husni-portfolio/pull/71))
+- *(deps)* update rust crate axum to 0.8.0 ([#70](https://github.com/husni-zuhdi/husni-portfolio/pull/70))
+- *(deps)* update rust crate askama to 0.14.0 ([#69](https://github.com/husni-zuhdi/husni-portfolio/pull/69))
+- add os filter for update-gcs-secret task ([#59](https://github.com/husni-zuhdi/husni-portfolio/pull/59))
+- tidy up ipad styling ([#58](https://github.com/husni-zuhdi/husni-portfolio/pull/58))
+- update inactive_tag styling in dark mode
+- check if token cookie is present or not
+- update button hover in dark mode
+- update light-mode code snippet and update selection
+- deactivate search for blogs and talks. fix add blog button
+- apply clippy guidance
+- mobile code snippet to be scrollable
+- PUT edit admin tags selection filters
+- update operation failure on talks and blogs databases
+- *(tags)* add empty tags handler on frontend
+- remove unused module
+- stories indentation
+- update command port naming
+- typo in arg
+- fix versioning
+- clean envar after test and update task test to run unit test sequentially
+- add text-warp on pre code section
+- copy version.json during docker build
+- add static files to docker image
+
+### Other
+
+- Chore spec and tune ci ([#83](https://github.com/husni-zuhdi/husni-portfolio/pull/83))
+- Fix missing theme icons ([#82](https://github.com/husni-zuhdi/husni-portfolio/pull/82))
+- *(deps)* update rust crate google-cloud-storage to v1.5.0 ([#81](https://github.com/husni-zuhdi/husni-portfolio/pull/81))
+- *(deps)* update rust crate tower-http to v0.6.8 ([#80](https://github.com/husni-zuhdi/husni-portfolio/pull/80))
+- *(deps)* update rust crate tower-http to v0.6.7 ([#79](https://github.com/husni-zuhdi/husni-portfolio/pull/79))
+- *(deps)* group all minor and patch rust deps ([#77](https://github.com/husni-zuhdi/husni-portfolio/pull/77))
+- *(deps)* update rust crate vergen to v9 ([#74](https://github.com/husni-zuhdi/husni-portfolio/pull/74))
+- *(deps)* update rust crate google-cloud-storage to v1.4.0 ([#68](https://github.com/husni-zuhdi/husni-portfolio/pull/68))
+- *(deps)* update rust crate bytes to v1.11.0 ([#67](https://github.com/husni-zuhdi/husni-portfolio/pull/67))
+- *(deps)* update tokio-tracing monorepo ([#65](https://github.com/husni-zuhdi/husni-portfolio/pull/65))
+- *(deps)* update rust crate test-log to v0.2.19 ([#64](https://github.com/husni-zuhdi/husni-portfolio/pull/64))
+- Configure Renovate ([#63](https://github.com/husni-zuhdi/husni-portfolio/pull/63))
+- improve CI pipelines ([#60](https://github.com/husni-zuhdi/husni-portfolio/pull/60))
+- add update-gcs-secret task to help update secrets in gcs ([#57](https://github.com/husni-zuhdi/husni-portfolio/pull/57))
+- add admin profile story ([#56](https://github.com/husni-zuhdi/husni-portfolio/pull/56))
+- add unit test story
+- test ruleset ([#55](https://github.com/husni-zuhdi/husni-portfolio/pull/55))
+- Chore deprecate GitHub and fs api ([#54](https://github.com/husni-zuhdi/husni-portfolio/pull/54))
+- send code coverage to coveralls in CI pipeline ([#53](https://github.com/husni-zuhdi/husni-portfolio/pull/53))
+- Chore update ci ([#52](https://github.com/husni-zuhdi/husni-portfolio/pull/52))
+- bump version to 0.3.3-hotfix-1
+- Fix dark mode styling ([#51](https://github.com/husni-zuhdi/husni-portfolio/pull/51))
+- bump version to 0.3.3
+- bump rust version and update stories
+- remove debuging lines from base html files
+- remove /icons endpoints
+- add GCS secret log
+- standardize navbar padding
+- remove sqlx migration
+- update config secrets usage
+- update example env
+- update stories
+- standardize and update footer styling
+- remove inifinite debug from repos
+- bump version
+- update stories
+- update readme and bump STORIES
+- update docker-run task
+- implement jwt verification under /admin path
+- add login/logout and admin routes
+- update base template to include login/logout
+- update warning html template name
+- add svg files for /admin
+- add jwt secret config
+- bump rust version in dockerfile and ci pipeline
+- bump cargo
+- update AppState and routes
+- update stories
+- standardize naming and design for blogs
+- remove BlogId to i64 for simplicity
+- change TalkId to i64
+- modernize admin talks pages
+- pretify admin talks templates
+- update stories
+- rename tags find_all method
+- move admin blogs and talks base template and pretify
+- remove unused port modules
+- update css styling to handle top section in pages
+- update css styling
+- remove ports
+- add task lint with clippy
+- update sotries
+- add notes on add and edit blog pages
+- add tags label on blog page
+- enable allow dangerous html to allow manual div rendering
+- bump version
+- update stories and update cargo version
+- add code bg style
+- sanitize blog body and enable mathjax
+- update textarea styling
+- move process markdown to util and add unit tests
+- update tag button styling on blog pages
+- apply cargo clippy --fix
+- use let Some else instead of if is_none. just testing
+- update styling
+- add routes
+- add askama blogs admin template models
+- change admin_edit to admin_input css class
+- add tag and blog tag mapping usecases in the app state
+- add get_new_id database query on blogs table
+- add get_new_id on blogs usecase
+- specify usecase on delete blog_tag_mappings
+- update mods
+- update tailwindcss and html styling
+- restructure routes and tidy up app initiation
+- update debug lines on blogs handler
+- add tag active inactive class
+- add remove_whitespace unit test
+- tidy up config test
+- move admin talks html templates
+- follow rust-analyzer guidence
+- update routing
+- add chronos
+- add button and additional classes
+- update get edit talk html
+- add urlencoding in internal
+- update stories doc
+- update routing
+- enable HTMX and update talks template
+- *(deps)* bump tokio from 1.42.0 to 1.43.1
+- implement 418 response code for i am a teapot
+- Merge pull request #32 from husni-zuhdi/chore-move-mail-to-social-media-section
+- move email to social media section
+- update stories doc
+- bump version.json
+- bump version to 0.3.0
+- *(docs)* update documentation and env file example
+- Revert "chore(0.2.2): bump version to 0.2.2"
+- *(0.2.2)* bump version to 0.2.2
+- tidy up stories
+- add tech debt tracking
+- *(tags)* update comment on memory tags query
+- *(tags)* update story and create another low prio story
+- *(tags)* update stories doc on tags
+- *(profile)* update profile page
+- *(sytle)* update tailwindcss styling
+- *(askama)* remove lifetime on askama templates and remove borrow from handlers
+- update current story
+- update tags story
+- update new stories for tags idea
+- check list curent eng story
+- update blogs populating function with new blog id type
+- update blogs id type on apis
+- update stories with another things to do
+- remove test sql file
+- completed databases related engineering stories (2)
+- update cargo lock
+- update talks database stories
+- update state implementation
+- Merge branch 'main' into feat-add-turso-database
+- *(deps)* bump ring from 0.17.8 to 0.17.14
+- init stories doc
+- update statics styles
+- update talks page title and add youtube links
+- reduce footer pages margin
+- *(deps)* bump mio from 0.8.10 to 0.8.11
+- trigger rust-unit-test when a PR was opened
+- add setup rust toolchain to pin toolchain version
+- bump version to 0.2.1 again
+- add cargo lock in the repo
+- bump version to 0.2.1
+- add cargo lock in the repo
+- bump version to 0.2.1
+- edit all links to open new tab and update profile
+- bump app version
+- implement optional value returned by db methods
+- change filesystem usecase flow and implement new option returned from api and db methods
+- update api and db methods to return option
+- *(build)* remove postgresql docker compose container
+- create populate_blog from api usecase
+- disable htmx and mathjax as they are not used
+- remove dummy blog
+- remove blog id from ui
+- add error handling to anticipate empty filesystem dir
+- migrate logs -> tracing
+- remove unused md_to_html
+- add TODO to change BlogId to int
+- move method documentation
+- move processing markdwon function to a method under filesystem
+- remove unused comment
+- change error.rs to status.rs and their implementation
+- refactor handler functions
+- update Version and BlogsTemplate implementation
+- separate BlogsTemplate from BlogTemplate data
+- tidy up Version model
+- change default endpoint and environment naming
+- add docs
+- change &mut self to &self for db repo and fix several sqlite queries + logging
+- change &mut self to &self for queries and add Sync trait
+- improve build state fn
+- remove postgre envar and add sqlite/data envar
+- exploring markdown-rs frontmatter construct related to md yaml metadata section
+- update readme to replace actix -> axum
+- remove commented code, remove unused functions, and trimming lib usage
+- add dyn-clone dependencies
+- update sqlx task related and update env.example
+- ignore sqlite files
+- bump version and move config to internal
+- enable GFM during markdown -> html conversion and add tables tailwind styling
+- bump version
+- update css styling for paragraph
+- bump version
+- bump version and fix main async function
+- *(ci)* make rust unit test run sequentially
+- update version json
+- update version json
+- bump version to 0.1.2
+- remove unused function and update several info log to debug
+- Revert "chore: add vertical padding on img"
+- remove res mut warning
+- add vertical padding on img
+- update .env example
+- add social media border
+- remove h1 and hr
+- add h2 tailwindcss class
+- include api module
+- improve md_to_html helper function to able parse markdown body
+- update version
+- tidy up taskfile
+- remove unused postgres envar, add service port, and remove junk
+- update postgres related envar
+- bump cargo version
+- update style.css file
+- add build tailwind task
+- add tailwindcss to tech stack
+- update statics file handler and endpoint
+- add favicon files
+- add mathjax js dependency
+- *(model/data/blogs_data)* update test to match latest change
+- add capitalize util and update blog title formating
+- update templates
+- remove left right padding on paragraph
+- update sample blog
+- add error handling on styles.css
+- *(blogs)* rename 001 blog
+- *(build)* add build and push pipeline
+- ci(): add build dependencies config
+- ci(): create internal build.rs
+- chore(): add .env example file
+- ci(): create version.json manifest
+- ci(): add dockerfile
+- *(cmd)* change config usage from default => from_envar
+- *(config)* add environment type configuration
+- chore(): add update_version and update run
+- *(rust-unit-test)* add rust unit test CI pipeline
+- *(readme)* add readme
+- *(task)* add test task
+- chore(): remove unused lib
+- *(config)* add unit test for config default and from_envar method
