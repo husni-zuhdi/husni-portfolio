@@ -16,12 +16,18 @@
 			]
 		},
 		{
+			"groupName": "All Github Actions dependencies",
+			"groupSlug": "all-github-actions",
+			"matchManagers": [
+				"github-actions"
+			]
+		},
+		{
 			"matchManagers": [
 				"docker-compose",
 				"dockerfile",
-				"github-actions"
 			],
-			"description": "Ignore Dockerfile, Docker-compose, and Github Actions",
+			"description": "Ignore Dockerfile and Docker-compose",
 			"enabled": false
 		}
 	]
