@@ -52,6 +52,16 @@ pub struct Config {
     /// Example: secret/my-secret
     /// Default to None.
     pub secrets_object: Option<String>,
+    /// Cache Type (Optional)
+    /// Type of cache to be used such as `InMemory`.
+    /// Default to None
+    pub cache_type: Option<Cache>,
+    /// Cache Time to Live (Optional)
+    /// A cached entry will be expired after the specified duration (s)
+    /// past from cache insertion.
+    /// Example: 3600
+    /// Default to None
+    pub cache_ttl: Option<i64>,
 }
 
 /// Environment Type
@@ -59,6 +69,24 @@ pub struct Config {
 pub enum Environment {
     Development,
     Release,
+}
+
+impl std::fmt::Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+/// Cache Type
+#[derive(PartialEq, Debug, Clone)]
+pub enum Cache {
+    InMemory,
+}
+
+impl std::fmt::Display for Cache {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
 }
 
 /// Collection of secrets
@@ -81,12 +109,6 @@ pub struct Secrets {
     /// `turso` as DATA_SOURCE..
     /// Default to None
     pub turso_auth_token: Option<String>,
-}
-
-impl std::fmt::Display for Environment {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
 }
 
 impl Default for Config {
@@ -113,6 +135,8 @@ impl Default for Config {
             },
             secrets_bucket: None,
             secrets_object: None,
+            cache_type: None,
+            cache_ttl: None,
         }
     }
 }
@@ -130,6 +154,11 @@ impl Config {
         let data_source = Self::parse_data_source();
 
         // Optional
+        let cache_type = Self::parse_cache_type();
+        let cache_ttl = Self::parse_optional("CACHE_TTL").map(|c| {
+            c.parse::<i64>()
+                .expect("Failed to parse CACHE_TTL from String to i64")
+        });
         let secrets_bucket = Self::parse_optional("SECRETS_BUCKET");
         let secrets_object = Self::parse_optional("SECRETS_OBJECT");
 
@@ -174,6 +203,8 @@ impl Config {
             },
             secrets_bucket,
             secrets_object,
+            cache_type,
+            cache_ttl,
         }
     }
     async fn load_gcs_secrets(secrets_bucket: &str, secrets_object: &str) -> Secrets {
@@ -294,6 +325,21 @@ impl Config {
             },
         }
     }
+    /// Parse Cache Level
+    fn parse_cache_type() -> Option<Cache> {
+        match env::var("CACHE_TYPE") {
+            Err(e) => {
+                println!(
+                "Failed to load CACHE_TYPE environment variable. Set default to 'None'. Error {e}"
+            );
+                None
+            }
+            Ok(val) => match val.as_str() {
+                "inmemory" | "InMemory" => Some(Cache::InMemory),
+                _ => None,
+            },
+        }
+    }
 }
 
 #[cfg(test)]
@@ -321,6 +367,8 @@ mod test {
         assert_eq!(result.secrets.turso_auth_token, None);
         assert_eq!(result.secrets_bucket, None);
         assert_eq!(result.secrets_object, None);
+        assert_eq!(result.cache_type, None);
+        assert_eq!(result.cache_ttl, None);
     }
 
     #[tokio::test]
@@ -334,7 +382,6 @@ mod test {
         let data_source = "";
         let expected_data_source = "memory";
         let jwt_secret = "secret";
-        let empty = Some("".to_string());
 
         set_envars(Config {
             svc_endpoint: svc_endpoint.to_string(),
@@ -344,11 +391,13 @@ mod test {
             data_source: data_source.to_string(),
             secrets: Secrets {
                 jwt_secret: jwt_secret.to_string(),
-                database_url: empty.clone(),
-                turso_auth_token: empty.clone(),
+                database_url: None,
+                turso_auth_token: None,
             },
-            secrets_bucket: empty.clone(),
-            secrets_object: empty,
+            secrets_bucket: None,
+            secrets_object: None,
+            cache_type: None,
+            cache_ttl: None,
         });
 
         let result = Config::from_envar().await;
@@ -363,6 +412,8 @@ mod test {
         assert_eq!(result.secrets.turso_auth_token, None);
         assert_eq!(result.secrets_bucket, None);
         assert_eq!(result.secrets_object, None);
+        assert_eq!(result.cache_type, None);
+        assert_eq!(result.cache_ttl, None);
 
         remove_envars()
     }
@@ -379,6 +430,8 @@ mod test {
         let turso_auth_token = Some("turso_token_123456".to_string());
         let secrets_bucket = Some("".to_string());
         let secrets_object = Some("".to_string());
+        let cache_type = Some(Cache::InMemory);
+        let cache_ttl = Some(3600 as i64);
 
         set_envars(Config {
             svc_endpoint: svc_endpoint.to_string(),
@@ -393,6 +446,8 @@ mod test {
             },
             secrets_bucket,
             secrets_object,
+            cache_type: cache_type.clone(),
+            cache_ttl,
         });
 
         let result = Config::from_envar().await;
@@ -407,21 +462,45 @@ mod test {
         assert_eq!(result.secrets.turso_auth_token, turso_auth_token);
         assert_eq!(result.secrets_bucket, None);
         assert_eq!(result.secrets_object, None);
+        assert_eq!(result.cache_type, cache_type);
+        assert_eq!(result.cache_ttl, cache_ttl);
 
         remove_envars()
     }
 
     fn set_envars(config: Config) {
+        let empty = "";
+
         env::set_var("SVC_ENDPOINT", config.svc_endpoint);
         env::set_var("SVC_PORT", config.svc_port);
         env::set_var("LOG_LEVEL", config.log_level.to_string());
         env::set_var("ENVIRONMENT", config.environment.to_string());
         env::set_var("DATA_SOURCE", config.data_source);
         env::set_var("JWT_SECRET", config.secrets.jwt_secret);
-        env::set_var("DATABASE_URL", config.secrets.database_url.unwrap());
-        env::set_var("TURSO_AUTH_TOKEN", config.secrets.turso_auth_token.unwrap());
-        env::set_var("SECRETS_BUCKET", config.secrets_bucket.unwrap());
-        env::set_var("SECRETS_OBJECT", config.secrets_object.unwrap());
+        match config.secrets.database_url {
+            Some(val) => env::set_var("DATABASE_URL", val),
+            None => env::set_var("DATABASE_URL", empty),
+        }
+        match config.secrets.turso_auth_token {
+            Some(val) => env::set_var("TURSO_AUTH_TOKEN", val),
+            None => env::set_var("TURSO_AUTH_TOKEN", empty),
+        }
+        match config.secrets_bucket {
+            Some(val) => env::set_var("SECRETS_BUCKET", val),
+            None => env::set_var("SECRETS_BUCKET", empty),
+        }
+        match config.secrets_object {
+            Some(val) => env::set_var("SECRETS_OBJECT", val),
+            None => env::set_var("SECRETS_OBJECT", empty),
+        }
+        match config.cache_type {
+            Some(val) => env::set_var("CACHE_TYPE", val.to_string()),
+            None => env::set_var("CACHE_TYPE", empty),
+        }
+        match config.cache_ttl {
+            Some(val) => env::set_var("CACHE_TTL", val.to_string()),
+            None => env::set_var("CACHE_TTL", empty),
+        }
     }
 
     fn remove_envars() {
@@ -435,5 +514,7 @@ mod test {
         env::remove_var("TURSO_AUTH_TOKEN");
         env::remove_var("SECRETS_BUCKET");
         env::remove_var("SECRETS_OBJECT");
+        env::remove_var("CACHE_TYPE");
+        env::remove_var("CACHE_TTL");
     }
 }
