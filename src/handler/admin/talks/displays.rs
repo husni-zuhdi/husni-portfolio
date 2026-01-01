@@ -11,7 +11,6 @@ use crate::model::{
         AdminGetTalkTemplate, AdminListTalksTemplate, AdminTalkTemplate, AdminTalksTemplate,
     },
 };
-use crate::repo::talks::TalkRepo;
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
@@ -65,13 +64,13 @@ pub async fn get_admin_talks_list(
         return get_401_unauthorized().await;
     }
 
-    let talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
+    let talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     debug!("Params {:?}", &params);
     let sanitized_params = sanitize_params(params);
 
     // Construct TalksTemplate Struct
     let result = talks_uc
-        .talk_repo
+        .talk_display_repo
         .find_talks(sanitized_params.clone())
         .await;
     match result {
@@ -136,7 +135,7 @@ pub async fn get_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
+    let talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -149,7 +148,7 @@ pub async fn get_admin_talk(
         }
     };
 
-    let result = talks_uc.talk_repo.find(id.clone().unwrap()).await;
+    let result = talks_uc.talk_display_repo.find(id.clone().unwrap()).await;
 
     match result {
         Some(talk_data) => {
@@ -203,9 +202,9 @@ pub async fn get_add_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
+    let talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     // Calculate new Talk Id
-    let result = talks_uc.get_new_id().await;
+    let result = talks_uc.talk_operation_repo.get_new_id().await;
 
     match result {
         Some(talk_id) => {
@@ -251,7 +250,7 @@ pub async fn get_edit_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
+    let talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -264,7 +263,7 @@ pub async fn get_edit_admin_talk(
         }
     };
 
-    let result = talks_uc.talk_repo.find(id.clone().unwrap()).await;
+    let result = talks_uc.talk_display_repo.find(id.clone().unwrap()).await;
 
     match result {
         Some(talk_data) => {
@@ -322,7 +321,7 @@ pub async fn get_delete_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
+    let talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -335,7 +334,7 @@ pub async fn get_delete_admin_talk(
         }
     };
 
-    let result = talks_uc.talk_repo.find(id.clone().unwrap()).await;
+    let result = talks_uc.talk_display_repo.find(id.clone().unwrap()).await;
 
     match result {
         Some(talk_data) => {

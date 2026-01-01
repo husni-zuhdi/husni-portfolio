@@ -20,7 +20,7 @@ use tracing::{info, warn};
 /// If failed, inform user the email and password combination is wrong.
 #[debug_handler]
 pub async fn post_login(State(app_state): State<AppState>, body: String) -> impl IntoResponse {
-    let auth_uc = app_state.auth_usecase.lock().await.clone().unwrap();
+    let auth_uc = app_state.auth_db_usecase.lock().await.clone().unwrap();
     let (email, password) = process_login_body(&body).unwrap();
     let sanitized_email = sanitize_email(&email);
     let sanitized_password = sanitize_password(&password);

@@ -29,11 +29,11 @@ pub async fn post_add_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let mut talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
+    let mut talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     let talk = process_talk_body(body);
 
     let add_result = talks_uc
-        .talk_repo
+        .talk_operation_repo
         .add(
             talk.id,
             talk.name,
@@ -81,7 +81,7 @@ pub async fn put_edit_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let mut talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
+    let mut talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -97,7 +97,7 @@ pub async fn put_edit_admin_talk(
     let talk = process_talk_body(body);
 
     let result = talks_uc
-        .talk_repo
+        .talk_operation_repo
         .update(
             talk.id,
             Some(talk.name.clone()),
@@ -121,7 +121,7 @@ pub async fn put_edit_admin_talk(
         }
     }
 
-    let get_result = talks_uc.talk_repo.find(talk.id).await;
+    let get_result = talks_uc.talk_display_repo.find(talk.id).await;
 
     match get_result {
         Some(talk_data) => {
@@ -176,7 +176,7 @@ pub async fn delete_delete_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let mut talks_uc = app_state.talk_usecase.lock().await.clone().unwrap();
+    let mut talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -189,7 +189,10 @@ pub async fn delete_delete_admin_talk(
         }
     };
 
-    let delete_result = talks_uc.talk_repo.delete(id.clone().unwrap()).await;
+    let delete_result = talks_uc
+        .talk_operation_repo
+        .delete(id.clone().unwrap())
+        .await;
 
     match delete_result {
         Some(talk_command_status) => {

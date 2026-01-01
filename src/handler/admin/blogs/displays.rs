@@ -65,7 +65,7 @@ pub async fn get_admin_blogs_list(
     }
 
     // Locking Mutex
-    let data = app_state.blog_usecase.lock().await;
+    let data = app_state.blog_db_usecase.lock().await;
 
     // Setup Pagination
     debug!("Query Parameters {:?}", &params);
@@ -155,7 +155,7 @@ pub async fn get_admin_blog(
         return get_401_unauthorized().await;
     }
 
-    let data = app_state.blog_usecase.lock().await.clone();
+    let data = app_state.blog_db_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -221,7 +221,7 @@ pub async fn get_add_admin_blog(
     }
 
     // Locking Mutex
-    let blog_uc = app_state.blog_usecase.lock().await;
+    let blog_uc = app_state.blog_db_usecase.lock().await;
 
     // Calculate new Blog Id
     let result = blog_uc.blog_repo.get_new_id().await;
@@ -232,7 +232,7 @@ pub async fn get_add_admin_blog(
     };
     debug!("Construct AdminGetAddBlogTemplate for Blog Id {}", &blog_id);
 
-    let tag_uc = app_state.tag_usecase.lock().await;
+    let tag_uc = app_state.tag_db_usecase.lock().await;
     if tag_uc.is_none() {
         error!("Failed to get lock Tag Usecase Mutex.");
         return get_500_internal_server_error();
@@ -286,7 +286,7 @@ pub async fn get_edit_admin_blog(
         return get_401_unauthorized().await;
     }
 
-    let blog_uc = app_state.blog_usecase.lock().await.clone();
+    let blog_uc = app_state.blog_db_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -307,7 +307,7 @@ pub async fn get_edit_admin_blog(
     };
     debug!("Blog {:?}", &blog_data);
 
-    let tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
     if tag_uc.is_none() {
         error!("Failed to lock Tag Usecase Mutex.");
         return get_500_internal_server_error();
@@ -371,7 +371,7 @@ pub async fn get_delete_admin_blog(
     }
 
     // Locking Mutex
-    let data = app_state.blog_usecase.lock().await.clone();
+    let data = app_state.blog_db_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {

@@ -31,7 +31,7 @@ pub async fn post_add_admin_blog(
 
     // Locking Mutex
     // TODO: Implement check and add on tags and blog_tag_mappings
-    let mut blog_uc = app_state.blog_usecase.lock().await.clone();
+    let mut blog_uc = app_state.blog_db_usecase.lock().await.clone();
 
     let blog = process_blog_body(body);
     let add_result = blog_uc.blog_repo.add(blog.clone()).await;
@@ -51,7 +51,7 @@ pub async fn post_add_admin_blog(
 
     // Check if tags is available. if not add the new tag
     // No need to check tags. We only provide available tags for now
-    let tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
     if tag_uc.is_none() {
         error!("Failed to lock tag usecase mutex");
         return get_500_internal_server_error();
@@ -74,7 +74,7 @@ pub async fn post_add_admin_blog(
     debug!("Selected Tags: {:?}", selected_tags);
 
     // Add blog_tag_mappings
-    let blog_tag_mapping_uc = app_state.blog_tag_mapping_usecase.lock().await.clone();
+    let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
     if blog_tag_mapping_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();
@@ -127,7 +127,7 @@ pub async fn put_edit_admin_blog(
         return get_401_unauthorized().await;
     }
 
-    let mut blog_uc = app_state.blog_usecase.lock().await.clone();
+    let mut blog_uc = app_state.blog_db_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -158,7 +158,7 @@ pub async fn put_edit_admin_blog(
     }
 
     // Get selected tags id
-    let tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
     if tag_uc.is_none() {
         error!("Failed to lock tag usecase mutex");
         return get_500_internal_server_error();
@@ -179,7 +179,7 @@ pub async fn put_edit_admin_blog(
     debug!("Selected Tag IDs {:?}", &selected_tag_ids);
 
     // Get blog tag mapping by blog id and tag id
-    let blog_tag_mapping_uc = app_state.blog_tag_mapping_usecase.lock().await.clone();
+    let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
     if blog_tag_mapping_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();
@@ -301,7 +301,7 @@ pub async fn delete_delete_admin_blog(
         return get_401_unauthorized().await;
     }
 
-    let mut blog_uc = app_state.blog_usecase.lock().await.clone();
+    let mut blog_uc = app_state.blog_db_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -329,7 +329,7 @@ pub async fn delete_delete_admin_blog(
         }
     }
 
-    let blog_tag_mapping_uc = app_state.blog_tag_mapping_usecase.lock().await.clone();
+    let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
     if blog_tag_mapping_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();

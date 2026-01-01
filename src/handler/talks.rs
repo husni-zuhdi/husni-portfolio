@@ -18,7 +18,7 @@ pub async fn get_talks(
     State(app_state): State<AppState>,
     params: Query<TalksParams>,
 ) -> Html<String> {
-    match app_state.talk_usecase.lock().await.clone() {
+    match app_state.talk_db_usecase.lock().await.clone() {
         Some(data) => {
             // Setup Pagination
             debug!("Params {:?}", &params);
@@ -40,7 +40,7 @@ pub async fn get_talks(
             // Construct TalksTemplate Struct
             let empty_value = "".to_string();
             let result = data
-                .talk_repo
+                .talk_display_repo
                 .find_talks(TalksParams {
                     start: Some(start),
                     end: Some(end),

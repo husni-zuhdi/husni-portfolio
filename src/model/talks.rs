@@ -34,6 +34,8 @@ pub struct TalksParams {
 /// - Stored
 /// - Updated
 /// - Deleted
+/// - CacheInserted
+/// - CacheInvalidated
 ///
 /// I think you should wrap this with Option so you can check if it `None`
 /// then check the value of the status
@@ -42,4 +44,6 @@ pub enum TalkCommandStatus {
     Stored,
     Updated,
     Deleted,
+    CacheInserted,
+    CacheInvalidated,
 }

@@ -20,7 +20,7 @@ pub async fn get_blogs(
     params: Query<BlogsParams>,
 ) -> Html<String> {
     // Locking Mutex
-    let data = app_state.blog_usecase.lock().await;
+    let data = app_state.blog_db_usecase.lock().await;
 
     // Setup Pagination
     debug!("Query Parameters {:?}", &params);
@@ -113,7 +113,7 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
     }
 
     // Locking Mutex
-    let data = app_state.blog_usecase.lock().await;
+    let data = app_state.blog_db_usecase.lock().await;
 
     // Construct BlogTemplate Struct
     let result = data.blog_repo.find(id.clone().unwrap()).await;

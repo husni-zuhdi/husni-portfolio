@@ -1,32 +1,11 @@
 use crate::database::turso::TursoDatabase;
 use crate::model::talks::*;
-use crate::repo::talks::TalkRepo;
+use crate::repo::talks::{TalkDisplayRepo, TalkOperationRepo};
 use async_trait::async_trait;
 use tracing::{debug, info};
 
 #[async_trait]
-impl TalkRepo for TursoDatabase {
-    async fn get_new_id(&self) -> Option<i64> {
-        let prep_query = "SELECT id FROM talks ORDER BY id DESC LIMIT 1";
-        debug!("Executing lenght query {}", &prep_query);
-
-        let row = self
-            .conn
-            .query(prep_query, ())
-            .await
-            .expect("Failed to query Talks length.")
-            .next()
-            .await
-            .expect("Failed to access Talks length.")
-            .expect("Failed to access Talks length row.");
-
-        debug!("Debug Row {:?}", &row);
-
-        let lenght_id: Option<i64> = row.get(0).unwrap();
-        let new_id = lenght_id.unwrap() + 1;
-
-        Some(new_id)
-    }
+impl TalkDisplayRepo for TursoDatabase {
     async fn find(&self, id: i64) -> Option<Talk> {
         let prep_query = "SELECT * FROM talks WHERE id = ?1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &id);
@@ -120,6 +99,31 @@ impl TalkRepo for TursoDatabase {
         }
 
         Some(Talks { talks })
+    }
+}
+
+#[async_trait]
+impl TalkOperationRepo for TursoDatabase {
+    async fn get_new_id(&self) -> Option<i64> {
+        let prep_query = "SELECT id FROM talks ORDER BY id DESC LIMIT 1";
+        debug!("Executing lenght query {}", &prep_query);
+
+        let row = self
+            .conn
+            .query(prep_query, ())
+            .await
+            .expect("Failed to query Talks length.")
+            .next()
+            .await
+            .expect("Failed to access Talks length.")
+            .expect("Failed to access Talks length row.");
+
+        debug!("Debug Row {:?}", &row);
+
+        let lenght_id: Option<i64> = row.get(0).unwrap();
+        let new_id = lenght_id.unwrap() + 1;
+
+        Some(new_id)
     }
     async fn add(
         &mut self,
