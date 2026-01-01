@@ -80,9 +80,8 @@ pub async fn state_factory(config: Config) -> AppState {
             (BlogDBUseCase::new(Box::new(repo)), None, None, None, None)
         };
 
-    let cache_repo = InMemoryCache::new(3600).await;
-
     let talk_cache_uc = if cache_is_enabled {
+        let cache_repo = InMemoryCache::new(config.cache_ttl.unwrap()).await;
         Some(TalkCacheUseCase::new(
             Box::new(cache_repo.clone()),
             Box::new(cache_repo.clone()),
