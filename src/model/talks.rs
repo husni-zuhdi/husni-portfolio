@@ -1,4 +1,6 @@
+use crate::model::templates::{TalkTemplate, TalksTemplate};
 use serde::{Deserialize, Serialize};
+use tracing::{debug, info};
 
 /// Talk
 /// Talk data with fields:
@@ -16,9 +18,46 @@ pub struct Talk {
     pub org_link: Option<String>,
 }
 
+impl Talk {
+    /// Convert Talks to (Askama) TalkTemplate
+    pub fn to_template(&self) -> TalkTemplate {
+        let empty_value = "".to_string();
+        info!("Construct TalkTemplate for Talk Id {}", &self.id);
+        debug!("Talk {:?}", &self);
+        let media_link = match &self.media_link {
+            Some(val) => val.clone(),
+            None => empty_value.clone(),
+        };
+        let org_name = match &self.org_name {
+            Some(val) => val.clone(),
+            None => empty_value.clone(),
+        };
+        let org_link = match &self.org_link {
+            Some(val) => val.clone(),
+            None => empty_value.clone(),
+        };
+        TalkTemplate {
+            id: self.id,
+            name: self.name.clone(),
+            date: self.date.clone(),
+            media_link,
+            org_name,
+            org_link,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Talks {
     pub talks: Vec<Talk>,
+}
+
+impl Talks {
+    /// Convert Talks to (Askama) TalksTemplate
+    pub fn to_template(&self) -> TalksTemplate {
+        let talks: Vec<TalkTemplate> = self.talks.iter().map(|talk| talk.to_template()).collect();
+        TalksTemplate { talks }
+    }
 }
 
 /// TalksParams
