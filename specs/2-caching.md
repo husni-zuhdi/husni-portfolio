@@ -15,20 +15,16 @@ to add another infrastructure resources.
 [Moka](https://github.com/moka-rs/moka) is one of the most common cache library
 available in Rust. We can try to use this for the initial phase.
 
-Cache is enabled with envar such as `IS_CACHE_ENABLED` that declared as 
-a mandatory envar. The other configurations envars such as `CACHE_TYPE`,
-`CACHE_TIMEOUT_SECOND`, etc should be declared as optional
-envars and evalueated when the `IS_CACHE_ENABLED` is enabled.
+Cache is enabled when `CACHE_TYPE` is not `None`. The other configurations 
+envars such as `CACHE_TTL_SECOND`, etc should be declared as optional envars.
 
 Draft of envars:
-- IS_CACHE_ENABLED
-    - Boolean
-    - Enable/Disable Cache
 - CACHE_TYPE
     - String
-    - Choose Cache types. Currently we only provide `in-memory` type. We can add `redis` later
+    - Choose Cache types. Currently we only provide `in-memory` type.
+    - We can add `redis` later
     - Default to `in-memory`
-- CACHE_TIMEOUT_SECOND
+- CACHE_TTL_SECOND
     - number
     - Cache timeout duration in second
     - Default to 3600
