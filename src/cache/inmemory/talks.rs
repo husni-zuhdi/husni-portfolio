@@ -12,24 +12,27 @@ impl TalkDisplayRepo for InMemoryCache {
         self.talks_cache.get(&key).await
     }
     async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
-        let start_seq = params.start.unwrap();
+        let start_seq = params.start.unwrap() + 1;
         let end_seq = params.end.unwrap();
         info!("Looking Talks with id started at {start_seq} to {end_seq} in InMemoryCache");
 
         let mut talks = Vec::new();
-        for id in start_seq..=end_seq {
+        // rev() method to reverse Talk order
+        for id in (start_seq..=end_seq).rev() {
             let key = format!("talk-{id}");
             let value = self.talks_cache.get(&key).await;
-            // Return early if one of the talk id cache is empty
-            // and trigger call to Database and fill cache.
             if value.is_none() {
                 debug!("Talk with id {id} is not cached");
-                return None;
+                continue;
             }
 
             talks.push(value.unwrap());
         }
 
+        // If Cache is still fresh, return None
+        if talks.is_empty() {
+            return None;
+        }
         Some(Talks { talks })
     }
 }
