@@ -9,15 +9,15 @@ use urlencoding::decode;
 /// Initiate pagination check. Set default if not manually requested
 fn sanitize_params(params: Query<TalksParams>) -> TalksParams {
     let start = match params.start {
-        Some(val) => val,
-        None => {
-            debug!("Set default start to 0");
+        Some(val) if val >= 0 => val,
+        _ => {
+            debug!("Set default end to 0");
             0_i64
         }
     };
     let end = match params.end {
-        Some(val) => val,
-        None => {
+        Some(val) if val >= 0 => val,
+        _ => {
             debug!("Set default end to 10");
             10_i64
         }
