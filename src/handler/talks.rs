@@ -1,12 +1,10 @@
-use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
+use crate::handler::status::get_500_internal_server_error;
+use crate::repo::talks::TalkDisplayRepo;
 use askama::Template;
 use axum::response::Html;
 
+use crate::model::axum::AppState;
 use crate::model::talks::TalksParams;
-use crate::model::{
-    axum::AppState,
-    templates::{TalkTemplate, TalksTemplate},
-};
 use axum::debug_handler;
 use axum::extract::{Query, State};
 use tracing::{debug, error, info};
@@ -18,91 +16,98 @@ pub async fn get_talks(
     State(app_state): State<AppState>,
     params: Query<TalksParams>,
 ) -> Html<String> {
-    match app_state.talk_db_usecase.lock().await.clone() {
-        Some(data) => {
-            // Setup Pagination
-            debug!("Params {:?}", &params);
-            let start = match params.start {
-                Some(val) => val,
-                None => {
-                    debug!("Set default start to 0");
-                    0_i64
-                }
-            };
-            let end = match params.end {
-                Some(val) => val,
-                None => {
-                    debug!("Set default end to 10");
-                    10_i64
-                }
-            };
+    // Setup usecases
+    let talk_db_uc = app_state
+        .talk_db_usecase
+        .lock()
+        .await
+        .clone()
+        .expect("Failed to lock Talk DB Usecase");
+    let talk_cache_uc_opt = app_state.talk_cache_usecase.lock().await;
+    let cache_is_enabled = talk_cache_uc_opt.is_some();
 
-            // Construct TalksTemplate Struct
-            let empty_value = "".to_string();
-            let result = data
-                .talk_display_repo
-                .find_talks(TalksParams {
-                    start: Some(start),
-                    end: Some(end),
-                })
-                .await;
-            match result {
-                Some(talks_data) => {
-                    let talks: Vec<TalkTemplate> = talks_data
-                        .talks
-                        .iter()
-                        .map(|talk| {
-                            debug!("Construct TalkTemplate for Talk Id {}", &talk.id);
-                            debug!("TalkTemplate {:?}", &talk);
-                            let media_link = match &talk.media_link {
-                                Some(val) => val.clone(),
-                                None => empty_value.clone(),
-                            };
-                            let org_name = match &talk.org_name {
-                                Some(val) => val.clone(),
-                                None => empty_value.clone(),
-                            };
-                            let org_link = match &talk.org_link {
-                                Some(val) => val.clone(),
-                                None => empty_value.clone(),
-                            };
-                            TalkTemplate {
-                                id: talk.id,
-                                name: talk.name.clone(),
-                                date: talk.date.clone(),
-                                media_link,
-                                org_name,
-                                org_link,
-                            }
-                        })
-                        .collect();
-                    debug!("TalksTemplate talks : {:?}", &talks);
-
-                    let talks_res = TalksTemplate { talks }.render();
-                    match talks_res {
-                        Ok(res) => {
-                            info!("Talks askama template rendered.");
-                            Html(res)
-                        }
-                        Err(err) => {
-                            error!("Failed to render get_talks.html. {}", err);
-                            get_500_internal_server_error()
-                        }
-                    }
-                }
-                None => {
-                    error!(
-                        "Failed to find talks with Talk Id started at {} and ended at {}.",
-                        start, end
-                    );
-                    get_500_internal_server_error()
-                }
-            }
+    // Setup Pagination
+    debug!("Params {:?}", &params);
+    let start = match params.start {
+        Some(val) if val >= 0 => val,
+        _ => {
+            debug!("Set default start to 0");
+            0_i64
         }
-        None => {
-            // No Talks in Memory yet and I don't think it's worth to be implement
-            // Andd I also think to remove the memory database at all
-            get_404_not_found().await
+    };
+    let end = match params.end {
+        Some(val) if val >= 0 => val,
+        _ => {
+            debug!("Set default end to 10");
+            10_i64
+        }
+    };
+    let params = TalksParams {
+        start: Some(start),
+        end: Some(end),
+    };
+
+    // Get Data from Cache
+    let cache_result = if cache_is_enabled {
+        talk_cache_uc_opt
+            .clone()
+            .unwrap()
+            .find_talks(params.clone())
+            .await
+    } else {
+        None
+    };
+    // If cache hit, return early
+    if let Some(res) = cache_result {
+        let talks_res = res.to_template().render();
+        if talks_res.is_err() {
+            error!(
+                "Failed to render get_talks.html. {}",
+                talks_res.unwrap_err()
+            );
+            return get_500_internal_server_error();
+        }
+
+        info!("Talks askama template rendered.");
+        return Html(talks_res.unwrap());
+    }
+    // If not, get data from database
+    let db_result = talk_db_uc
+        .talk_display_repo
+        .find_talks(params.clone())
+        .await;
+
+    // Early check db result. If empty, return 500 error
+    if db_result.is_none() {
+        error!(
+            "Failed to find talks with Talk Id started at {} and ended at {}.",
+            start, end
+        );
+        return get_500_internal_server_error();
+    }
+
+    // Insert cache
+    if cache_is_enabled {
+        for talk in db_result.clone().unwrap().talks {
+            debug!("Caching talk {}", &talk.id);
+            let _ = talk_cache_uc_opt
+                .clone()
+                .unwrap()
+                .talk_operation_repo
+                .insert(talk)
+                .await;
         }
     }
+
+    // Render Talks
+    let talks_res = db_result.unwrap().to_template().render();
+    if talks_res.is_err() {
+        error!(
+            "Failed to render get_talks.html. {}",
+            talks_res.unwrap_err()
+        );
+        return get_500_internal_server_error();
+    }
+    info!("Talks askama template rendered.");
+    Html(talks_res.unwrap())
 }
