@@ -1,6 +1,6 @@
 use crate::model::templates::{TalkTemplate, TalksTemplate};
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info};
+use tracing::debug;
 
 /// Talk
 /// Talk data with fields:
@@ -22,7 +22,7 @@ impl Talk {
     /// Convert Talks to (Askama) TalkTemplate
     pub fn to_template(&self) -> TalkTemplate {
         let empty_value = "".to_string();
-        info!("Construct TalkTemplate for Talk Id {}", &self.id);
+        debug!("Construct TalkTemplate for Talk Id {}", &self.id);
         debug!("Talk {:?}", &self);
         let media_link = match &self.media_link {
             Some(val) => val.clone(),
