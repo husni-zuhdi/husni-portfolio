@@ -45,6 +45,16 @@ impl Talk {
             org_link,
         }
     }
+    /// Calculate size of Talks in u32
+    /// Useful for weighing data size
+    pub fn data_size(&self) -> u32 {
+        (size_of_val(&self.id)
+            + size_of_val(&self.name)
+            + size_of_val(&self.date)
+            + size_of_val(&self.org_name)
+            + size_of_val(&self.org_link)
+            + size_of_val(&self.media_link)) as u32
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
