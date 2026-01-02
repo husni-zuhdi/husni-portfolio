@@ -6,11 +6,17 @@ use tracing::{debug, info};
 
 #[async_trait]
 impl TalkDisplayRepo for InMemoryCache {
+    /// Find a Talk Cache
+    /// Take talk id and return Option of `Talk`. If `None`, no talk was cached
     async fn find(&self, id: i64) -> Option<Talk> {
         info!("Looking Talk with id {id} in InMemoryCache");
         let key = format!("talk-{id}");
         self.talks_cache.get(&key).await
     }
+    /// Find a Talk Caches
+    /// Take `TalkParams` that contain `start` and `end` then
+    /// return Option of `Talks`. `talks` filed is always reversed.
+    /// if `None`, no talks within `TalkParams` was cached
     async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
         let start_seq = params.start.unwrap() + 1;
         let end_seq = params.end.unwrap();
@@ -48,6 +54,9 @@ impl TalkOperationRepo for InMemoryCache {
         self.talks_cache.insert(key, talk).await;
         Some(TalkCommandStatus::CacheInserted)
     }
+    /// Invalidate Talk Cache
+    /// Invalidate (discard value from the cached key) talk cache by talk id
+    /// Return Option of `TalkCommandStatus`. If `None`, invalidation failed
     async fn invalidate(&mut self, id: i64) -> Option<TalkCommandStatus> {
         info!("Invalidating Talk with id {id} into InMemoryCache");
         let key = format!("talk-{id}");
