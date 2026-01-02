@@ -134,8 +134,12 @@ mod test {
     #[tokio::test]
     async fn test_sqlite_state() {
         // Config default data source is `memory`
-        let mut config = Config::default();
-        config.data_source = "sqlite".to_string();
+        let mut config = Config {
+            data_source: "sqlite".to_string(),
+            ..Default::default()
+        };
+        //let mut config = Config::default();
+        //config.data_source = "sqlite".to_string();
         config.secrets.database_url = Some("../husni-portfolio.db".to_string());
 
         let state = state_factory(config).await;

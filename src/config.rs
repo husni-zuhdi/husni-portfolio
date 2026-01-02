@@ -431,7 +431,7 @@ mod test {
         let secrets_bucket = Some("".to_string());
         let secrets_object = Some("".to_string());
         let cache_type = Some(Cache::InMemory);
-        let cache_ttl = Some(3600 as i64);
+        let cache_ttl = Some(3600_i64);
 
         set_envars(Config {
             svc_endpoint: svc_endpoint.to_string(),
