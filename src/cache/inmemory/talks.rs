@@ -4,13 +4,15 @@ use crate::repo::talks::{TalkCacheOperationRepo as TalkOperationRepo, TalkDispla
 use async_trait::async_trait;
 use tracing::{debug, info};
 
+const TALK_KEY_PREFIX: &str = "talk";
+
 #[async_trait]
 impl TalkDisplayRepo for InMemoryCache {
     /// Find a Talk Cache
     /// Take talk id and return Option of `Talk`. If `None`, no talk was cached
     async fn find(&self, id: i64) -> Option<Talk> {
-        info!("Looking Talk with id {id} in InMemoryCache");
-        let key = format!("talk-{id}");
+        debug!("Looking Talk with id {id} in InMemoryCache");
+        let key = format!("{TALK_KEY_PREFIX}-{id}");
         self.talks_cache.get(&key).await
     }
     /// Find a Talk Caches
@@ -20,13 +22,12 @@ impl TalkDisplayRepo for InMemoryCache {
     async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
         let start_seq = params.start.unwrap() + 1;
         let end_seq = params.end.unwrap();
-        info!("Looking Talks with id started at {start_seq} to {end_seq} in InMemoryCache");
+        debug!("Looking Talks with id started at {start_seq} to {end_seq} in InMemoryCache");
 
         let mut talks = Vec::new();
         // rev() method to reverse Talk order
         for id in (start_seq..=end_seq).rev() {
-            let key = format!("talk-{id}");
-            let value = self.talks_cache.get(&key).await;
+            let value = self.find(id).await;
             if value.is_none() {
                 debug!("Talk with id {id} is not cached");
                 continue;
@@ -50,7 +51,7 @@ impl TalkOperationRepo for InMemoryCache {
     /// Return Option of `TalkCommandStatus`. If `None`, insertion failed
     async fn insert(&mut self, talk: Talk) -> Option<TalkCommandStatus> {
         info!("Inserting Talk with id {} into InMemoryCache", &talk.id);
-        let key = format!("talk-{}", &talk.id);
+        let key = format!("{TALK_KEY_PREFIX}-{}", &talk.id);
         self.talks_cache.insert(key, talk).await;
         Some(TalkCommandStatus::CacheInserted)
     }
@@ -59,7 +60,7 @@ impl TalkOperationRepo for InMemoryCache {
     /// Return Option of `TalkCommandStatus`. If `None`, invalidation failed
     async fn invalidate(&mut self, id: i64) -> Option<TalkCommandStatus> {
         info!("Invalidating Talk with id {id} into InMemoryCache");
-        let key = format!("talk-{id}");
+        let key = format!("{TALK_KEY_PREFIX}-{id}");
         self.talks_cache.invalidate(&key).await;
         Some(TalkCommandStatus::CacheInvalidated)
     }
@@ -136,7 +137,7 @@ mod test {
             assert!(
                 insert_status.is_some(),
                 "{}",
-                format!("Talk-{id} insertion failed")
+                format!("{TALK_KEY_PREFIX}-{id} insertion failed")
             );
             assert_eq!(insert_status.unwrap(), TalkCommandStatus::CacheInserted);
 
@@ -145,7 +146,7 @@ mod test {
             assert!(
                 result.is_some(),
                 "{}",
-                format!("talk-{id} find operation failed")
+                format!("{TALK_KEY_PREFIX}-{id} find operation failed")
             );
             assert_eq!(result.unwrap(), test_val.clone());
         }
@@ -168,7 +169,7 @@ mod test {
             assert!(
                 invalidate_status.is_some(),
                 "{}",
-                format!("talk-{id} invalidation failed")
+                format!("{TALK_KEY_PREFIX}-{id} invalidation failed")
             );
             assert_eq!(
                 invalidate_status.unwrap(),
