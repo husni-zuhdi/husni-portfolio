@@ -25,7 +25,7 @@ impl TalkDisplayRepo for TursoDatabase {
             .expect("Failed to access query talk.")
             .expect("Failed to access row talk.");
 
-        debug!("Debug Row {:?}", &row);
+        debug!("Find {:?}", &row);
 
         let mut media_link: Option<String> = row.get(3).unwrap();
         if media_link.clone().unwrap().is_empty() {
@@ -73,7 +73,7 @@ impl TalkDisplayRepo for TursoDatabase {
         let mut talks: Vec<Talk> = Vec::new();
 
         while let Some(row) = rows.next().await.unwrap() {
-            debug!("Debug Row {:?}", &row);
+            debug!("Find Talks {:?}", &row);
 
             let mut media_link: Option<String> = row.get(3).unwrap();
             if media_link.clone().unwrap().is_empty() {
@@ -118,7 +118,7 @@ impl TalkOperationRepo for TursoDatabase {
             .expect("Failed to access Talks length.")
             .expect("Failed to access Talks length row.");
 
-        debug!("Debug Row {:?}", &row);
+        debug!("Get New Id {:?}", &row);
 
         let lenght_id: Option<i64> = row.get(0).unwrap();
         let new_id = lenght_id.unwrap() + 1;

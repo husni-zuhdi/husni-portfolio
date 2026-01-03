@@ -24,8 +24,7 @@ pub struct Talk {
 impl Talk {
     /// Convert Talk to (Askama) TalkTemplate
     pub fn to_template(&self) -> TalkTemplate {
-        debug!("Construct TalkTemplate for Talk Id {}", &self.id);
-        debug!("Talk {:?}", &self);
+        debug!("Talk: Constructing TalkTemplate for Talk Id {}", &self.id);
         TalkTemplate {
             id: self.id,
             name: self.name.clone(),
@@ -37,8 +36,10 @@ impl Talk {
     }
     /// Convert Talk to (Askama) AdminTalkTemplate
     pub fn to_admin_template(&self) -> AdminTalkTemplate {
-        debug!("Construct AdminTalkTemplate for Talk Id {}", self.id);
-        debug!("Talk {:?}", self);
+        debug!(
+            "Talk: Constructing AdminTalkTemplate for Talk Id {}",
+            self.id
+        );
         AdminTalkTemplate {
             id: self.id,
             name: self.name.clone(),
@@ -132,18 +133,17 @@ impl TalksParams {
     /// Sanitize TalksParams by checking negative value and set unknown to
     /// the default values
     pub fn sanitize(&self) -> Self {
-        debug!("{:?}", &self);
         let start = match self.start {
             Some(val) if val >= 0 => val,
             _ => {
-                debug!("Set default start to 0");
+                debug!("TalkParams: set default start to 0");
                 0_i64
             }
         };
         let end = match self.end {
             Some(val) if val >= 0 => val,
             _ => {
-                debug!("Set default end to 10");
+                debug!("TalkParams: set default end to 10");
                 10_i64
             }
         };

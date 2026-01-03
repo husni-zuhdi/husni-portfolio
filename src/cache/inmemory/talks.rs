@@ -11,7 +11,7 @@ impl TalkDisplayRepo for InMemoryCache {
     /// Find a Talk Cache
     /// Take talk id and return Option of `Talk`. If `None`, no talk was cached
     async fn find(&self, id: i64) -> Option<Talk> {
-        debug!("Looking Talk with id {id} in InMemoryCache");
+        debug!("Finding InMemoryCache {TALK_KEY_PREFIX}-{id}");
         let key = format!("{TALK_KEY_PREFIX}-{id}");
         self.talks_cache.get(&key).await
     }
@@ -22,17 +22,18 @@ impl TalkDisplayRepo for InMemoryCache {
     async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
         let start_seq = params.start.unwrap() + 1;
         let end_seq = params.end.unwrap();
-        debug!("Looking Talks with id started at {start_seq} to {end_seq} in InMemoryCache");
+        debug!("Finding InMemoryCache {TALK_KEY_PREFIX}-{start_seq} - {TALK_KEY_PREFIX}-{end_seq}");
 
         let mut talks = Vec::new();
         // rev() method to reverse Talk order
         for id in (start_seq..=end_seq).rev() {
             let value = self.find(id).await;
             if value.is_none() {
-                debug!("Talk with id {id} is not cached");
+                debug!("{TALK_KEY_PREFIX}-{id} cache miss");
                 continue;
             }
 
+            debug!("{TALK_KEY_PREFIX}-{id} cache hit");
             talks.push(value.unwrap());
         }
 
@@ -50,8 +51,8 @@ impl TalkOperationRepo for InMemoryCache {
     /// Take a `Talk` object and store it in the `InMemoryCache`
     /// Return Option of `TalkCommandStatus`. If `None`, insertion failed
     async fn insert(&mut self, talk: Talk) -> Option<TalkCommandStatus> {
-        info!("Inserting Talk with id {} into InMemoryCache", &talk.id);
         let key = format!("{TALK_KEY_PREFIX}-{}", &talk.id);
+        info!("Inserting {} into InMemoryCache", &key);
         self.talks_cache.insert(key, talk).await;
         Some(TalkCommandStatus::CacheInserted)
     }
@@ -59,8 +60,8 @@ impl TalkOperationRepo for InMemoryCache {
     /// Invalidate (discard value from the cached key) talk cache by talk id
     /// Return Option of `TalkCommandStatus`. If `None`, invalidation failed
     async fn invalidate(&mut self, id: i64) -> Option<TalkCommandStatus> {
-        info!("Invalidating Talk with id {id} into InMemoryCache");
         let key = format!("{TALK_KEY_PREFIX}-{id}");
+        info!("Invalidating {} from InMemoryCache", &key);
         self.talks_cache.invalidate(&key).await;
         Some(TalkCommandStatus::CacheInvalidated)
     }
