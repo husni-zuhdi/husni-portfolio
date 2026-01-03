@@ -5,28 +5,8 @@ use crate::model::talks::Talk;
 use tracing::{debug, warn};
 use urlencoding::decode;
 
-/// sanitize media and org part of Talk fields
-fn sanitize_talk_media_org(talk_data: &Talk) -> (String, String, String) {
-    let empty_value = "".to_string();
-
-    let media_link = match &talk_data.media_link {
-        Some(val) => val.clone(),
-        None => empty_value.clone(),
-    };
-    let org_name = match &talk_data.org_name {
-        Some(val) => val.clone(),
-        None => empty_value.clone(),
-    };
-    let org_link = match &talk_data.org_link {
-        Some(val) => val.clone(),
-        None => empty_value.clone(),
-    };
-
-    (media_link, org_name, org_link)
-}
-
 // Take request body String from PUT and POST operations to create a new Talk
-fn process_talk_body(body: String) -> Talk {
+fn process_talk_body(body: String) -> Option<Talk> {
     // Initialize fields
     let mut talk_id = 0_i64;
     let mut talk_name = String::new();
@@ -42,9 +22,14 @@ fn process_talk_body(body: String) -> Talk {
         debug!("Request field key/value {:?}/{:?}", key, value_decoded);
         match key {
             "talk_id" => {
-                talk_id = value_decoded
-                    .parse::<i64>()
-                    .expect("Failed to parse path from request body")
+                let talk_id_res = value_decoded.parse::<i64>();
+                match talk_id_res {
+                    Ok(val) => talk_id = val,
+                    Err(err) => {
+                        warn!("Failed to parse talk_id with error, {err}");
+                        return None;
+                    }
+                }
             }
             "talk_name" => talk_name = value_decoded.to_string(),
             "talk_media_link" => talk_media_link = value_decoded.to_string(),
@@ -58,12 +43,12 @@ fn process_talk_body(body: String) -> Talk {
         }
     }
 
-    Talk {
+    Some(Talk {
         id: talk_id,
         name: talk_name,
         date: talk_date,
         media_link: Some(talk_media_link),
         org_name: Some(talk_org_name),
         org_link: Some(talk_org_link),
-    }
+    })
 }

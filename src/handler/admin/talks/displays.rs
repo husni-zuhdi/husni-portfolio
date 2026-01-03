@@ -278,7 +278,6 @@ pub async fn get_add_admin_talk(
         date: chrono::Local::now().format("%Y-%m-%d").to_string(),
     }
     .render();
-    debug!("AdminGetAddTalkTemplate : {:?}", &add_talk);
 
     if add_talk.is_err() {
         error!(
