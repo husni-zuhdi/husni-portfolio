@@ -111,3 +111,24 @@ pub async fn get_talks(
     info!("Talks askama template rendered.");
     Html(talks_res.unwrap())
 }
+
+//#[cfg(test)]
+//mod test {
+//    use crate::config;
+//
+//    use super::*;
+//
+//    #[tokio::test]
+//    async fn test_get_talks() {
+//        todo!();
+//        // Problem is we cannot create a db in pipeline that connected to turso
+//        // The memory database also didn't account for talks feature
+//        // One thing I can think of is to set the `sqlte` database as default
+//        // then create a local sqlite db for testing.
+//        //
+//        // We need to configure the `Config` and `AppState` structu to default
+//        // to `sqlite`. Finally we can remove the memory database entierly.
+//        //
+//        // We can add `generate_mock` data method to help with test?
+//    }
+//}
