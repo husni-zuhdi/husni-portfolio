@@ -7,10 +7,11 @@ use crate::model::talks::Talk;
 
 #[derive(Clone)]
 pub struct InMemoryCache {
-    pub talks_cache: Cache<String, Talk>,
+    talks_cache: Cache<String, Talk>,
 }
 
 impl InMemoryCache {
+    /// Create new InMemoryCache by providing TTL (s)
     pub async fn new(ttl: i64) -> InMemoryCache {
         let talks_cache = Cache::builder()
             // Set time to live from the CACHE_TTL envar
