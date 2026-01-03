@@ -1,4 +1,7 @@
-use crate::model::templates::{TalkTemplate, TalksTemplate};
+use crate::model::{
+    templates::{TalkTemplate, TalksTemplate},
+    templates_admin::{AdminListTalksTemplate, AdminTalkTemplate},
+};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
@@ -19,30 +22,30 @@ pub struct Talk {
 }
 
 impl Talk {
-    /// Convert Talks to (Askama) TalkTemplate
+    /// Convert Talk to (Askama) TalkTemplate
     pub fn to_template(&self) -> TalkTemplate {
-        let empty_value = "".to_string();
         debug!("Construct TalkTemplate for Talk Id {}", &self.id);
         debug!("Talk {:?}", &self);
-        let media_link = match &self.media_link {
-            Some(val) => val.clone(),
-            None => empty_value.clone(),
-        };
-        let org_name = match &self.org_name {
-            Some(val) => val.clone(),
-            None => empty_value.clone(),
-        };
-        let org_link = match &self.org_link {
-            Some(val) => val.clone(),
-            None => empty_value.clone(),
-        };
         TalkTemplate {
             id: self.id,
             name: self.name.clone(),
             date: self.date.clone(),
-            media_link,
-            org_name,
-            org_link,
+            media_link: self.media_link.clone().unwrap(),
+            org_name: self.org_name.clone().unwrap(),
+            org_link: self.org_link.clone().unwrap(),
+        }
+    }
+    /// Convert Talk to (Askama) AdminTalkTemplate
+    pub fn to_admin_template(&self) -> AdminTalkTemplate {
+        debug!("Construct AdminTalkTemplate for Talk Id {}", self.id);
+        debug!("Talk {:?}", self);
+        AdminTalkTemplate {
+            id: self.id,
+            name: self.name.clone(),
+            date: self.date.clone(),
+            media_link: self.media_link.clone().unwrap(),
+            org_name: self.org_name.clone().unwrap(),
+            org_link: self.org_link.clone().unwrap(),
         }
     }
     /// Calculate size of Talks in u32
@@ -55,6 +58,32 @@ impl Talk {
             + size_of_val(&self.org_link)
             + size_of_val(&self.media_link)) as u32
     }
+    /// Sanitize media and org part of Talk by set default empty value if None
+    pub fn sanitize_talk_media_org(&self) -> Self {
+        let empty_value = "".to_string();
+
+        let media_link = match &self.media_link {
+            None => Some(empty_value.clone()),
+            val => val.clone(),
+        };
+        let org_name = match &self.org_name {
+            None => Some(empty_value.clone()),
+            val => val.clone(),
+        };
+        let org_link = match &self.org_link {
+            None => Some(empty_value.clone()),
+            val => val.clone(),
+        };
+
+        Self {
+            id: self.id,
+            name: self.name.clone(),
+            date: self.date.clone(),
+            media_link,
+            org_name,
+            org_link,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -63,10 +92,31 @@ pub struct Talks {
 }
 
 impl Talks {
+    /// Sanitize Talks
+    pub fn sanitize(&self) -> Self {
+        Self {
+            talks: self
+                .talks
+                .iter()
+                .map(|talk| talk.sanitize_talk_media_org())
+                .collect(),
+        }
+    }
     /// Convert Talks to (Askama) TalksTemplate
     pub fn to_template(&self) -> TalksTemplate {
-        let talks: Vec<TalkTemplate> = self.talks.iter().map(|talk| talk.to_template()).collect();
-        TalksTemplate { talks }
+        TalksTemplate {
+            talks: self.talks.iter().map(|talk| talk.to_template()).collect(),
+        }
+    }
+    /// Convert Talks to (Askama) AdminListTalksTemplate
+    pub fn to_admin_list_template(&self) -> AdminListTalksTemplate {
+        AdminListTalksTemplate {
+            talks: self
+                .talks
+                .iter()
+                .map(|admin_talk| admin_talk.to_admin_template())
+                .collect(),
+        }
     }
 }
 

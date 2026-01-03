@@ -41,7 +41,7 @@ pub async fn get_talks(
     };
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let talks_res = res.to_template().render();
+        let talks_res = res.sanitize().to_template().render();
         if talks_res.is_err() {
             error!(
                 "Failed to render get_talks.html. {}",
@@ -83,7 +83,7 @@ pub async fn get_talks(
     }
 
     // Render Talks
-    let talks_res = db_result.unwrap().to_template().render();
+    let talks_res = db_result.unwrap().sanitize().to_template().render();
     if talks_res.is_err() {
         error!(
             "Failed to render get_talks.html. {}",

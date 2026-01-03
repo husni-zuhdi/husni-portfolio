@@ -1,8 +1,7 @@
 pub mod displays;
 pub mod operations;
 
-use crate::model::talks::{Talk, TalksParams};
-use axum::extract::Query;
+use crate::model::talks::Talk;
 use tracing::{debug, warn};
 use urlencoding::decode;
 
