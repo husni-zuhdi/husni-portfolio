@@ -29,12 +29,13 @@ impl AuthRepo for TursoDatabase {
             return None;
         };
 
-        debug!("Debug Row {:?}", &row);
-        Some(User {
+        let user = User {
             id: row.get(0).unwrap(),
             email: row.get(1).unwrap(),
             hashed_password: row.get(2).unwrap(),
-        })
+        };
+        debug!("User id {:?} found", &user.id);
+        Some(user)
     }
     async fn find_user_by_email(&self, email: String) -> Option<User> {
         let prep_query = "SELECT id, email, hashed_password FROM users WHERE email=?1 LIMIT 1";
@@ -59,12 +60,13 @@ impl AuthRepo for TursoDatabase {
             return None;
         };
 
-        debug!("Debug Row {:?}", &row);
-        Some(User {
+        let user = User {
             id: row.get(0).unwrap(),
             email: row.get(1).unwrap(),
             hashed_password: row.get(2).unwrap(),
-        })
+        };
+        debug!("User id {:?} found", &user.id);
+        Some(user)
     }
     async fn add_user(
         &self,

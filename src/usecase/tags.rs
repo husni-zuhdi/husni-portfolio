@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use core::fmt::Debug;
 
 #[derive(Clone, Debug)]
-pub struct TagUseCase {
+pub struct TagDBUseCase {
     pub tag_repo: Box<dyn TagRepo + Send + Sync>,
 }
 
@@ -15,7 +15,7 @@ impl Debug for dyn TagRepo + Send + Sync {
 }
 
 #[async_trait]
-impl TagRepo for TagUseCase {
+impl TagRepo for TagDBUseCase {
     async fn find(&self, id: i64) -> Option<Tag> {
         self.tag_repo.find(id).await
     }
@@ -42,8 +42,8 @@ impl TagRepo for TagUseCase {
     }
 }
 
-impl TagUseCase {
-    pub fn new(tag_repo: Box<dyn TagRepo + Send + Sync>) -> TagUseCase {
-        TagUseCase { tag_repo }
+impl TagDBUseCase {
+    pub fn new(tag_repo: Box<dyn TagRepo + Send + Sync>) -> TagDBUseCase {
+        TagDBUseCase { tag_repo }
     }
 }

@@ -25,7 +25,6 @@ fn process_login_body(body: &str) -> Option<(String, String)> {
     for req_field in req_fields {
         let (key, value) = req_field.split_once("=").unwrap();
         let value_decoded = url_decode(value).unwrap();
-        debug!("Request field key/value {:?}/{:?}", key, value_decoded);
         match key {
             "login_email" => email = value_decoded.to_string(),
             "login_password" => password = value_decoded.to_string(),

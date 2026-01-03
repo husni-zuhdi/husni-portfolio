@@ -64,7 +64,7 @@ pub async fn get_admin_tags_list(
     }
 
     // Locking Mutex
-    let data = app_state.tag_usecase.lock().await.clone().unwrap();
+    let data = app_state.tag_db_usecase.lock().await.clone().unwrap();
 
     // Setup Pagination
     debug!("Query Parameters {:?}", &params);
@@ -136,7 +136,7 @@ pub async fn get_admin_tags_search(
     }
 
     // Locking Mutex
-    let data = app_state.tag_usecase.lock().await.clone().unwrap();
+    let data = app_state.tag_db_usecase.lock().await.clone().unwrap();
 
     // Setup Pagination
     debug!("Query Parameters {:?}", &params);
@@ -207,7 +207,7 @@ pub async fn get_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    let data = app_state.tag_usecase.lock().await.clone().unwrap();
+    let data = app_state.tag_db_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -263,7 +263,7 @@ pub async fn get_add_admin_tag(
     }
 
     // Locking Mutex
-    let tag_uc = app_state.tag_usecase.lock().await.clone().unwrap();
+    let tag_uc = app_state.tag_db_usecase.lock().await.clone().unwrap();
 
     // Calculate new Blog Id
     let result = tag_uc.tag_repo.get_new_id().await;
@@ -305,7 +305,7 @@ pub async fn get_edit_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    let tag_uc = app_state.tag_usecase.lock().await.clone().unwrap();
+    let tag_uc = app_state.tag_db_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -369,7 +369,7 @@ pub async fn get_delete_admin_tag(
     }
 
     // Locking Mutex
-    let data = app_state.tag_usecase.lock().await.clone().unwrap();
+    let data = app_state.tag_db_usecase.lock().await.clone().unwrap();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {

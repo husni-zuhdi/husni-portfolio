@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use core::fmt::Debug;
 
 #[derive(Clone, Debug)]
-pub struct AuthUseCase {
+pub struct AuthDBUseCase {
     pub auth_repo: Box<dyn AuthRepo + Send + Sync>,
 }
 
@@ -15,7 +15,7 @@ impl Debug for dyn AuthRepo + Send + Sync {
 }
 
 #[async_trait]
-impl AuthRepo for AuthUseCase {
+impl AuthRepo for AuthDBUseCase {
     async fn find_user_by_id(&self, id: String) -> Option<User> {
         self.auth_repo.find_user_by_id(id).await
     }
@@ -58,8 +58,8 @@ impl AuthRepo for AuthUseCase {
     }
 }
 
-impl AuthUseCase {
-    pub fn new(auth_repo: Box<dyn AuthRepo + Send + Sync>) -> AuthUseCase {
-        AuthUseCase { auth_repo }
+impl AuthDBUseCase {
+    pub fn new(auth_repo: Box<dyn AuthRepo + Send + Sync>) -> AuthDBUseCase {
+        AuthDBUseCase { auth_repo }
     }
 }

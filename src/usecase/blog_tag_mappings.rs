@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use core::fmt::Debug;
 
 #[derive(Clone, Debug)]
-pub struct BlogTagMappingUseCase {
+pub struct BlogTagMappingDBUseCase {
     pub blog_tag_mapping_repo: Box<dyn BlogTagMappingRepo + Send + Sync>,
 }
 
@@ -15,7 +15,7 @@ impl Debug for dyn BlogTagMappingRepo + Send + Sync {
 }
 
 #[async_trait]
-impl BlogTagMappingRepo for BlogTagMappingUseCase {
+impl BlogTagMappingRepo for BlogTagMappingDBUseCase {
     async fn find_by_blog_id(&self, blog_id: i64) -> Option<BlogTagMappings> {
         self.blog_tag_mapping_repo.find_by_blog_id(blog_id).await
     }
@@ -39,11 +39,11 @@ impl BlogTagMappingRepo for BlogTagMappingUseCase {
     }
 }
 
-impl BlogTagMappingUseCase {
+impl BlogTagMappingDBUseCase {
     pub fn new(
         blog_tag_mapping_repo: Box<dyn BlogTagMappingRepo + Send + Sync>,
-    ) -> BlogTagMappingUseCase {
-        BlogTagMappingUseCase {
+    ) -> BlogTagMappingDBUseCase {
+        BlogTagMappingDBUseCase {
             blog_tag_mapping_repo,
         }
     }

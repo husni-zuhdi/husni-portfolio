@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use core::fmt::Debug;
 
 #[derive(Clone, Debug)]
-pub struct BlogUseCase {
+pub struct BlogDBUseCase {
     pub blog_repo: Box<dyn BlogRepo + Send + Sync>,
 }
 
@@ -15,7 +15,7 @@ impl Debug for dyn BlogRepo + Send + Sync {
 }
 
 #[async_trait]
-impl BlogRepo for BlogUseCase {
+impl BlogRepo for BlogDBUseCase {
     async fn find(&self, id: i64) -> Option<Blog> {
         self.blog_repo.find(id).await
     }
@@ -39,8 +39,8 @@ impl BlogRepo for BlogUseCase {
     }
 }
 
-impl BlogUseCase {
-    pub fn new(blog_repo: Box<dyn BlogRepo + Send + Sync>) -> BlogUseCase {
-        BlogUseCase { blog_repo }
+impl BlogDBUseCase {
+    pub fn new(blog_repo: Box<dyn BlogRepo + Send + Sync>) -> BlogDBUseCase {
+        BlogDBUseCase { blog_repo }
     }
 }

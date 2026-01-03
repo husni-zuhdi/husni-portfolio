@@ -29,7 +29,7 @@ pub async fn post_add_admin_tag(
     }
 
     // Locking Mutex
-    let tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
 
     let tag = process_tag_body(body);
     let add_result = tag_uc.unwrap().tag_repo.add(tag.id, tag.name).await;
@@ -72,7 +72,7 @@ pub async fn put_edit_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    let tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {
@@ -125,7 +125,7 @@ pub async fn delete_delete_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    let tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
     // Sanitize `path`
     let id = path.parse::<i64>();
     match &id {

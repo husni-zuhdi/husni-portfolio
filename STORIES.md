@@ -41,6 +41,8 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 - [ ] As an Engineer, I want to increase my code quiality by implementing test.
     - We have a bit of unit test for `config` and `state`.
     - I think we want to gradually increase the test coverage.
+- [ ] As an Engineer, I want to deprecate the `memory` database.
+    - local `sqlite` database is far supperior for development
 
 ## 0.3.3 2025-10-24
 ### Engineering stories
