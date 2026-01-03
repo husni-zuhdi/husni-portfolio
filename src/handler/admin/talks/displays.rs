@@ -1,4 +1,4 @@
-use crate::handler::admin::talks::{sanitize_params, sanitize_talk_media_org};
+use crate::handler::admin::talks::sanitize_talk_media_org;
 use crate::handler::auth::{process_login_header, verify_jwt};
 use crate::handler::status::{
     get_401_unauthorized, get_404_not_found, get_500_internal_server_error,
@@ -65,8 +65,7 @@ pub async fn get_admin_talks_list(
     }
 
     let talks_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
-    debug!("Params {:?}", &params);
-    let sanitized_params = sanitize_params(params);
+    let sanitized_params = params.sanitize();
 
     // Construct TalksTemplate Struct
     let result = talks_uc

@@ -26,33 +26,15 @@ pub async fn get_talks(
     let talk_cache_uc_opt = app_state.talk_cache_usecase.lock().await;
     let cache_is_enabled = talk_cache_uc_opt.is_some();
 
-    // Setup Pagination
-    debug!("Params {:?}", &params);
-    let start = match params.start {
-        Some(val) if val >= 0 => val,
-        _ => {
-            debug!("Set default start to 0");
-            0_i64
-        }
-    };
-    let end = match params.end {
-        Some(val) if val >= 0 => val,
-        _ => {
-            debug!("Set default end to 10");
-            10_i64
-        }
-    };
-    let params = TalksParams {
-        start: Some(start),
-        end: Some(end),
-    };
+    // Sanitize Params
+    let sanitized_params = params.sanitize();
 
     // Get Data from Cache
     let cache_result = if cache_is_enabled {
         talk_cache_uc_opt
             .clone()
             .unwrap()
-            .find_talks(params.clone())
+            .find_talks(sanitized_params.clone())
             .await
     } else {
         None
@@ -74,14 +56,15 @@ pub async fn get_talks(
     // If not, get data from database
     let db_result = talk_db_uc
         .talk_display_repo
-        .find_talks(params.clone())
+        .find_talks(sanitized_params.clone())
         .await;
 
     // Early check db result. If empty, return 500 error
     if db_result.is_none() {
         error!(
             "Failed to find talks with Talk Id started at {} and ended at {}.",
-            start, end
+            sanitized_params.start.unwrap(),
+            sanitized_params.end.unwrap()
         );
         return get_500_internal_server_error();
     }

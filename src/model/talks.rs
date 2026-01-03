@@ -78,6 +78,33 @@ pub struct TalksParams {
     pub end: Option<i64>,
 }
 
+impl TalksParams {
+    /// Sanitize TalksParams by checking negative value and set unknown to
+    /// the default values
+    pub fn sanitize(&self) -> Self {
+        debug!("{:?}", &self);
+        let start = match self.start {
+            Some(val) if val >= 0 => val,
+            _ => {
+                debug!("Set default start to 0");
+                0_i64
+            }
+        };
+        let end = match self.end {
+            Some(val) if val >= 0 => val,
+            _ => {
+                debug!("Set default end to 10");
+                10_i64
+            }
+        };
+
+        TalksParams {
+            start: Some(start),
+            end: Some(end),
+        }
+    }
+}
+
 /// TalkCommandStatus
 /// Status of Talk Command Operations:
 /// - Stored

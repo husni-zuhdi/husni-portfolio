@@ -6,28 +6,6 @@ use axum::extract::Query;
 use tracing::{debug, warn};
 use urlencoding::decode;
 
-/// Initiate pagination check. Set default if not manually requested
-fn sanitize_params(params: Query<TalksParams>) -> TalksParams {
-    let start = match params.start {
-        Some(val) if val >= 0 => val,
-        _ => {
-            debug!("Set default end to 0");
-            0_i64
-        }
-    };
-    let end = match params.end {
-        Some(val) if val >= 0 => val,
-        _ => {
-            debug!("Set default end to 10");
-            10_i64
-        }
-    };
-    TalksParams {
-        start: Some(start),
-        end: Some(end),
-    }
-}
-
 /// sanitize media and org part of Talk fields
 fn sanitize_talk_media_org(talk_data: &Talk) -> (String, String, String) {
     let empty_value = "".to_string();
