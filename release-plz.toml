@@ -1,0 +1,27 @@
+[workspace]
+changelog_update = false
+git_tag_enable = true
+git_tag_name = "{{ version }}"
+
+[changelog]
+trim = true
+sort_commits = "newest"
+
+commit_preprocessors = [
+  # remove issue numbers from commits
+  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "" },
+]
+
+commit_parsers = [
+    { message = "^feat", group = "added" },
+    { message = "^.*: support", group = "added" },
+    { message = "^changed", group = "changed" },
+    { message = "^deprecated", group = "deprecated" },
+    { message = "^.*: remove", group = "deprecated" },
+    { message = "^.*: delete", group = "deprecated" },
+    { message = "^fix", group = "fixed" },
+    { message = "^test", group = "fixed" },
+    { message = "^.*: fix", group = "fixed" },
+    { message = "^security", group = "security" },
+    { message = "^.*", group = "other" },
+]
