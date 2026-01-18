@@ -48,10 +48,16 @@ tasks:
 
   docker-build:
     summary: Build Docker Image
+    deps:
+      - tailwind-build
+      - update-version
     cmds:
       - docker build -t husni-portfolio:$(cat version.json | jq --raw-output '.version') .
   docker-run:
     summary: Run Docker Image
+    deps:
+      - tailwind-build
+      - update-version
     cmds:
       - docker run --name husni-portfolio-$(date +'%Y-%m-%d-%H-%M-%S') -it -d -p 8080:8080 --env-file=.env husni-portfolio:$(cat version.json | jq --raw-output '.version')
   docker-compose-up:
