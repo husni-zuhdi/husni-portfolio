@@ -867,6 +867,40 @@ svg:is(.dark *) {
   --tw-contain-style:  ;
 }
 
+.container {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1536px;
+  }
+}
+
 .main_navbar {
   position: relative;
   display: flex;
@@ -1186,6 +1220,10 @@ svg:is(.dark *) {
   background-color: rgb(15 23 42 / var(--tw-bg-opacity));
 }
 
+.fixed {
+  position: fixed;
+}
+
 .my-10 {
   margin-top: 2.5rem;
   margin-bottom: 2.5rem;
@@ -1217,6 +1255,10 @@ svg:is(.dark *) {
 
 .block {
   display: block;
+}
+
+.inline {
+  display: inline;
 }
 
 .flex {
