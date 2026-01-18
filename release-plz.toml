@@ -2,6 +2,7 @@
 changelog_update = false
 git_tag_enable = true
 git_tag_name = "{{ version }}"
+release_commits = "^feat[(:]"
 publish = false
 
 [changelog]
@@ -21,8 +22,8 @@ commit_parsers = [
     { message = "^deprecated", group = "deprecated" },
     { message = "^.*: remove", group = "deprecated" },
     { message = "^.*: delete", group = "deprecated" },
-    { message = "^fix", group = "fixed" },
-    { message = "^test", group = "fixed" },
+    { message = "^(fix|test)", group = "fixed" },
+    { body = ".*(fix|test)", group = "fixed" },
     { message = "^.*: fix", group = "fixed" },
     { message = "^security", group = "security" },
     { message = "^.*", group = "other" },
