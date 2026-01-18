@@ -2,6 +2,7 @@
 changelog_update = false
 git_tag_enable = true
 git_tag_name = "{{ version }}"
+publish = false
 
 [changelog]
 trim = true
