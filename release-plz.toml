@@ -16,6 +16,7 @@ commit_preprocessors = [
 commit_parsers = [
     { message = "^feat", group = "added" },
     { message = "^.*: support", group = "added" },
+    { body = ".*feat", group = "added" },
     { message = "^changed", group = "changed" },
     { message = "^deprecated", group = "deprecated" },
     { message = "^.*: remove", group = "deprecated" },
