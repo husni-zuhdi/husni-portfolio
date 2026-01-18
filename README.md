@@ -41,3 +41,8 @@ task docker-build
 3. (Optional) If you use `turso`, setup your sqlite database.
 4. (Optional) If you store secrets in `Google Cloud Storage`, setup your bucket and Google Cloud Platform credentials [[example for local device]](https://docs.cloud.google.com/docs/authentication/set-up-adc-local-dev-environment).
 4. Set your container service (cloud-run, k8s, fargate, linode, docker swarm, etc) to use this image and set the environment varaibles in the [env.example](./env.example) file.
+
+### With Docker Compose
+1. Generate GCP service account key from GCP console or `gcloud` cli
+2. Rename the secret account key to `secret_account.json`
+3. Run `task docker-compose-up` to setup docker compose
