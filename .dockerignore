@@ -6,3 +6,4 @@ Dockerfile
 .gitignore
 tarpaulin-report.html
 specs/*
+service_account.json
