@@ -101,7 +101,6 @@ pub async fn get_admin_talks_list(
         .find_talks(sanitized_params.clone())
         .await;
 
-    // Early check db result. If empty, return 500 error
     if db_result.is_none() {
         error!(
             "Failed to find talks with Talk Id started at {} and ended at {}.",

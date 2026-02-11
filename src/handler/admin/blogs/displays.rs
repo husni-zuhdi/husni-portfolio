@@ -3,6 +3,7 @@ use crate::handler::status::get_401_unauthorized;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
 use crate::model::blogs::BlogsParams;
+use crate::model::tags::TagsListParams;
 use crate::model::templates::BlogMetadataTemplate;
 use crate::model::templates_admin::{
     AdminBlogsTemplate, AdminGetAddBlogTemplate, AdminGetBlogTemplate, AdminGetDeleteBlogTemplate,
@@ -238,7 +239,15 @@ pub async fn get_add_admin_blog(
         return get_500_internal_server_error();
     };
 
-    let tag_result = tag_uc.clone().unwrap().tag_repo.find_all_tags().await;
+    let tag_result = tag_uc
+        .clone()
+        .unwrap()
+        .tag_display_repo
+        .find_tags(TagsListParams {
+            start: Some(0),
+            end: Some(1000),
+        })
+        .await;
     if tag_result.is_none() {
         error!("Failed to get find all available Tags.");
         return get_500_internal_server_error();
@@ -313,7 +322,14 @@ pub async fn get_edit_admin_blog(
         return get_500_internal_server_error();
     }
 
-    let tags_result = tag_uc.unwrap().tag_repo.find_all_tags().await;
+    let tags_result = tag_uc
+        .unwrap()
+        .tag_display_repo
+        .find_tags(TagsListParams {
+            start: Some(0),
+            end: Some(1000),
+        })
+        .await;
     let Some(complete_tags_data) = tags_result else {
         error!("Failed to get all Tags");
         return get_500_internal_server_error();
