@@ -197,8 +197,8 @@ pub async fn delete_delete_admin_talk(
         .await;
 
     if delete_result.is_none() {
-        info!("Failed to edit Talk with Id {}.", &path);
-        return get_404_not_found().await;
+        info!("Failed to delete Talk with Id {}.", &path);
+        return get_500_internal_server_error();
     }
 
     if delete_result.unwrap() != TalkCommandStatus::Deleted {

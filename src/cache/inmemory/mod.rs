@@ -1,13 +1,16 @@
+pub mod tags;
 pub mod talks;
 
 use moka::future::Cache;
 use std::time::Duration;
 
+use crate::model::tags::Tag;
 use crate::model::talks::Talk;
 
 #[derive(Clone)]
 pub struct InMemoryCache {
     talks_cache: Cache<String, Talk>,
+    tags_cache: Cache<String, Tag>,
 }
 
 impl InMemoryCache {
@@ -21,7 +24,18 @@ impl InMemoryCache {
             // Set max cache capacity to 32MiB
             .max_capacity(32 * 1024 * 1024)
             .build();
-        InMemoryCache { talks_cache }
+        let tags_cache = Cache::builder()
+            // Set time to live from the CACHE_TTL envar
+            .time_to_live(Duration::from_secs(ttl as u64))
+            // Weigher to set K and V varaibles type
+            .weigher(|_key: &String, value: &Tag| -> u32 { value.data_size() })
+            // Set max cache capacity to 32MiB
+            .max_capacity(32 * 1024 * 1024)
+            .build();
+        InMemoryCache {
+            talks_cache,
+            tags_cache,
+        }
     }
 }
 
@@ -96,6 +110,67 @@ mod test {
         assert!(
             talks_cache.clone().get(&test_key).await.is_some(),
             "talk-1 cache is None! There should be a cache!"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_tags_im_cache_with_ttl() {
+        let cache = InMemoryCache::new(3600);
+        let test_key = "tag-1".to_string();
+        let test_val = Tag {
+            id: 1,
+            name: "test".to_string(),
+        };
+        let tags_cache = cache.await.tags_cache;
+
+        // Insert cache
+        let _ = tags_cache
+            .clone()
+            .insert(test_key.clone(), test_val.clone())
+            .await;
+        // Get cache
+        assert!(
+            tags_cache.clone().get(&test_key).await.is_some(),
+            "tag-1 cache is None"
+        );
+        assert_eq!(tags_cache.clone().get(&test_key).await.unwrap(), test_val);
+        // Invalidate cache
+        let _ = tags_cache.clone().invalidate(&test_key).await;
+        assert_eq!(tags_cache.get(&test_key).await, None);
+    }
+
+    #[tokio::test]
+    async fn test_tags_im_cache_with_short_ttl() {
+        let cache = InMemoryCache::new(3);
+        let test_key = "tag-1".to_string();
+        let test_val = Tag {
+            id: 1,
+            name: "test".to_string(),
+        };
+        let tags_cache = cache.await.tags_cache;
+
+        // Insert cache
+        let _ = tags_cache
+            .clone()
+            .insert(test_key.clone(), test_val.clone())
+            .await;
+        // Sleep for 6 seconds to pass TTL
+        sleep(SleepDuration::from_secs(4)).await;
+        // Get cache
+        assert!(
+            tags_cache.clone().get(&test_key).await.is_none(),
+            "tag-1 cache is Some! It should be None"
+        );
+
+        // Re-insert cache
+        let _ = tags_cache
+            .clone()
+            .insert(test_key.clone(), test_val.clone())
+            .await;
+        // Get cache
+        assert!(
+            tags_cache.clone().get(&test_key).await.is_some(),
+            "tag-1 cache is None! There should be a cache!"
         );
     }
 }
