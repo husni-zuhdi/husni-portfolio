@@ -111,7 +111,7 @@ impl BlogRepo for TursoDatabase {
             JOIN tags ON tag_ref=tags.id
             JOIN blogs ON blog_ref=blogs.id
             GROUP BY blog_ref
-            ORDER BY blog_ref
+            ORDER BY blog_ref DESC
             LIMIT ?1
             OFFSET ?2;
         "#
