@@ -7,3 +7,4 @@ Dockerfile
 tarpaulin-report.html
 specs/*
 service_account.json
+**/.DS_Store
