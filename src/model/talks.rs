@@ -143,8 +143,8 @@ impl TalksParams {
         let end = match self.end {
             Some(val) if val >= 0 => val,
             _ => {
-                debug!("TalkParams: set default end to 10");
-                10_i64
+                debug!("TalkParams: set default end to 100");
+                100_i64
             }
         };
 

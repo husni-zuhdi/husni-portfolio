@@ -19,6 +19,12 @@ pub fn remove_whitespace(s: &str) -> String {
     s.chars().filter(|c| !c.is_whitespace()).collect()
 }
 
+/// Convert String to Vec<String> for Tags
+/// Tags from axum query come in a String with comma separated format
+pub fn convert_tags_string_to_vec(s: &str) -> Vec<String> {
+    s.split(",").map(|t| t.to_string()).collect()
+}
+
 /// Process Markdown
 /// take String of markdown body and convert into html with Askama Options
 /// return String of converted markdown in html

@@ -64,8 +64,8 @@ impl TagOperationRepo for TagDBUseCase {
 
 #[async_trait]
 impl TagCacheOperationRepo for TagCacheUseCase {
-    async fn insert(&mut self, talk: Tag) -> Option<TagCommandStatus> {
-        self.tag_operation_repo.insert(talk).await
+    async fn insert(&mut self, tag: Tag) -> Option<TagCommandStatus> {
+        self.tag_operation_repo.insert(tag).await
     }
     async fn invalidate(&mut self, id: i64) -> Option<TagCommandStatus> {
         self.tag_operation_repo.invalidate(id).await
@@ -76,8 +76,8 @@ impl TagDBUseCase {
     pub fn new(
         tag_display_repo: Box<dyn TagDisplayRepo + Send + Sync>,
         tag_operation_repo: Box<dyn TagOperationRepo + Send + Sync>,
-    ) -> TagDBUseCase {
-        TagDBUseCase {
+    ) -> Self {
+        Self {
             tag_display_repo,
             tag_operation_repo,
         }
@@ -88,8 +88,8 @@ impl TagCacheUseCase {
     pub fn new(
         tag_display_repo: Box<dyn TagDisplayRepo + Send + Sync>,
         tag_operation_repo: Box<dyn TagCacheOperationRepo + Send + Sync>,
-    ) -> TagCacheUseCase {
-        TagCacheUseCase {
+    ) -> Self {
+        Self {
             tag_display_repo,
             tag_operation_repo,
         }

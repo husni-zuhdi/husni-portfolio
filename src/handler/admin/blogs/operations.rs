@@ -1,8 +1,9 @@
 use crate::handler::admin::blogs::displays::get_admin_blogs_list;
 use crate::handler::admin::blogs::process_blog_body;
 use crate::handler::auth::{process_login_header, verify_jwt};
-use crate::handler::status::get_401_unauthorized;
-use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
+use crate::handler::status::{
+    get_401_unauthorized, get_404_not_found, get_500_internal_server_error,
+};
 use crate::model::axum::AppState;
 use crate::model::blog_tag_mappings::{BlogTagMapping, BlogTagMappingCommandStatus};
 use crate::model::blogs::{BlogCommandStatus, BlogsParams};
@@ -30,47 +31,78 @@ pub async fn post_add_admin_blog(
     }
 
     // Locking Mutex
-    // TODO: Implement check and add on tags and blog_tag_mappings
-    let mut blog_uc = app_state.blog_db_usecase.lock().await.clone();
+    let mut blogs_db_uc = app_state.blog_db_usecase.lock().await.clone();
+    let blogs_cache_uc_opt = app_state.blog_cache_usecase.lock().await.clone();
+    let is_blogs_cache_enabled = blogs_cache_uc_opt.is_some();
 
     let blog = process_blog_body(body);
-    let add_result = blog_uc.blog_repo.add(blog.clone()).await;
+    let add_result = blogs_db_uc.blog_operation_repo.add(blog.clone()).await;
 
-    match add_result {
-        Some(blog_command_status) => {
-            if blog_command_status != BlogCommandStatus::Stored {
-                error!("Failed to add blog with Id {}", &blog.id);
-                return get_500_internal_server_error();
-            }
-        }
-        None => {
-            info!("Failed to add blog with Id {}.", &blog.id);
-            return get_404_not_found().await;
-        }
+    if add_result.is_none() {
+        info!("Failed to add blog with Id {}.", &blog.id);
+        return get_404_not_found().await;
+    }
+
+    if add_result.unwrap() != BlogCommandStatus::Stored {
+        error!("Failed to add blog with Id {}", &blog.id);
+        return get_500_internal_server_error();
+    }
+
+    // Insert cache
+    if is_blogs_cache_enabled {
+        debug!("Caching blog {}", &blog.id);
+        let _ = blogs_cache_uc_opt
+            .clone()
+            .unwrap()
+            .blog_operation_repo
+            .insert(blog.clone())
+            .await;
     }
 
     // Check if tags is available. if not add the new tag
     // No need to check tags. We only provide available tags for now
-    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
-    if tag_uc.is_none() {
+    let tag_db_uc = app_state.tag_db_usecase.lock().await.clone();
+    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
+    let is_tags_cache_enabled = tags_cache_uc_opt.is_some();
+
+    if tag_db_uc.is_none() {
         error!("Failed to lock tag usecase mutex");
         return get_500_internal_server_error();
     }
 
-    let available_tags = tag_uc
-        .unwrap()
-        .tag_display_repo
-        .find_tags(TagsListParams {
-            start: Some(0),
-            end: Some(1000),
-        })
-        .await;
+    // Get Data from Cache or Database
+    let mut available_tags = if is_tags_cache_enabled {
+        tags_cache_uc_opt
+            .clone()
+            .unwrap()
+            .tag_display_repo
+            .find_tags(TagsListParams {
+                start: Some(0),
+                end: Some(1000),
+            })
+            .await
+    } else {
+        None
+    };
+
+    if available_tags.is_none() {
+        debug!("Tags Cache is empty. Getting data from database");
+        available_tags = tag_db_uc
+            .unwrap()
+            .tag_display_repo
+            .find_tags(TagsListParams {
+                start: Some(0),
+                end: Some(1000),
+            })
+            .await;
+    }
 
     // Filter tag id from the response body in the available_tags
     if available_tags.is_none() {
         error!("Failed to get all tags");
         return get_500_internal_server_error();
     }
+
     let selected_tags: Vec<Tag> = available_tags
         .unwrap()
         .tags
@@ -82,6 +114,8 @@ pub async fn post_add_admin_blog(
 
     // Add blog_tag_mappings
     let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
+    // TODO: implement caching for blog tag mapping
+
     if blog_tag_mapping_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();
@@ -134,54 +168,86 @@ pub async fn put_edit_admin_blog(
         return get_401_unauthorized().await;
     }
 
-    let mut blog_uc = app_state.blog_db_usecase.lock().await.clone();
+    let mut blogs_db_uc = app_state.blog_db_usecase.lock().await.clone();
+    let blogs_cache_uc_opt = app_state.blog_cache_usecase.lock().await.clone();
+    let is_blogs_cache_enabled = blogs_cache_uc_opt.is_some();
+
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
     let blog = process_blog_body(body);
+    let edit_result = blogs_db_uc.blog_operation_repo.update(blog.clone()).await;
 
-    let blog_result = blog_uc.blog_repo.update(blog.clone()).await;
+    if edit_result.is_none() {
+        info!("Failed to edit blog with Id {}.", &blog.id);
+        return get_404_not_found().await;
+    }
 
-    match blog_result {
-        Some(blog_command_status) => {
-            if blog_command_status != BlogCommandStatus::Updated {
-                error!("Failed to edit Blog with Id {}", &path);
-                return get_500_internal_server_error();
-            }
-        }
-        None => {
-            info!("Failed to edit Blog with Id {}.", &path);
-            return get_404_not_found().await;
-        }
+    if edit_result.unwrap() != BlogCommandStatus::Updated {
+        error!("Failed to edit blog with Id {}", &blog.id);
+        return get_500_internal_server_error();
+    }
+
+    // Re-insert cache
+    if is_blogs_cache_enabled {
+        debug!("Invalidating blog {}", &blog.id);
+        let _ = blogs_cache_uc_opt
+            .clone()
+            .unwrap()
+            .blog_operation_repo
+            .invalidate(blog.id)
+            .await;
+        debug!("Re-caching tag {}", &blog.id);
+        let _ = blogs_cache_uc_opt
+            .clone()
+            .unwrap()
+            .blog_operation_repo
+            .insert(blog.clone())
+            .await;
     }
 
     // Get selected tags id
-    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
-    if tag_uc.is_none() {
+    let tag_db_uc = app_state.tag_db_usecase.lock().await.clone();
+    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
+    let is_tags_cache_enabled = tags_cache_uc_opt.is_some();
+
+    if tag_db_uc.is_none() {
         error!("Failed to lock tag usecase mutex");
         return get_500_internal_server_error();
     }
 
-    let tags_result = tag_uc
-        .clone()
-        .unwrap()
-        .tag_display_repo
-        .find_tags(TagsListParams {
-            start: Some(0),
-            end: Some(1000),
-        })
-        .await;
+    // Get Data from Cache or Database
+    let mut tags_result = if is_tags_cache_enabled {
+        tags_cache_uc_opt
+            .clone()
+            .unwrap()
+            .tag_display_repo
+            .find_tags(TagsListParams {
+                start: Some(0),
+                end: Some(1000),
+            })
+            .await
+    } else {
+        None
+    };
+
+    if tags_result.is_none() {
+        debug!("Tags Cache is empty. Getting data from database");
+        tags_result = tag_db_uc
+            .unwrap()
+            .tag_display_repo
+            .find_tags(TagsListParams {
+                start: Some(0),
+                end: Some(1000),
+            })
+            .await;
+    }
+
     let Some(tags) = tags_result else {
-        error!("Failed to get all Tags");
+        error!("Failed to get Tags with id from 0 - 1000");
         return get_500_internal_server_error();
     };
 
@@ -195,6 +261,8 @@ pub async fn put_edit_admin_blog(
 
     // Get blog tag mapping by blog id and tag id
     let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
+    // TODO: implement caching for blog tag mapping
+
     if blog_tag_mapping_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();
@@ -204,13 +272,10 @@ pub async fn put_edit_admin_blog(
         .clone()
         .unwrap()
         .blog_tag_mapping_repo
-        .find_by_blog_id(id.clone().unwrap())
+        .find_by_blog_id(id)
         .await;
     let Some(btm) = btm_result else {
-        error!(
-            "Failed to get Blog Tag Mapping for Blog ID {}",
-            id.clone().unwrap()
-        );
+        error!("Failed to get Blog Tag Mapping for Blog ID {}", &id);
         return get_500_internal_server_error();
     };
     // Find tags not present in request but present in mapping
@@ -233,20 +298,14 @@ pub async fn put_edit_admin_blog(
             .delete_by_blog_id_and_tag_id(delete_tag.blog_id, delete_tag.tag_id)
             .await;
 
-        match delete_map_result {
-            Some(btm_command_status) => {
-                if btm_command_status != BlogTagMappingCommandStatus::Deleted {
-                    error!(
-                        "Failed to delete Blog Tag Mapping for Blog ID {} and Tag ID {}",
-                        &delete_tag.blog_id, &delete_tag.tag_id
-                    );
-                    return get_500_internal_server_error();
-                }
-            }
-            None => {
-                info!("Failed to delete Blog Tag Mapping");
-                return get_404_not_found().await;
-            }
+        if delete_map_result.is_none()
+            || delete_map_result.unwrap() != BlogTagMappingCommandStatus::Deleted
+        {
+            info!(
+                "Failed to delete Blog Tag Mapping with Blog Id {} and Tag Id {}.",
+                &delete_tag.blog_id, &delete_tag.tag_id
+            );
+            return get_500_internal_server_error();
         }
     }
     // Find tags not present in mapping but present in request
@@ -255,39 +314,32 @@ pub async fn put_edit_admin_blog(
         .iter()
         .filter(|tag_id| {
             !btm.maps.contains(&BlogTagMapping {
-                blog_id: id.clone().unwrap(),
+                blog_id: id,
                 tag_id: **tag_id,
             })
         })
         .cloned()
         .collect();
     for add_tag_id in add_plan_mapping {
-        let blog_id = id.clone().unwrap();
         info!(
             "Adding Blog Tag Mapping for Blog ID {} and Tag ID {}",
-            &blog_id, &add_tag_id
+            &id, &add_tag_id
         );
         let add_map_result = blog_tag_mapping_uc
             .clone()
             .unwrap()
             .blog_tag_mapping_repo
-            .add(blog_id, add_tag_id)
+            .add(id, add_tag_id)
             .await;
 
-        match add_map_result {
-            Some(btm_command_status) => {
-                if btm_command_status != BlogTagMappingCommandStatus::Stored {
-                    error!(
-                        "Failed to add Blog Tag Mapping for Blog ID {} and Tag ID {}",
-                        &blog_id, &add_tag_id
-                    );
-                    return get_500_internal_server_error();
-                }
-            }
-            None => {
-                info!("Failed to add Blog Tag Mapping");
-                return get_404_not_found().await;
-            }
+        if add_map_result.is_none()
+            || add_map_result.unwrap() != BlogTagMappingCommandStatus::Stored
+        {
+            error!(
+                "Failed to add Blog Tag Mapping for Blog ID {} and Tag ID {}",
+                &id, &add_tag_id
+            );
+            return get_500_internal_server_error();
         }
     }
 
@@ -316,35 +368,36 @@ pub async fn delete_delete_admin_blog(
         return get_401_unauthorized().await;
     }
 
-    let mut blog_uc = app_state.blog_db_usecase.lock().await.clone();
+    let mut blogs_db_uc = app_state.blog_db_usecase.lock().await.clone();
+    let blogs_cache_uc_opt = app_state.blog_cache_usecase.lock().await.clone();
+    let is_blogs_cache_enabled = blogs_cache_uc_opt.is_some();
+
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
-    let delete_result = blog_uc.blog_repo.delete(id.clone().unwrap()).await;
+    let delete_result = blogs_db_uc.blog_operation_repo.delete(id).await;
 
-    match delete_result {
-        Some(blog_command_status) => {
-            if blog_command_status != BlogCommandStatus::Deleted {
-                error!("Failed to delete Blog with Id {}", &path);
-                return get_500_internal_server_error();
-            }
-        }
-        None => {
-            info!("Failed to delete Blog with Id {}.", &path);
-            return get_404_not_found().await;
-        }
+    if delete_result.is_none() || delete_result.unwrap() != BlogCommandStatus::Deleted {
+        error!("Failed to delete blog with Id {}", id);
+        return get_500_internal_server_error();
+    }
+
+    // Invalidate cache
+    if is_blogs_cache_enabled {
+        debug!("Invalidating blog {} cache", id);
+        let _ = blogs_cache_uc_opt
+            .clone()
+            .unwrap()
+            .blog_operation_repo
+            .invalidate(id)
+            .await;
     }
 
     let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
+    // TODO: implement caching for blog tag mapping
     if blog_tag_mapping_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();
@@ -354,19 +407,16 @@ pub async fn delete_delete_admin_blog(
         .clone()
         .unwrap()
         .blog_tag_mapping_repo
-        .delete_by_blog_id(id.clone().unwrap())
+        .delete_by_blog_id(id)
         .await;
     if deleted_mappings.is_none() {
-        error!(
-            "Failed to delete blog tag mappings for blog id {}",
-            id.unwrap().clone(),
-        );
+        error!("Failed to delete blog tag mappings for blog id {}", &id,);
         return get_500_internal_server_error();
     }
     if deleted_mappings.unwrap() != BlogTagMappingCommandStatus::Deleted {
         error!(
             "Failed to delete blog tag mapping for blog id {}. Command Status is not Deleted",
-            id.unwrap().clone(),
+            &id,
         );
         return get_500_internal_server_error();
     }

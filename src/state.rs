@@ -1,11 +1,10 @@
 use crate::cache::inmemory::InMemoryCache;
 use crate::config::Config;
-use crate::database::memory::MemoryBlogRepo;
 use crate::database::turso::TursoDatabase;
 use crate::model::axum::AppState;
 use crate::usecase::auth::AuthDBUseCase;
 use crate::usecase::blog_tag_mappings::BlogTagMappingDBUseCase;
-use crate::usecase::blogs::BlogDBUseCase;
+use crate::usecase::blogs::{BlogCacheUseCase, BlogDBUseCase};
 use crate::usecase::tags::{TagCacheUseCase, TagDBUseCase};
 use crate::usecase::talks::{TalkCacheUseCase, TalkDBUseCase};
 use std::sync::Arc;
@@ -41,16 +40,19 @@ pub async fn state_factory(config: Config) -> AppState {
     let cache_is_enabled = config.cache_type.is_some();
 
     let (blog_uc, talk_uc, tag_uc, blog_tag_mapping_uc, auth_uc) =
-        if data_source_is_configured_sqlite {
-            info!("Building SQLite usecases.");
+        if data_source_is_configured_turso {
+            info!("Building Turso usecases.");
             let db_repo = TursoDatabase::new(
                 config.data_source.clone(),
                 config.secrets.database_url.clone().unwrap(),
-                None,
+                config.secrets.turso_auth_token.clone(),
             )
             .await;
             (
-                BlogDBUseCase::new(Box::new(db_repo.clone())),
+                Some(BlogDBUseCase::new(
+                    Box::new(db_repo.clone()),
+                    Box::new(db_repo.clone()),
+                )),
                 Some(TalkDBUseCase::new(
                     Box::new(db_repo.clone()),
                     Box::new(db_repo.clone()),
@@ -62,16 +64,19 @@ pub async fn state_factory(config: Config) -> AppState {
                 Some(BlogTagMappingDBUseCase::new(Box::new(db_repo.clone()))),
                 Some(AuthDBUseCase::new(Box::new(db_repo))),
             )
-        } else if data_source_is_configured_turso {
-            info!("Building Turso usecases.");
+        } else if data_source_is_configured_sqlite {
+            info!("Building SQLite usecases.");
             let db_repo = TursoDatabase::new(
                 config.data_source.clone(),
                 config.secrets.database_url.clone().unwrap(),
-                config.secrets.turso_auth_token.clone(),
+                None,
             )
             .await;
             (
-                BlogDBUseCase::new(Box::new(db_repo.clone())),
+                Some(BlogDBUseCase::new(
+                    Box::new(db_repo.clone()),
+                    Box::new(db_repo.clone()),
+                )),
                 Some(TalkDBUseCase::new(
                     Box::new(db_repo.clone()),
                     Box::new(db_repo.clone()),
@@ -84,37 +89,42 @@ pub async fn state_factory(config: Config) -> AppState {
                 Some(AuthDBUseCase::new(Box::new(db_repo))),
             )
         } else {
-            let repo = MemoryBlogRepo::default();
-            (BlogDBUseCase::new(Box::new(repo)), None, None, None, None)
+            (None, None, None, None, None)
         };
 
-    let talk_cache_uc = if cache_is_enabled {
+    if blog_uc.is_none() {
+        panic!("In version 0.3.5+, we drop the memory database support. Please use SQLite or Turso Database.");
+    }
+
+    let (blog_cache_uc, talk_cache_uc, tag_cache_uc) = if cache_is_enabled {
+        info!("Building In Memory usecases.");
         let cache_repo = InMemoryCache::new(config.cache_ttl.unwrap()).await;
-        Some(TalkCacheUseCase::new(
-            Box::new(cache_repo.clone()),
-            Box::new(cache_repo.clone()),
-        ))
+        (
+            Some(BlogCacheUseCase::new(
+                Box::new(cache_repo.clone()),
+                Box::new(cache_repo.clone()),
+            )),
+            Some(TalkCacheUseCase::new(
+                Box::new(cache_repo.clone()),
+                Box::new(cache_repo.clone()),
+            )),
+            Some(TagCacheUseCase::new(
+                Box::new(cache_repo.clone()),
+                Box::new(cache_repo.clone()),
+            )),
+        )
     } else {
-        None
+        (None, None, None)
     };
 
-    let tag_cache_uc = if cache_is_enabled {
-        let cache_repo = InMemoryCache::new(config.cache_ttl.unwrap()).await;
-        Some(TagCacheUseCase::new(
-            Box::new(cache_repo.clone()),
-            Box::new(cache_repo.clone()),
-        ))
-    } else {
-        None
-    };
-
-    let blog_db_usecase = Arc::new(Mutex::new(blog_uc));
+    let blog_db_usecase = Arc::new(Mutex::new(blog_uc.unwrap()));
     let talk_db_usecase = Arc::new(Mutex::new(talk_uc));
     let tag_db_usecase = Arc::new(Mutex::new(tag_uc));
     let blog_tag_mapping_db_usecase = Arc::new(Mutex::new(blog_tag_mapping_uc));
     let auth_db_usecase = Arc::new(Mutex::new(auth_uc));
     let talk_cache_usecase = Arc::new(Mutex::new(talk_cache_uc));
     let tag_cache_usecase = Arc::new(Mutex::new(tag_cache_uc));
+    let blog_cache_usecase = Arc::new(Mutex::new(blog_cache_uc));
 
     AppState {
         config,
@@ -125,6 +135,7 @@ pub async fn state_factory(config: Config) -> AppState {
         auth_db_usecase,
         talk_cache_usecase,
         tag_cache_usecase,
+        blog_cache_usecase,
     }
 }
 

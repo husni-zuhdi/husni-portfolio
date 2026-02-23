@@ -45,6 +45,14 @@ impl Tags {
             tags: self.tags.clone(),
         }
     }
+    /// Convert Tags to Vector of String
+    pub fn to_vector_string(&self) -> Vec<String> {
+        self.tags.iter().map(|tag| tag.name.clone()).collect()
+    }
+    /// Convert Tags to String separated by comma
+    pub fn to_formatted_string(&self) -> String {
+        self.to_vector_string().join(", ")
+    }
 }
 
 /// TagCommandStatus
@@ -88,7 +96,7 @@ impl TagsListParams {
         let end = match self.end {
             Some(val) if val >= 0 => val,
             _ => {
-                debug!("TagsListParams: set default end to 10");
+                debug!("TagsListParams: set default end to 100");
                 100_i64
             }
         };
@@ -123,7 +131,7 @@ impl TagsSearchParams {
         let end = match self.end {
             Some(val) if val >= 0 => val,
             _ => {
-                debug!("TagsListParams: set default end to 10");
+                debug!("TagsListParams: set default end to 100");
                 100_i64
             }
         };

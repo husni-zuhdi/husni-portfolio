@@ -1,6 +1,7 @@
 use crate::handler::auth::{process_login_header, verify_jwt};
-use crate::handler::status::get_401_unauthorized;
-use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
+use crate::handler::status::{
+    get_401_unauthorized, get_404_not_found, get_500_internal_server_error,
+};
 use crate::model::axum::AppState;
 use crate::model::tags::{TagsListParams, TagsSearchParams};
 use crate::model::templates_admin::{

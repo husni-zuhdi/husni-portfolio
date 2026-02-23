@@ -1,11 +1,11 @@
 use crate::database::turso::TursoDatabase;
 use crate::model::blogs::*;
-use crate::repo::blogs::BlogRepo;
+use crate::repo::blogs::{BlogDisplayRepo, BlogOperationRepo};
 use async_trait::async_trait;
 use tracing::{debug, error, info};
 
 #[async_trait]
-impl BlogRepo for TursoDatabase {
+impl BlogDisplayRepo for TursoDatabase {
     async fn find(&self, id: i64) -> Option<Blog> {
         let prep_query = r#"
             SELECT 
@@ -73,7 +73,7 @@ impl BlogRepo for TursoDatabase {
             }
         }
     }
-    async fn find_blogs(&self, query_params: BlogsParams) -> Option<Vec<BlogMetadata>> {
+    async fn find_blogs(&self, query_params: BlogsParams) -> Option<Vec<Blog>> {
         let start = query_params.start.unwrap();
         let end = query_params.end.unwrap();
         let tags = query_params.tags.unwrap();
@@ -105,6 +105,8 @@ impl BlogRepo for TursoDatabase {
                 blog_ref AS id,
                 blogs.name,
                 blogs.filename,
+                blogs.body,
+                blogs.source,
                 group_concat(tags.name, ',') AS tags
             FROM blog_tag_mapping
             JOIN blogs_with_tags AS bwt ON blog_ref=bwt.blog_id
@@ -132,28 +134,42 @@ impl BlogRepo for TursoDatabase {
             .await
             .expect("Failed to query blogs.");
 
-        let mut blogs: Vec<BlogMetadata> = Vec::new();
+        let mut blogs: Vec<Blog> = Vec::new();
 
         while let Some(row) = rows.next().await.unwrap() {
             debug!("Debug Row {:?}", &row);
+            let source = match row.get::<String>(4).unwrap().as_str() {
+                "Filesystem" => BlogSource::Filesystem,
+                "Github" => BlogSource::Github,
+                _ => {
+                    error!("Failed to parse blog source. Default to Filesystem.");
+                    BlogSource::Filesystem
+                }
+            };
 
             let tags: Vec<String> = row
-                .get::<String>(3)
+                .get::<String>(5)
                 .unwrap_or("".to_string())
                 .split(",")
                 .map(|tag| tag.to_string())
                 .collect();
 
-            blogs.push(BlogMetadata {
+            blogs.push(Blog {
                 id: row.get(0).unwrap(),
                 name: row.get(1).unwrap(),
                 filename: row.get(2).unwrap(),
-                tags,
+                body: row.get(3).unwrap(),
+                source: Some(source),
+                tags: Some(tags),
             });
         }
 
         Some(blogs)
     }
+}
+
+#[async_trait]
+impl BlogOperationRepo for TursoDatabase {
     async fn check_id(&self, id: i64) -> Option<BlogCommandStatus> {
         let prep_query = "SELECT id FROM blogs WHERE id = ?1 ORDER BY id";
         debug!("Executing query {} for id {}", &prep_query, &id);
