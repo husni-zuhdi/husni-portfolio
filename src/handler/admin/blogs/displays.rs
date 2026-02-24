@@ -1,4 +1,4 @@
-use crate::handler::auth::{process_login_header, verify_jwt};
+use crate::handler::auth::is_auth_verified;
 use crate::handler::status::{
     get_401_unauthorized, get_404_not_found, get_500_internal_server_error,
 };
@@ -27,11 +27,7 @@ pub async fn get_base_admin_blogs(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -58,16 +54,11 @@ pub async fn get_admin_blogs_list(
     headers: HeaderMap,
     params: Query<BlogsParams>,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
     // Locking Mutex
-    let blog_db_uc = app_state.blog_db_usecase.lock().await;
     let blog_cache_uc_opt = app_state.blog_cache_usecase.lock().await;
     let cache_is_enabled = blog_cache_uc_opt.is_some();
 
@@ -102,7 +93,10 @@ pub async fn get_admin_blogs_list(
     }
 
     // If not, get data from database
-    let db_result = blog_db_uc
+    let db_result = app_state
+        .blog_db_usecase
+        .lock()
+        .await
         .blog_display_repo
         .find_blogs(sanitized_params.clone())
         .await;
@@ -128,6 +122,7 @@ pub async fn get_admin_blogs_list(
                 .insert(blog)
                 .await;
         }
+        drop(blog_cache_uc_opt);
     }
 
     let blogs: Vec<BlogMetadataTemplate> = db_result
@@ -159,16 +154,11 @@ pub async fn get_admin_blog(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
     // Locking Mutex
-    let blog_db_uc = app_state.blog_db_usecase.lock().await.clone();
     let blog_cache_uc_opt = app_state.blog_cache_usecase.lock().await;
     let cache_is_enabled = blog_cache_uc_opt.is_some();
 
@@ -207,7 +197,14 @@ pub async fn get_admin_blog(
         return Html(blog_res.unwrap());
     }
     // If not, get data from database
-    let db_result = blog_db_uc.blog_display_repo.find(id).await;
+    let db_result = app_state
+        .blog_db_usecase
+        .lock()
+        .await
+        .clone()
+        .blog_display_repo
+        .find(id)
+        .await;
 
     // Early check db result. If empty, return 404 error
     if db_result.is_none() {
@@ -224,6 +221,7 @@ pub async fn get_admin_blog(
             .blog_operation_repo
             .insert(db_result.clone().unwrap())
             .await;
+        drop(blog_cache_uc_opt);
     }
 
     let blog = AdminGetBlogTemplate {
@@ -246,19 +244,19 @@ pub async fn get_add_admin_blog(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
     // Locking Mutex
-    let blog_uc = app_state.blog_db_usecase.lock().await;
-
     // Calculate new Blog Id
-    let db_result = blog_uc.blog_operation_repo.get_new_id().await;
+    let db_result = app_state
+        .blog_db_usecase
+        .lock()
+        .await
+        .blog_operation_repo
+        .get_new_id()
+        .await;
 
     let Some(blog_id) = db_result else {
         error!("Failed to get new Blog ID.");
@@ -319,6 +317,7 @@ pub async fn get_add_admin_blog(
             end: Some(1000),
         })
         .await;
+    drop(tag_db_uc);
 
     if tags_db_result.is_none() {
         error!("Failed to get find all available Tags.");
@@ -356,11 +355,7 @@ pub async fn get_edit_admin_blog(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -416,7 +411,6 @@ pub async fn get_edit_admin_blog(
                     .clone()
                     .unwrap()
                     .tags
-                    .clone()
                     .unwrap()
                     .contains(&t.name)
             })
@@ -426,9 +420,9 @@ pub async fn get_edit_admin_blog(
 
         let edit_blog = AdminGetEditBlogTemplate {
             id,
-            name: blog_cache_result.clone().unwrap().name.unwrap().clone(),
-            body: blog_cache_result.clone().unwrap().body.unwrap().clone(),
-            blog_tags: blog_cache_result.clone().unwrap().tags.unwrap().clone(),
+            name: blog_cache_result.clone().unwrap().name.unwrap(),
+            body: blog_cache_result.clone().unwrap().body.unwrap(),
+            blog_tags: blog_cache_result.clone().unwrap().tags.unwrap(),
             avail_tags: unselected_tags,
         }
         .render();
@@ -487,9 +481,9 @@ pub async fn get_edit_admin_blog(
 
     let edit_blog = AdminGetEditBlogTemplate {
         id,
-        name: blog_data.name.unwrap().clone(),
-        body: blog_data.body.unwrap().clone(),
-        blog_tags: blog_data.tags.unwrap().clone(),
+        name: blog_data.name.unwrap(),
+        body: blog_data.body.unwrap(),
+        blog_tags: blog_data.tags.unwrap(),
         avail_tags: unselected_tags,
     }
     .render();
@@ -514,11 +508,7 @@ pub async fn get_delete_admin_blog(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 

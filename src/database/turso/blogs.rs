@@ -7,7 +7,7 @@ use tracing::{debug, error, info};
 #[async_trait]
 impl BlogDisplayRepo for TursoDatabase {
     async fn find(&self, id: i64) -> Option<Blog> {
-        let prep_query = r#"
+        let prep_query = r"
             SELECT 
                 blogs.id AS id,
                 blogs.name AS name, 
@@ -21,7 +21,7 @@ impl BlogDisplayRepo for TursoDatabase {
             WHERE blogs.id=?1
             GROUP BY blogs.name
             ORDER BY blogs.id;
-        "#;
+        ";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
         let stmt = self
@@ -38,8 +38,12 @@ impl BlogDisplayRepo for TursoDatabase {
             .await
             .expect("Failed to access query blog.");
 
-        match res {
-            Some(row) => {
+        res.map_or_else(
+            || {
+                debug!("No Blog with Id {} is available.", &id);
+                None
+            },
+            |row| {
                 debug!("Debug Row {:?}", &row);
                 let source_string = row.get::<String>(2).unwrap();
                 let source = match source_string.as_str() {
@@ -53,7 +57,7 @@ impl BlogDisplayRepo for TursoDatabase {
 
                 let tags: Vec<String> = row
                     .get::<String>(5)
-                    .unwrap_or("".to_string())
+                    .unwrap_or_default()
                     .split(",")
                     .map(|tag| tag.to_string())
                     .collect();
@@ -66,12 +70,8 @@ impl BlogDisplayRepo for TursoDatabase {
                     body: Some(row.get(4).unwrap()),
                     tags: Some(tags),
                 })
-            }
-            None => {
-                debug!("No Blog with Id {} is available.", &id);
-                None
-            }
-        }
+            },
+        )
     }
     async fn find_blogs(&self, query_params: BlogsParams) -> Option<Vec<Blog>> {
         let start = query_params.start.unwrap();
@@ -93,7 +93,7 @@ impl BlogDisplayRepo for TursoDatabase {
             format!("WHERE {tag_names_joined}")
         };
         let prep_query = format!(
-            r#"
+            r"
             WITH blogs_with_tags AS (
                 SELECT blog_ref AS blog_id
                 FROM blog_tag_mapping
@@ -116,7 +116,7 @@ impl BlogDisplayRepo for TursoDatabase {
             ORDER BY blog_ref DESC
             LIMIT ?1
             OFFSET ?2;
-        "#
+        "
         );
         debug!(
             "Executing query {} for start {}, end {}, limit {}",
@@ -149,7 +149,7 @@ impl BlogDisplayRepo for TursoDatabase {
 
             let tags: Vec<String> = row
                 .get::<String>(5)
-                .unwrap_or("".to_string())
+                .unwrap_or_default()
                 .split(",")
                 .map(|tag| tag.to_string())
                 .collect();
@@ -180,7 +180,7 @@ impl BlogOperationRepo for TursoDatabase {
             .await
             .expect("Failed to prepare find query.");
 
-        let row = stmt
+        let res = stmt
             .query([id])
             .await
             .expect("Failed to query blog id.")
@@ -188,17 +188,17 @@ impl BlogOperationRepo for TursoDatabase {
             .await
             .expect("Failed to access query blog id.");
 
-        match row {
-            Some(val) => {
+        res.map_or_else(
+            || {
+                info!("Blog {} is not in Turso.", &id);
+                None
+            },
+            |val| {
                 let checked_id: i64 = val.get(0).unwrap();
                 info!("Blog {:?} is in Turso.", &checked_id);
                 Some(BlogCommandStatus::Stored)
-            }
-            None => {
-                info!("Blog {} is not in Turso.", &id);
-                None
-            }
-        }
+            },
+        )
     }
     async fn get_new_id(&self) -> Option<i64> {
         let prep_query = "SELECT COUNT(id) AS length FROM blogs";
@@ -224,7 +224,7 @@ impl BlogOperationRepo for TursoDatabase {
     async fn add(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
         let blog_id = &blog.id;
         let blog_name = &blog.name.unwrap();
-        let blog_filename = &blog.filename.unwrap_or("".to_string());
+        let blog_filename = &blog.filename.unwrap_or_default();
         let blog_source = if blog.source.is_none() {
             "".to_string()
         } else {

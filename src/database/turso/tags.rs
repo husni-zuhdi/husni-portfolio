@@ -7,14 +7,14 @@ use tracing::debug;
 #[async_trait]
 impl TagDisplayRepo for TursoDatabase {
     async fn find(&self, id: i64) -> Option<Tag> {
-        let prep_query = r#"
+        let prep_query = r"
             SELECT
                 id,
                 name
             FROM tags
             WHERE id=?1
             LIMIT 1
-        "#;
+        ";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
         let stmt = self
@@ -46,14 +46,14 @@ impl TagDisplayRepo for TursoDatabase {
         let start_seq = params.start.unwrap();
         let end_seq = params.end.unwrap();
         let limit = end_seq - start_seq;
-        let prep_query = r#"
+        let prep_query = r"
             SELECT
                 id,
                 name
             FROM tags
             LIMIT ?1
             OFFSET ?2;
-        "#;
+        ";
         debug!(
             "Executing query {} with limit {} and start sequence {}",
             &prep_query, limit, start_seq

@@ -1,4 +1,4 @@
-use crate::handler::auth::{process_login_header, verify_jwt};
+use crate::handler::auth::is_auth_verified;
 use crate::handler::status::{
     get_401_unauthorized, get_404_not_found, get_500_internal_server_error,
 };
@@ -23,11 +23,7 @@ pub async fn get_base_admin_tags(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -56,11 +52,7 @@ pub async fn get_admin_tags_list(
     headers: HeaderMap,
     params: Query<TagsListParams>,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -152,11 +144,7 @@ pub async fn get_admin_tags_search(
     headers: HeaderMap,
     params: Query<TagsSearchParams>,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -245,11 +233,7 @@ pub async fn get_admin_tag(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -336,11 +320,7 @@ pub async fn get_add_admin_tag(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -378,11 +358,7 @@ pub async fn get_edit_admin_tag(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -454,7 +430,7 @@ pub async fn get_edit_admin_tag(
 
     let edit_tag = AdminGetEditTagTemplate {
         id: id.clone().unwrap(),
-        name: db_result.clone().unwrap().name.clone(),
+        name: db_result.clone().unwrap().name,
     }
     .render();
     if edit_tag.is_err() {
@@ -477,11 +453,7 @@ pub async fn get_delete_admin_tag(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 

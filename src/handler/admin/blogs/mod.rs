@@ -34,7 +34,6 @@ fn process_blog_body(body: String) -> Blog {
             }
             _ => {
                 warn!("Unrecognized key/value: {:?}/{:?}", key, value_decoded);
-                continue;
             }
         }
     }

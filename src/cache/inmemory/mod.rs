@@ -18,7 +18,7 @@ pub struct InMemoryCache {
 
 impl InMemoryCache {
     /// Create new InMemoryCache by providing TTL (s)
-    pub async fn new(ttl: i64) -> InMemoryCache {
+    pub fn new(ttl: i64) -> Self {
         let blogs_cache = Cache::builder()
             // Set time to live from the CACHE_TTL envar
             .time_to_live(Duration::from_secs(ttl as u64))
@@ -43,7 +43,7 @@ impl InMemoryCache {
             // Set max cache capacity to 32MiB
             .max_capacity(32 * 1024 * 1024)
             .build();
-        InMemoryCache {
+        Self {
             blogs_cache,
             talks_cache,
             tags_cache,
@@ -68,7 +68,7 @@ mod test {
             org_name: None,
             org_link: None,
         };
-        let talks_cache = cache.await.talks_cache;
+        let talks_cache = cache.talks_cache;
 
         // Insert cache
         let _ = talks_cache
@@ -98,7 +98,7 @@ mod test {
             org_name: None,
             org_link: None,
         };
-        let talks_cache = cache.await.talks_cache;
+        let talks_cache = cache.talks_cache;
 
         // Insert cache
         let _ = talks_cache
@@ -133,7 +133,7 @@ mod test {
             id: 1,
             name: "test".to_string(),
         };
-        let tags_cache = cache.await.tags_cache;
+        let tags_cache = cache.tags_cache;
 
         // Insert cache
         let _ = tags_cache
@@ -159,7 +159,7 @@ mod test {
             id: 1,
             name: "test".to_string(),
         };
-        let tags_cache = cache.await.tags_cache;
+        let tags_cache = cache.tags_cache;
 
         // Insert cache
         let _ = tags_cache

@@ -96,7 +96,7 @@ mod test {
 
     #[tokio::test]
     async fn test_insert_find_and_invalidate_blog() {
-        let cache = InMemoryCache::new(3600).await;
+        let cache = InMemoryCache::new(3600);
         let test_val = Blog {
             id: 1,
             name: Some("test".to_string()),
@@ -131,7 +131,7 @@ mod test {
 
     #[tokio::test]
     async fn test_insert_find_and_invalidate_blogs() {
-        let cache = InMemoryCache::new(3600).await;
+        let cache = InMemoryCache::new(3600);
         let test_values = vec![
             Blog {
                 id: 2,

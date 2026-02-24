@@ -1,45 +1,42 @@
-use markdown::{to_html_with_options, CompileOptions, Constructs, Options, ParseOptions};
+use markdown::{to_html_with_options, CompileOptions, Options, ParseOptions};
 
-/// capitalize
 /// Capitalize the first character in s.
 /// Take borrowed str of s
 /// then return capitalized String
+#[must_use]
 pub fn capitalize(s: &str) -> String {
     let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-    }
+    c.next().map_or_else(String::new, |f| {
+        f.to_uppercase().collect::<String>() + c.as_str()
+    })
 }
 
-/// remove_whitespace
 /// Take borrow of str and remove whitespace
 /// return cleaned String
+#[must_use]
 pub fn remove_whitespace(s: &str) -> String {
     s.chars().filter(|c| !c.is_whitespace()).collect()
 }
 
 /// Convert String to Vec<String> for Tags
 /// Tags from axum query come in a String with comma separated format
+#[must_use]
 pub fn convert_tags_string_to_vec(s: &str) -> Vec<String> {
-    s.split(",").map(|t| t.to_string()).collect()
+    s.split(',').map(std::string::ToString::to_string).collect()
 }
 
 /// Process Markdown
 /// take String of markdown body and convert into html with Askama Options
 /// return String of converted markdown in html
-pub fn convert_markdown_to_html(body_md: String) -> String {
+///
+/// # Panics
+/// panic if failed to convert markdown to html with allow dangerous html option
+#[must_use]
+pub fn convert_markdown_to_html(body_md: &str) -> String {
     to_html_with_options(
-        &body_md,
+        body_md,
         &Options {
-            parse: ParseOptions {
-                constructs: Constructs {
-                    // In case you want to activeat frontmatter in the future
-                    // frontmatter: true,
-                    ..Constructs::gfm()
-                },
-                ..ParseOptions::gfm()
-            },
+            parse: ParseOptions::gfm(),
             compile: CompileOptions {
                 allow_dangerous_html: true,
                 ..CompileOptions::gfm()
@@ -72,28 +69,28 @@ mod test {
 
     #[test]
     fn test_convert_markdown_to_html_header() {
-        let header = r#"
+        let header = r"
 # Hello World
 ## Heading level 2
 ### Heading level 3
-#### Heading level 4"#
+#### Heading level 4"
             .to_string();
         let expected = "<h1>Hello World</h1>\n<h2>Heading level 2</h2>\n<h3>Heading level 3</h3>\n<h4>Heading level 4</h4>".to_string();
-        let result = convert_markdown_to_html(header);
+        let result = convert_markdown_to_html(&header);
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_convert_markdown_to_html_text_style() {
-        let text = r#"
+        let text = r"
 **bold**
 *italics*
 *italics and later **bold***
 ~~strikethrough~~
-[A link](http://example.com)"#
+[A link](http://example.com)"
             .to_string();
         let expected = "<p><strong>bold</strong>\n<em>italics</em>\n<em>italics and later <strong>bold</strong></em>\n<del>strikethrough</del>\n<a href=\"http://example.com\">A link</a></p>".to_string();
-        let result = convert_markdown_to_html(text);
+        let result = convert_markdown_to_html(&text);
         assert_eq!(result, expected);
     }
 }

@@ -15,11 +15,7 @@ pub struct TursoDatabase {
 }
 
 impl TursoDatabase {
-    pub async fn new(
-        mode: String,
-        database_url: String,
-        database_token: Option<String>,
-    ) -> TursoDatabase {
+    pub async fn new(mode: String, database_url: String, database_token: Option<String>) -> Self {
         info!("Setting up Database...");
         let db: libsql::Database = match mode.as_str() {
             "sqlite" => {
@@ -53,55 +49,55 @@ impl TursoDatabase {
         let migration_commands = HashMap::from([
             (
                 "Blogs Migration",
-                r#"CREATE TABLE IF NOT EXISTS blogs (
+                r"CREATE TABLE IF NOT EXISTS blogs (
                     id INTEGER PRIMARY KEY NOT NULL,
                     name TEXT NOT NULL,
                     source TEXT NOT NULL,
                     filename TEXT NOT NULL,
                     body TEXT NOT NULL
-                    );"#,
+                    );",
             ),
             (
                 "Talks Migration",
-                r#"CREATE TABLE IF NOT EXISTS talks (
+                r"CREATE TABLE IF NOT EXISTS talks (
                     id INTEGER PRIMARY KEY NOT NULL,
                     name TEXT NOT NULL,
                     date TEXT NOT NULL,
                     media_link TEXT,
                     org_name TEXT,
                     org_link TEXT
-                    );"#,
+                    );",
             ),
             (
                 "2025-04-28 Tags Migration",
-                r#"CREATE TABLE IF NOT EXISTS tags (
+                r"CREATE TABLE IF NOT EXISTS tags (
                     id INTEGER PRIMARY KEY NOT NULL,
                     name TEXT NOT NULL
-                    );"#,
+                    );",
             ),
             (
                 "2025-04-28 Blog Tag Mapping Migration",
-                r#"CREATE TABLE IF NOT EXISTS blog_tag_mapping(
+                r"CREATE TABLE IF NOT EXISTS blog_tag_mapping(
                     blog_ref INTEGER NOT NULL,
                     tag_ref INTEGER NOT NULL
-                    );"#,
+                    );",
             ),
             (
                 "2025-09-23 User Migration",
-                r#"CREATE TABLE IF NOT EXISTS users (
+                r"CREATE TABLE IF NOT EXISTS users (
                     id TEXT NOT NULL,
                     email TEXT NOT NULL,
                     hashed_password TEXT NOT NULL
-                )"#,
+                )",
             ),
             (
                 "2025-09-23 Session Migration",
-                r#"CREATE TABLE IF NOT EXISTS sessions (
+                r"CREATE TABLE IF NOT EXISTS sessions (
                     id TEXT NOT NULL,
                     user_id TEXT NOT NULL,
                     token TEXT NOT NULL,
                     expire TEXT NOT NULL
-                )"#,
+                )",
             ),
         ]);
 
@@ -114,7 +110,7 @@ impl TursoDatabase {
         }
         info!("Database Setup is finished");
 
-        TursoDatabase { conn }
+        Self { conn }
     }
 }
 

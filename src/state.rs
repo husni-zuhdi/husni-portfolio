@@ -11,6 +11,102 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::info;
 
+/// Create In-Memory cache usecases
+async fn create_inmemory_cache_usecases(
+    config: Config,
+) -> (
+    Option<BlogCacheUseCase>,
+    Option<TalkCacheUseCase>,
+    Option<TagCacheUseCase>,
+) {
+    info!("Building In Memory usecases.");
+    let cache_repo = InMemoryCache::new(config.cache_ttl.unwrap());
+    (
+        Some(BlogCacheUseCase::new(
+            Box::new(cache_repo.clone()),
+            Box::new(cache_repo.clone()),
+        )),
+        Some(TalkCacheUseCase::new(
+            Box::new(cache_repo.clone()),
+            Box::new(cache_repo.clone()),
+        )),
+        Some(TagCacheUseCase::new(
+            Box::new(cache_repo.clone()),
+            Box::new(cache_repo),
+        )),
+    )
+}
+
+/// Create SQLite database usecases
+async fn create_sqlite_db_usecases(
+    config: Config,
+) -> (
+    Option<BlogDBUseCase>,
+    Option<TalkDBUseCase>,
+    Option<TagDBUseCase>,
+    Option<BlogTagMappingDBUseCase>,
+    Option<AuthDBUseCase>,
+) {
+    info!("Building SQLite usecases.");
+    let db_repo = TursoDatabase::new(
+        config.data_source.clone(),
+        config.secrets.database_url.clone().unwrap(),
+        None,
+    )
+    .await;
+    (
+        Some(BlogDBUseCase::new(
+            Box::new(db_repo.clone()),
+            Box::new(db_repo.clone()),
+        )),
+        Some(TalkDBUseCase::new(
+            Box::new(db_repo.clone()),
+            Box::new(db_repo.clone()),
+        )),
+        Some(TagDBUseCase::new(
+            Box::new(db_repo.clone()),
+            Box::new(db_repo.clone()),
+        )),
+        Some(BlogTagMappingDBUseCase::new(Box::new(db_repo.clone()))),
+        Some(AuthDBUseCase::new(Box::new(db_repo))),
+    )
+}
+
+/// Create Turso database usecases
+async fn create_turso_db_usecases(
+    config: Config,
+) -> (
+    Option<BlogDBUseCase>,
+    Option<TalkDBUseCase>,
+    Option<TagDBUseCase>,
+    Option<BlogTagMappingDBUseCase>,
+    Option<AuthDBUseCase>,
+) {
+    info!("Building Turso usecases.");
+    let db_repo = TursoDatabase::new(
+        config.data_source.clone(),
+        config.secrets.database_url.clone().unwrap(),
+        config.secrets.turso_auth_token.clone(),
+    )
+    .await;
+    (
+        Some(BlogDBUseCase::new(
+            Box::new(db_repo.clone()),
+            Box::new(db_repo.clone()),
+        )),
+        Some(TalkDBUseCase::new(
+            Box::new(db_repo.clone()),
+            Box::new(db_repo.clone()),
+        )),
+        Some(TagDBUseCase::new(
+            Box::new(db_repo.clone()),
+            Box::new(db_repo.clone()),
+        )),
+        Some(BlogTagMappingDBUseCase::new(Box::new(db_repo.clone()))),
+        Some(AuthDBUseCase::new(Box::new(db_repo))),
+    )
+}
+
 /// Build App State for Axum Application
 /// take a Config and return AppState
 /// AppState contains `Config` and `BlogDBDBUseCase`
@@ -41,53 +137,9 @@ pub async fn state_factory(config: Config) -> AppState {
 
     let (blog_uc, talk_uc, tag_uc, blog_tag_mapping_uc, auth_uc) =
         if data_source_is_configured_turso {
-            info!("Building Turso usecases.");
-            let db_repo = TursoDatabase::new(
-                config.data_source.clone(),
-                config.secrets.database_url.clone().unwrap(),
-                config.secrets.turso_auth_token.clone(),
-            )
-            .await;
-            (
-                Some(BlogDBUseCase::new(
-                    Box::new(db_repo.clone()),
-                    Box::new(db_repo.clone()),
-                )),
-                Some(TalkDBUseCase::new(
-                    Box::new(db_repo.clone()),
-                    Box::new(db_repo.clone()),
-                )),
-                Some(TagDBUseCase::new(
-                    Box::new(db_repo.clone()),
-                    Box::new(db_repo.clone()),
-                )),
-                Some(BlogTagMappingDBUseCase::new(Box::new(db_repo.clone()))),
-                Some(AuthDBUseCase::new(Box::new(db_repo))),
-            )
+            create_turso_db_usecases(config.clone()).await
         } else if data_source_is_configured_sqlite {
-            info!("Building SQLite usecases.");
-            let db_repo = TursoDatabase::new(
-                config.data_source.clone(),
-                config.secrets.database_url.clone().unwrap(),
-                None,
-            )
-            .await;
-            (
-                Some(BlogDBUseCase::new(
-                    Box::new(db_repo.clone()),
-                    Box::new(db_repo.clone()),
-                )),
-                Some(TalkDBUseCase::new(
-                    Box::new(db_repo.clone()),
-                    Box::new(db_repo.clone()),
-                )),
-                Some(TagDBUseCase::new(
-                    Box::new(db_repo.clone()),
-                    Box::new(db_repo.clone()),
-                )),
-                Some(BlogTagMappingDBUseCase::new(Box::new(db_repo.clone()))),
-                Some(AuthDBUseCase::new(Box::new(db_repo))),
-            )
+            create_sqlite_db_usecases(config.clone()).await
         } else {
             (None, None, None, None, None)
         };
@@ -97,22 +149,7 @@ pub async fn state_factory(config: Config) -> AppState {
     }
 
     let (blog_cache_uc, talk_cache_uc, tag_cache_uc) = if cache_is_enabled {
-        info!("Building In Memory usecases.");
-        let cache_repo = InMemoryCache::new(config.cache_ttl.unwrap()).await;
-        (
-            Some(BlogCacheUseCase::new(
-                Box::new(cache_repo.clone()),
-                Box::new(cache_repo.clone()),
-            )),
-            Some(TalkCacheUseCase::new(
-                Box::new(cache_repo.clone()),
-                Box::new(cache_repo.clone()),
-            )),
-            Some(TagCacheUseCase::new(
-                Box::new(cache_repo.clone()),
-                Box::new(cache_repo.clone()),
-            )),
-        )
+        create_inmemory_cache_usecases(config.clone()).await
     } else {
         (None, None, None)
     };

@@ -6,7 +6,7 @@ use crate::model::templates_admin::{AdminBlogTagsListTemplate, AdminGetTagTempla
 
 /// Tag
 /// Just tag id and it's name
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Tag {
     pub id: i64,
     pub name: String,
@@ -26,14 +26,14 @@ impl Tag {
     }
     /// Calculate size of Tag in u32
     /// Useful for weighing data size
-    pub fn data_size(&self) -> u32 {
+    pub const fn data_size(&self) -> u32 {
         (size_of_val(&self.id) + size_of_val(&self.name)) as u32
     }
 }
 
 /// Tags
 /// Vector of tag id and it's name
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Tags {
     pub tags: Vec<Tag>,
 }
@@ -65,7 +65,7 @@ impl Tags {
 ///
 /// I think you should wrap this with Option so you can check if it `None`
 /// then check the value of the status
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TagCommandStatus {
     Stored,
     Updated,
@@ -76,7 +76,7 @@ pub enum TagCommandStatus {
 
 /// TagsParams
 /// Axum Query struct for `/admin/blogs/tags/list` query parameters
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TagsListParams {
     pub start: Option<i64>,
     pub end: Option<i64>,
@@ -110,7 +110,7 @@ impl TagsListParams {
 
 /// TagsSearchParams
 /// Axum Query struct for `/admin/blogs/tags/search` query parameters
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TagsSearchParams {
     pub start: Option<i64>,
     pub end: Option<i64>,
@@ -121,23 +121,22 @@ impl TagsSearchParams {
     /// Sanitize TagSearchParams by checking negative value and set unknown to
     /// the default values
     pub fn sanitize(&self) -> Self {
-        let start = match self.start {
-            Some(val) if val >= 0 => val,
-            _ => {
+        let start = self.end.map_or_else(
+            || {
                 debug!("TagsListParams: set default start to 0");
                 0_i64
-            }
-        };
-        let end = match self.end {
-            Some(val) if val >= 0 => val,
-            _ => {
+            },
+            |val| val,
+        );
+        let end = self.end.map_or_else(
+            || {
                 debug!("TagsListParams: set default end to 100");
                 100_i64
-            }
-        };
+            },
+            |val| val,
+        );
 
-        let pattern = Regex::new(r"[^a-zA-Z0-9\s]+").unwrap();
-        let sanitized_query = pattern.replace(&self.query, "").to_string();
+        let sanitized_query = self.sanitize_query();
         if sanitized_query != self.query {
             warn!(
                 "Query {} contain non-alphanumeric, dash, and whitespace chars",
@@ -149,5 +148,10 @@ impl TagsSearchParams {
             end: Some(end),
             query: sanitized_query,
         }
+    }
+    /// Sanitize query of TagsSearchParams
+    fn sanitize_query(&self) -> String {
+        let pattern = Regex::new(r"[^a-zA-Z0-9\s]+").unwrap();
+        pattern.replace(&self.query, "").to_string()
     }
 }

@@ -2,7 +2,7 @@ use google_cloud_storage::client::Storage;
 use std::env;
 
 /// Struct Config for setup environment variables
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Config {
     /// Service Endpoint
     /// Default to localhost.
@@ -65,7 +65,7 @@ pub struct Config {
 }
 
 /// Environment Type
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Environment {
     Development,
     Release,
@@ -78,7 +78,7 @@ impl std::fmt::Display for Environment {
 }
 
 /// Cache Type
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Cache {
     InMemory,
 }
@@ -90,7 +90,7 @@ impl std::fmt::Display for Cache {
 }
 
 /// Collection of secrets
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Secrets {
     /// JWT Secret (Secret)
     /// Secret to encode JWT in authenticated-pages.
@@ -234,7 +234,7 @@ impl Config {
         let mut database_url: Option<String> = None;
         let mut turso_auth_token: Option<String> = None;
 
-        for secret in data.split("\n").collect::<Vec<&str>>() {
+        for secret in data.split("\n") {
             if secret.split_once("=").is_none() {
                 continue;
             }

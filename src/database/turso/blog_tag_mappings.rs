@@ -7,13 +7,13 @@ use tracing::debug;
 #[async_trait]
 impl BlogTagMappingRepo for TursoDatabase {
     async fn find_by_blog_id(&self, blog_id: i64) -> Option<BlogTagMappings> {
-        let prep_query = r#"
+        let prep_query = r"
             SELECT
                 blog_ref,
                 tag_ref
             FROM blog_tag_mapping
             WHERE blog_ref = ?1
-        "#;
+        ";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
         let stmt = self
@@ -40,13 +40,13 @@ impl BlogTagMappingRepo for TursoDatabase {
         Some(BlogTagMappings { maps })
     }
     async fn find_by_tag_id(&self, tag_id: i64) -> Option<BlogTagMappings> {
-        let prep_query = r#"
+        let prep_query = r"
             SELECT
                 blog_ref,
                 tag_ref
             FROM blog_tag_mapping
             WHERE tag_ref = ?1
-        "#;
+        ";
         debug!("Executing query {} for id {}", &prep_query, &tag_id);
 
         let stmt = self

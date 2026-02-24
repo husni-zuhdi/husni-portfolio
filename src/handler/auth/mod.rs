@@ -12,6 +12,7 @@ use jsonwebtoken::{
 };
 use password_hash::{PasswordHash, PasswordVerifier};
 use regex::Regex;
+use tracing::info;
 use tracing::{debug, error, warn};
 use urlencoding::decode as url_decode;
 
@@ -30,16 +31,14 @@ fn process_login_body(body: &str) -> Option<(String, String)> {
             "login_password" => password = value_decoded.to_string(),
             _ => {
                 warn!("Unrecognized key/value: {:?}/{:?}", key, value_decoded);
-                continue;
             }
         }
     }
     Some((email, password))
 }
 
-/// Take HeaderMap from GET login to produce user agent and JWT token
-pub fn process_login_header(header: HeaderMap) -> Option<(String, String)> {
-    // Initialize fields
+/// Take HeaderMap to verify the auth headers
+pub fn is_auth_verified(header: HeaderMap, jwt_secret: &str) -> bool {
     let mut user_agent = String::new();
     let mut token = String::new();
 
@@ -56,12 +55,16 @@ pub fn process_login_header(header: HeaderMap) -> Option<(String, String)> {
             }
             _ => {
                 debug!("Unrecognized key/value: {:?}/{:?}", key, value);
-                continue;
             }
         }
     }
 
-    Some((user_agent, token))
+    info!("User Agent: {} and JWT processed", user_agent);
+    if !verify_jwt(&token, jwt_secret) {
+        info!("Unauthorized access.");
+        return false;
+    }
+    true
 }
 
 /// sanitize_email

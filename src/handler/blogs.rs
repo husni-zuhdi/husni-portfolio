@@ -20,7 +20,6 @@ pub async fn get_blogs(
     params: Query<BlogsParams>,
 ) -> Html<String> {
     // Locking Mutex
-    let blog_db_uc = app_state.blog_db_usecase.lock().await;
     let blog_cache_uc_opt = app_state.blog_cache_usecase.lock().await;
     let cache_is_enabled = blog_cache_uc_opt.is_some();
 
@@ -55,7 +54,10 @@ pub async fn get_blogs(
     }
 
     // If not, get data from database
-    let db_result = blog_db_uc
+    let db_result = app_state
+        .blog_db_usecase
+        .lock()
+        .await
         .blog_display_repo
         .find_blogs(sanitized_params.clone())
         .await;
@@ -81,6 +83,7 @@ pub async fn get_blogs(
                 .insert(blog)
                 .await;
         }
+        drop(blog_cache_uc_opt);
     }
 
     let blogs: Vec<BlogMetadataTemplate> = db_result
@@ -121,7 +124,6 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
     }
 
     // Locking Mutex
-    let blog_db_uc = app_state.blog_db_usecase.lock().await;
     let blog_cache_uc_opt = app_state.blog_cache_usecase.lock().await;
     let cache_is_enabled = blog_cache_uc_opt.is_some();
 
@@ -148,7 +150,13 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
         return Html(blog_res.unwrap());
     }
     // If not, get data from database
-    let db_result = blog_db_uc.blog_display_repo.find(id.clone().unwrap()).await;
+    let db_result = app_state
+        .blog_db_usecase
+        .lock()
+        .await
+        .blog_display_repo
+        .find(id.clone().unwrap())
+        .await;
 
     // Early check db result. If empty, return 404 error
     if db_result.is_none() {
@@ -165,6 +173,7 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
             .blog_operation_repo
             .insert(db_result.clone().unwrap())
             .await;
+        drop(blog_cache_uc_opt);
     }
 
     let blog = db_result.unwrap().as_template().render();

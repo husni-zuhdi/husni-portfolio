@@ -40,10 +40,8 @@ impl BlogTagMappingRepo for BlogTagMappingDBUseCase {
 }
 
 impl BlogTagMappingDBUseCase {
-    pub fn new(
-        blog_tag_mapping_repo: Box<dyn BlogTagMappingRepo + Send + Sync>,
-    ) -> BlogTagMappingDBUseCase {
-        BlogTagMappingDBUseCase {
+    pub fn new(blog_tag_mapping_repo: Box<dyn BlogTagMappingRepo + Send + Sync>) -> Self {
+        Self {
             blog_tag_mapping_repo,
         }
     }

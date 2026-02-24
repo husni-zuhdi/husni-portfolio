@@ -20,9 +20,7 @@ impl Version {
     pub fn new() -> Result<Self, String> {
         let file = fs::File::open("version.json").expect("Failed to open version.json");
         let reader = BufReader::new(file);
-
-        let version: Version =
-            serde_json::from_reader(reader).expect("Failed to parse version.json");
+        let version: Self = serde_json::from_reader(reader).expect("Failed to parse version.json");
         Ok(version)
     }
 }
