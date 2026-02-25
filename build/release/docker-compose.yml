@@ -1,0 +1,14 @@
+name: husni-portfolio
+version: "3"
+
+services:
+  husni-portfolio:
+    image: "gcr.io/husni-release/husni-portfolio:0.3.5"
+    environment:
+        GOOGLE_APPLICATION_CREDENTIALS: /var/service_account.json
+    env_file:
+      - "../../.release.env"
+    ports:
+      - 8080:8080
+    volumes:
+      - ./../../release.service_account.json:/var/service_account.json
