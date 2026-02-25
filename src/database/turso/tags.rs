@@ -43,8 +43,9 @@ impl TagDisplayRepo for TursoDatabase {
         })
     }
     async fn find_tags(&self, params: TagsListParams) -> Option<Tags> {
-        let start_seq = params.start.unwrap();
-        let end_seq = params.end.unwrap();
+        let sanitized_params = params.sanitize();
+        let start_seq = sanitized_params.start.unwrap();
+        let end_seq = sanitized_params.end.unwrap();
         let limit = end_seq - start_seq;
         let prep_query = r"
             SELECT

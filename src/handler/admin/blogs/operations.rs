@@ -109,19 +109,24 @@ pub async fn post_add_admin_blog(
     debug!("Selected Tags: {:?}", selected_tags);
 
     // Add blog_tag_mappings
-    let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
-    // TODO: implement caching for blog tag mapping
+    let btms_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
+    let btms_cache_uc_opt = app_state
+        .blog_tag_mapping_cache_usecase
+        .lock()
+        .await
+        .clone();
+    let is_btms_cache_enabled = btms_cache_uc_opt.is_some();
 
-    if blog_tag_mapping_uc.is_none() {
+    if btms_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();
     }
 
     for tag in selected_tags {
-        let added_mapping = blog_tag_mapping_uc
+        let added_mapping = btms_uc
             .clone()
             .unwrap()
-            .blog_tag_mapping_repo
+            .operation
             .add(blog.id, tag.id)
             .await;
         if added_mapping.is_none() {
@@ -135,6 +140,19 @@ pub async fn post_add_admin_blog(
         if added_mapping.unwrap() != BlogTagMappingCommandStatus::Stored {
             error!("Failed to add blog tag mapping for blog id {} and tag id {}. Command Status is not Stored", blog.id.clone(), tag.id.clone());
             return get_500_internal_server_error();
+        }
+
+        if is_btms_cache_enabled {
+            debug!(
+                "Caching Blog Tag Mapping  blog_id {}, tag_id {}",
+                blog.id, tag.id
+            );
+            let _ = btms_cache_uc_opt
+                .clone()
+                .unwrap()
+                .operation
+                .insert(blog.id, tag.id)
+                .await;
         }
     }
 
@@ -252,21 +270,21 @@ pub async fn put_edit_admin_blog(
     debug!("Selected Tag IDs {:?}", &selected_tag_ids);
 
     // Get blog tag mapping by blog id and tag id
-    let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
-    // TODO: implement caching for blog tag mapping
+    let btms_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
+    let btms_cache_uc_opt = app_state
+        .blog_tag_mapping_cache_usecase
+        .lock()
+        .await
+        .clone();
+    let is_btms_cache_enabled = btms_cache_uc_opt.is_some();
 
-    if blog_tag_mapping_uc.is_none() {
+    if btms_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();
     }
 
-    let btm_result = blog_tag_mapping_uc
-        .clone()
-        .unwrap()
-        .blog_tag_mapping_repo
-        .find_by_blog_id(id)
-        .await;
-    let Some(btm) = btm_result else {
+    let btms_result = btms_uc.clone().unwrap().display.find_by_blog_id(id).await;
+    let Some(btm) = btms_result else {
         error!("Failed to get Blog Tag Mapping for Blog ID {}", &id);
         return get_500_internal_server_error();
     };
@@ -278,16 +296,16 @@ pub async fn put_edit_admin_blog(
         .filter(|map| !selected_tag_ids.contains(&map.tag_id))
         .cloned()
         .collect();
-    for delete_tag in delete_plan_mapping {
+    for delete_btm in delete_plan_mapping {
         info!(
             "Deleting Blog Tag Mapping for Blog ID {} and Tag ID {}",
-            &delete_tag.blog_id, &delete_tag.tag_id
+            &delete_btm.blog_id, &delete_btm.tag_id
         );
-        let delete_map_result = blog_tag_mapping_uc
+        let delete_map_result = btms_uc
             .clone()
             .unwrap()
-            .blog_tag_mapping_repo
-            .delete_by_blog_id_and_tag_id(delete_tag.blog_id, delete_tag.tag_id)
+            .operation
+            .delete_by_blog_id_and_tag_id(delete_btm.blog_id, delete_btm.tag_id)
             .await;
 
         if delete_map_result.is_none()
@@ -295,9 +313,22 @@ pub async fn put_edit_admin_blog(
         {
             info!(
                 "Failed to delete Blog Tag Mapping with Blog Id {} and Tag Id {}.",
-                &delete_tag.blog_id, &delete_tag.tag_id
+                &delete_btm.blog_id, &delete_btm.tag_id
             );
             return get_500_internal_server_error();
+        }
+
+        if is_btms_cache_enabled {
+            debug!(
+                "Invalidating Blog Tag Mapping cache blog_id {}, tag_id {}",
+                &delete_btm.blog_id, &delete_btm.tag_id
+            );
+            let _ = btms_cache_uc_opt
+                .clone()
+                .unwrap()
+                .operation
+                .invalidate(delete_btm.blog_id, delete_btm.tag_id)
+                .await;
         }
     }
     // Find tags not present in mapping but present in request
@@ -317,12 +348,7 @@ pub async fn put_edit_admin_blog(
             "Adding Blog Tag Mapping for Blog ID {} and Tag ID {}",
             &id, &add_tag_id
         );
-        let add_map_result = blog_tag_mapping_uc
-            .clone()
-            .unwrap()
-            .blog_tag_mapping_repo
-            .add(id, add_tag_id)
-            .await;
+        let add_map_result = btms_uc.clone().unwrap().operation.add(id, add_tag_id).await;
 
         if add_map_result.is_none()
             || add_map_result.unwrap() != BlogTagMappingCommandStatus::Stored
@@ -332,6 +358,25 @@ pub async fn put_edit_admin_blog(
                 &id, &add_tag_id
             );
             return get_500_internal_server_error();
+        }
+
+        if is_btms_cache_enabled {
+            debug!(
+                "Re-Inserting Blog Tag Mapping cache blog_id {}, tag_id {}",
+                &id, &add_tag_id
+            );
+            let _ = btms_cache_uc_opt
+                .clone()
+                .unwrap()
+                .operation
+                .invalidate(id, add_tag_id)
+                .await;
+            let _ = btms_cache_uc_opt
+                .clone()
+                .unwrap()
+                .operation
+                .insert(id, add_tag_id)
+                .await;
         }
     }
 
@@ -384,17 +429,23 @@ pub async fn delete_delete_admin_blog(
             .await;
     }
 
-    let blog_tag_mapping_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
-    // TODO: implement caching for blog tag mapping
-    if blog_tag_mapping_uc.is_none() {
+    let btms_uc = app_state.blog_tag_mapping_db_usecase.lock().await.clone();
+    let btms_cache_uc_opt = app_state
+        .blog_tag_mapping_cache_usecase
+        .lock()
+        .await
+        .clone();
+    let is_btms_cache_enabled = btms_cache_uc_opt.is_some();
+
+    if btms_uc.is_none() {
         error!("Failed to lock blog tag mapping usecase mutex");
         return get_500_internal_server_error();
     }
 
-    let deleted_mappings = blog_tag_mapping_uc
+    let deleted_mappings = btms_uc
         .clone()
         .unwrap()
-        .blog_tag_mapping_repo
+        .operation
         .delete_by_blog_id(id)
         .await;
     if deleted_mappings.is_none() {
@@ -407,6 +458,19 @@ pub async fn delete_delete_admin_blog(
             &id,
         );
         return get_500_internal_server_error();
+    }
+
+    if is_btms_cache_enabled {
+        debug!("Invalidating Blog Tag Mapping cache blog_id {}", &id);
+        let invalidate_opt = btms_cache_uc_opt
+            .clone()
+            .unwrap()
+            .operation
+            .invalidate_by_blog_id(id)
+            .await;
+        if invalidate_opt.is_none() {
+            error!("Failed to delete blog tag mappings for blog id {}", &id,);
+        }
     }
 
     let query_params = BlogsParams {

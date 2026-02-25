@@ -23,6 +23,6 @@ pub trait BlogOperationRepo: DynClone {
 
 #[async_trait]
 pub trait BlogCacheOperationRepo: DynClone {
-    async fn insert(&mut self, tag: Blog) -> Option<BlogCommandStatus>;
+    async fn insert(&mut self, blog: Blog) -> Option<BlogCommandStatus>;
     async fn invalidate(&mut self, id: i64) -> Option<BlogCommandStatus>;
 }

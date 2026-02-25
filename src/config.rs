@@ -24,7 +24,7 @@ pub struct Config {
     pub environment: Environment,
     /// Data Source
     /// Source of all data (blogs, talks, etc).
-    /// Default to `memory`. Available types are `memory`, `sqlite`, and `turso`.
+    /// Default to `sqlite`. Available types are `sqlite` and `turso`.
     /// `sqlite` and `turso` required DATABASE_URL envar to be set.
     /// `turso` required TURSO_AUTH_TOKEN envar to be set.
     pub data_source: String,
@@ -96,14 +96,14 @@ pub struct Secrets {
     /// Secret to encode JWT in authenticated-pages.
     /// Default to `secret` but highly advised to provide your own value.
     pub jwt_secret: String,
-    /// Database URL (Optional; Secret)
+    /// Database URL (Secret)
     /// Database URL (or Path). **Required** if you use `sqlite` or `turso`
     /// as DATA_SOURCE.
     /// Example:
-    ///     - sqlite:husni-portfolio.db
+    ///     - file:husni-portfolio.db
     ///     - libsql://husni-portfolio.asia.turso.io
     /// Default to None.
-    pub database_url: Option<String>,
+    pub database_url: String,
     /// Turso Auth Token (Optional; Secret)
     /// Authentication token for turso database. **Required** if you use
     /// `turso` as DATA_SOURCE..
@@ -113,14 +113,15 @@ pub struct Secrets {
 
 impl Default for Config {
     /// By default running on localhost:8080 in release
-    /// with log-level info and data from memory
+    /// with log-level info and data from sqlite
     fn default() -> Self {
         let svc_endpoint: String = "localhost".to_string();
         let svc_port: String = "8080".to_string();
         let log_level = tracing::Level::INFO;
         let environment = Environment::Release;
-        let data_source: String = "memory".to_string();
+        let data_source: String = "sqlite".to_string();
         let jwt_secret: String = "secret".to_string();
+        let database_url = "file:local.db".to_string();
 
         Self {
             svc_endpoint,
@@ -130,7 +131,7 @@ impl Default for Config {
             data_source,
             secrets: Secrets {
                 jwt_secret,
-                database_url: None,
+                database_url,
                 turso_auth_token: None,
             },
             secrets_bucket: None,
@@ -184,7 +185,7 @@ impl Config {
             let jwt_secret = env::var("JWT_SECRET")
                 .expect("failed to load JWT_SECRET environment variable. Double check your config");
             // Optional Secrets
-            let database_url = Self::parse_optional("DATABASE_URL");
+            let database_url = Self::parse_optional("DATABASE_URL").unwrap();
             let turso_auth_token = Self::parse_optional("TURSO_AUTH_TOKEN");
 
             (jwt_secret, database_url, turso_auth_token)
@@ -231,7 +232,7 @@ impl Config {
         }
         let data = String::from_utf8(contents.clone()).unwrap();
         let mut jwt_secret = String::new();
-        let mut database_url: Option<String> = None;
+        let mut database_url = String::new();
         let mut turso_auth_token: Option<String> = None;
 
         for secret in data.split("\n") {
@@ -242,7 +243,7 @@ impl Config {
             let secret_v = value.to_string();
             match key {
                 "JWT_SECRET" => jwt_secret = secret_v,
-                "DATABASE_URL" => database_url = Some(secret_v),
+                "DATABASE_URL" => database_url = secret_v,
                 "TURSO_AUTH_TOKEN" => turso_auth_token = Some(secret_v),
                 _ => {
                     println!("Unused secret {} is detected.", &key)
@@ -312,15 +313,15 @@ impl Config {
         match env::var("DATA_SOURCE") {
             Err(e) => {
                 println!(
-                "Failed to load DATA_SOURCE environment variable. Set default to 'memory'. Error {e}"
+                "Failed to load DATA_SOURCE environment variable. Set default to 'sqlite'. Error {e}"
                 );
-                "memory".to_string()
+                "sqlite".to_string()
             }
             Ok(val) => match val.as_str() {
-                "memory" | "sqlite" | "turso" => val,
+                "sqlite" | "turso" => val,
                 _ => {
-                    println!("Data Source type {val} is not supported! Default to 'memory'.");
-                    "memory".to_string()
+                    println!("Data Source type {val} is not supported! Default to 'sqlite'.");
+                    "sqlite".to_string()
                 }
             },
         }
@@ -352,8 +353,9 @@ mod test {
         let svc_port = "8080";
         let log_level = tracing::Level::INFO;
         let environment = Environment::Release;
-        let data_source = "memory";
+        let data_source = "sqlite";
         let jwt_secret = "secret";
+        let database_url = "file:local.db".to_string();
 
         let result = Config::default();
 
@@ -363,7 +365,7 @@ mod test {
         assert_eq!(result.environment, environment);
         assert_eq!(result.data_source, data_source);
         assert_eq!(result.secrets.jwt_secret, jwt_secret);
-        assert_eq!(result.secrets.database_url, None);
+        assert_eq!(result.secrets.database_url, database_url);
         assert_eq!(result.secrets.turso_auth_token, None);
         assert_eq!(result.secrets_bucket, None);
         assert_eq!(result.secrets_object, None);
@@ -380,8 +382,9 @@ mod test {
         let environment = Environment::Release;
         let expected_environment = Environment::Release;
         let data_source = "";
-        let expected_data_source = "memory";
+        let expected_data_source = "sqlite";
         let jwt_secret = "secret";
+        let database_url = "file:local.db".to_string();
 
         set_envars(Config {
             svc_endpoint: svc_endpoint.to_string(),
@@ -391,7 +394,7 @@ mod test {
             data_source: data_source.to_string(),
             secrets: Secrets {
                 jwt_secret: jwt_secret.to_string(),
-                database_url: None,
+                database_url: database_url.clone(),
                 turso_auth_token: None,
             },
             secrets_bucket: None,
@@ -408,7 +411,7 @@ mod test {
         assert_eq!(result.environment, expected_environment);
         assert_eq!(result.data_source, expected_data_source);
         assert_eq!(result.secrets.jwt_secret, jwt_secret);
-        assert_eq!(result.secrets.database_url, None);
+        assert_eq!(result.secrets.database_url, database_url);
         assert_eq!(result.secrets.turso_auth_token, None);
         assert_eq!(result.secrets_bucket, None);
         assert_eq!(result.secrets_object, None);
@@ -426,7 +429,7 @@ mod test {
         let environment = Environment::Development;
         let data_source = "sqlite";
         let jwt_secret = "secret";
-        let database_url = Some("libsql://husni-portfolio.asia.turso.io".to_string());
+        let database_url = "libsql://husni-portfolio.asia.turso.io".to_string();
         let turso_auth_token = Some("turso_token_123456".to_string());
         let secrets_bucket = Some("".to_string());
         let secrets_object = Some("".to_string());
@@ -477,10 +480,7 @@ mod test {
         env::set_var("ENVIRONMENT", config.environment.to_string());
         env::set_var("DATA_SOURCE", config.data_source);
         env::set_var("JWT_SECRET", config.secrets.jwt_secret);
-        match config.secrets.database_url {
-            Some(val) => env::set_var("DATABASE_URL", val),
-            None => env::set_var("DATABASE_URL", empty),
-        }
+        env::set_var("DATABASE_URL", config.secrets.database_url);
         match config.secrets.turso_auth_token {
             Some(val) => env::set_var("TURSO_AUTH_TOKEN", val),
             None => env::set_var("TURSO_AUTH_TOKEN", empty),

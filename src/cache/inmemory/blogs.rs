@@ -23,7 +23,7 @@ impl BlogDisplayRepo for InMemoryCache {
     async fn find_blogs(&self, params: BlogsParams) -> Option<Vec<Blog>> {
         let start_seq = params.start.unwrap() + 1;
         let end_seq = params.end.unwrap();
-        let tags = params.tags.unwrap();
+        let tags = params.tags.unwrap_or_default();
         debug!("Finding InMemoryCache {BLOG_KEY_PREFIX}-{start_seq} - {BLOG_KEY_PREFIX}-{end_seq} with tags {:?}", tags);
 
         let mut blogs = Vec::new();

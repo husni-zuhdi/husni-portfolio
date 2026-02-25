@@ -50,8 +50,9 @@ impl TalkDisplayRepo for TursoDatabase {
         })
     }
     async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
-        let start_seq = params.start.unwrap();
-        let end_seq = params.end.unwrap();
+        let sanitized_params = params.sanitize();
+        let start_seq = sanitized_params.start.unwrap();
+        let end_seq = sanitized_params.end.unwrap();
         let limit = end_seq - start_seq;
         let prep_query = "SELECT * FROM talks ORDER BY id DESC LIMIT ?1 OFFSET ?2";
         debug!(

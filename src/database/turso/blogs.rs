@@ -74,9 +74,10 @@ impl BlogDisplayRepo for TursoDatabase {
         )
     }
     async fn find_blogs(&self, query_params: BlogsParams) -> Option<Vec<Blog>> {
-        let start = query_params.start.unwrap();
-        let end = query_params.end.unwrap();
-        let tags = query_params.tags.unwrap();
+        let sanitized_params = query_params.sanitize();
+        let start = sanitized_params.start.unwrap();
+        let end = sanitized_params.end.unwrap();
+        let tags = sanitized_params.tags.unwrap();
 
         let start_seq = start;
         let end_seq = end;
