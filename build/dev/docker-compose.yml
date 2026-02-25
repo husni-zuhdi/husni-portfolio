@@ -7,8 +7,8 @@ services:
     environment:
         GOOGLE_APPLICATION_CREDENTIALS: /var/service_account.json
     env_file:
-      - "../.env"
+      - "../../.env"
     ports:
       - ${SVC_PORT}:${SVC_PORT}
     volumes:
-      - ./../service_account.json:/var/service_account.json
+      - ./../../service_account.json:/var/service_account.json

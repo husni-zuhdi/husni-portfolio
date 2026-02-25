@@ -71,7 +71,7 @@ tasks:
       - |
         export $(cat .env | xargs)
         export SVC_VERSION=$(cat version.json | jq --raw-output '.version')
-        cd build
+        cd build/dev
         docker compose up -d
   docker-compose-down:
     summary: Teardown docker compose
@@ -79,7 +79,7 @@ tasks:
       - |
         export $(cat .env | xargs)
         export SVC_VERSION=$(cat version.json | jq --raw-output '.version')
-        cd build
+        cd build/dev
         docker compose down
 
   tailwind-build:

@@ -6,5 +6,5 @@ Dockerfile
 .gitignore
 tarpaulin-report.html
 specs/*
-service_account.json
+**/*service_account.json
 **/.DS_Store
