@@ -1,4 +1,4 @@
-use crate::handler::auth::{process_login_header, verify_jwt};
+use crate::handler::auth::is_auth_verified;
 use crate::handler::status::{get_401_unauthorized, get_500_internal_server_error};
 use crate::model::axum::AppState;
 use crate::model::templates_admin::AdminTemplate;
@@ -14,12 +14,7 @@ use tracing::{error, info};
 /// Under endpoint /admin
 #[debug_handler]
 pub async fn get_base_admin(State(app_state): State<AppState>, headers: HeaderMap) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    // Display 401 when User doesn't provide a JWT
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers, &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 

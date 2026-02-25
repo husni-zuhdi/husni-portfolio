@@ -50,8 +50,9 @@ impl TalkDisplayRepo for TursoDatabase {
         })
     }
     async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
-        let start_seq = params.start.unwrap();
-        let end_seq = params.end.unwrap();
+        let sanitized_params = params.sanitize();
+        let start_seq = sanitized_params.start.unwrap();
+        let end_seq = sanitized_params.end.unwrap();
         let limit = end_seq - start_seq;
         let prep_query = "SELECT * FROM talks ORDER BY id DESC LIMIT ?1 OFFSET ?2";
         debug!(
@@ -136,24 +137,27 @@ impl TalkOperationRepo for TursoDatabase {
     ) -> Option<TalkCommandStatus> {
         let talk_name = &name;
         let talk_date = &date;
-        let talk_media_link = if let Some(val) = media_link {
-            debug!("Media Link is present for talk id {}", &id);
-            val
-        } else {
-            "".to_string()
-        };
-        let talk_org_name = if let Some(val) = org_name {
-            debug!("Organization Name is present for talk id {}", &id);
-            val
-        } else {
-            "".to_string()
-        };
-        let talk_org_link = if let Some(val) = org_link {
-            debug!("Organization Link is present for talk id {}", &id);
-            val
-        } else {
-            "".to_string()
-        };
+        let talk_media_link = media_link.map_or_else(
+            || "".to_string(),
+            |val| {
+                debug!("Media Link is present for talk id {}", &id);
+                val
+            },
+        );
+        let talk_org_name = org_name.map_or_else(
+            || "".to_string(),
+            |val| {
+                debug!("Organization Name is present for talk id {}", &id);
+                val
+            },
+        );
+        let talk_org_link = org_link.map_or_else(
+            || "".to_string(),
+            |val| {
+                debug!("Organization Link is present for talk id {}", &id);
+                val
+            },
+        );
 
         let prep_add_command =
             "INSERT INTO talks (id, name, date, media_link, org_name, org_link) VALUES (?1, ?2, ?3, ?4, ?5, ?6)";

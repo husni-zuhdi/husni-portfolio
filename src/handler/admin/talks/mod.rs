@@ -38,7 +38,6 @@ fn process_talk_body(body: String) -> Option<Talk> {
             "talk_org_link" => talk_org_link = value_decoded.to_string(),
             _ => {
                 warn!("Unrecognized key/value: {:?}/{:?}", key, value_decoded);
-                continue;
             }
         }
     }

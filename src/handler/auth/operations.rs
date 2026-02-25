@@ -1,8 +1,9 @@
 use crate::handler::auth::displays::{get_login_retry, get_login_sucess, get_logout};
 use crate::handler::auth::{
-    create_jwt, is_password_match, process_login_body, process_login_header, sanitize_email,
+    create_jwt, is_auth_verified, is_password_match, process_login_body, sanitize_email,
     sanitize_password,
 };
+use crate::handler::status::get_401_unauthorized;
 use crate::handler::HX_REDIRECT;
 use crate::model::axum::AppState;
 use crate::repo::auth::AuthRepo;
@@ -11,7 +12,7 @@ use axum::extract::State;
 use axum::http::header::SET_COOKIE;
 use axum::http::HeaderMap;
 use axum::response::IntoResponse;
-use tracing::{info, warn};
+use tracing::warn;
 
 /// post_login
 /// Serve POST login endpoint.
@@ -60,11 +61,17 @@ pub async fn post_login(State(app_state): State<AppState>, body: String) -> impl
 /// delete_logout
 /// Serve DELETE logout endpoint.
 /// Remove JWT from client cookie
-pub async fn delete_logout(headers: HeaderMap) -> impl IntoResponse {
-    let (user_agent, _) = process_login_header(headers).unwrap();
-    info!("User Agent: {} and JWT token processed", user_agent);
-
+pub async fn delete_logout(
+    State(app_state): State<AppState>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
     let mut resp_headers = HeaderMap::new();
+
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret) {
+        let unauthorized = get_401_unauthorized().await;
+        return (resp_headers, unauthorized);
+    }
+
     // Redirect User if token present to Admin Blogs
     resp_headers.insert(
         SET_COOKIE,

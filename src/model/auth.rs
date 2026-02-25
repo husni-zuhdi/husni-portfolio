@@ -29,7 +29,7 @@ pub struct Session {
 /// - Stored
 /// - Updated
 /// - Deleted
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum UserCommandStatus {
     Stored,
     Updated,
@@ -40,7 +40,7 @@ pub enum UserCommandStatus {
 /// Status of Session Command Operations:
 /// - Stored
 /// - Deleted
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum SessionCommandStatus {
     Stored,
     Deleted,

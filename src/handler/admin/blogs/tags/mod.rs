@@ -24,7 +24,6 @@ fn process_tag_body(body: String) -> Tag {
             "tag_name" => tag_name = value_decoded.to_string(),
             _ => {
                 warn!("Unrecognized key/value: {:?}/{:?}", key, value_decoded);
-                continue;
             }
         }
     }

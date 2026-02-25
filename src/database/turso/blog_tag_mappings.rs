@@ -1,19 +1,19 @@
 use crate::database::turso::TursoDatabase;
 use crate::model::blog_tag_mappings::*;
-use crate::repo::blog_tag_mappings::BlogTagMappingRepo;
+use crate::repo::blog_tag_mappings::{BlogTagMappingDisplayRepo, BlogTagMappingOperationRepo};
 use async_trait::async_trait;
 use tracing::debug;
 
 #[async_trait]
-impl BlogTagMappingRepo for TursoDatabase {
+impl BlogTagMappingDisplayRepo for TursoDatabase {
     async fn find_by_blog_id(&self, blog_id: i64) -> Option<BlogTagMappings> {
-        let prep_query = r#"
+        let prep_query = r"
             SELECT
                 blog_ref,
                 tag_ref
             FROM blog_tag_mapping
             WHERE blog_ref = ?1
-        "#;
+        ";
         debug!("Executing query {} for id {}", &prep_query, &blog_id);
 
         let stmt = self
@@ -40,13 +40,13 @@ impl BlogTagMappingRepo for TursoDatabase {
         Some(BlogTagMappings { maps })
     }
     async fn find_by_tag_id(&self, tag_id: i64) -> Option<BlogTagMappings> {
-        let prep_query = r#"
+        let prep_query = r"
             SELECT
                 blog_ref,
                 tag_ref
             FROM blog_tag_mapping
             WHERE tag_ref = ?1
-        "#;
+        ";
         debug!("Executing query {} for id {}", &prep_query, &tag_id);
 
         let stmt = self
@@ -72,6 +72,10 @@ impl BlogTagMappingRepo for TursoDatabase {
 
         Some(BlogTagMappings { maps })
     }
+}
+
+#[async_trait]
+impl BlogTagMappingOperationRepo for TursoDatabase {
     async fn add(&mut self, blog_id: i64, tag_id: i64) -> Option<BlogTagMappingCommandStatus> {
         let prep_add_command = "INSERT INTO blog_tag_mapping (blog_ref, tag_ref) VALUES (?1, ?2)";
         debug!(

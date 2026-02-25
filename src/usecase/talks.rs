@@ -83,8 +83,8 @@ impl TalkDBUseCase {
     pub fn new(
         talk_display_repo: Box<dyn TalkDisplayRepo + Send + Sync>,
         talk_operation_repo: Box<dyn TalkOperationRepo + Send + Sync>,
-    ) -> TalkDBUseCase {
-        TalkDBUseCase {
+    ) -> Self {
+        Self {
             talk_display_repo,
             talk_operation_repo,
         }
@@ -115,8 +115,8 @@ impl TalkCacheUseCase {
     pub fn new(
         talk_display_repo: Box<dyn TalkDisplayRepo + Send + Sync>,
         talk_operation_repo: Box<dyn TalkCacheOperationRepo + Send + Sync>,
-    ) -> TalkCacheUseCase {
-        TalkCacheUseCase {
+    ) -> Self {
+        Self {
             talk_display_repo,
             talk_operation_repo,
         }

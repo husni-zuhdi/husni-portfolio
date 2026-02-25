@@ -1,8 +1,8 @@
 use crate::config::Config;
 use crate::usecase::auth::AuthDBUseCase;
-use crate::usecase::blog_tag_mappings::BlogTagMappingDBUseCase;
-use crate::usecase::blogs::BlogDBUseCase;
-use crate::usecase::tags::TagDBUseCase;
+use crate::usecase::blog_tag_mappings::{BlogTagMappingCacheUseCase, BlogTagMappingDBUseCase};
+use crate::usecase::blogs::{BlogCacheUseCase, BlogDBUseCase};
+use crate::usecase::tags::{TagCacheUseCase, TagDBUseCase};
 use crate::usecase::talks::{TalkCacheUseCase, TalkDBUseCase};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -20,4 +20,7 @@ pub struct AppState {
     pub blog_tag_mapping_db_usecase: Arc<Mutex<Option<BlogTagMappingDBUseCase>>>,
     pub auth_db_usecase: Arc<Mutex<Option<AuthDBUseCase>>>,
     pub talk_cache_usecase: Arc<Mutex<Option<TalkCacheUseCase>>>,
+    pub tag_cache_usecase: Arc<Mutex<Option<TagCacheUseCase>>>,
+    pub blog_cache_usecase: Arc<Mutex<Option<BlogCacheUseCase>>>,
+    pub blog_tag_mapping_cache_usecase: Arc<Mutex<Option<BlogTagMappingCacheUseCase>>>,
 }

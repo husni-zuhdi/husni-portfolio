@@ -80,6 +80,7 @@ pub async fn get_talks(
                 .insert(talk)
                 .await;
         }
+        drop(talk_cache_uc_opt);
     }
 
     // Render Talks

@@ -1,6 +1,6 @@
 use crate::handler::admin::talks::displays::{get_admin_talk, get_admin_talks_list};
 use crate::handler::admin::talks::process_talk_body;
-use crate::handler::auth::{process_login_header, verify_jwt};
+use crate::handler::auth::is_auth_verified;
 use crate::handler::status::get_401_unauthorized;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
 use crate::model::axum::AppState;
@@ -19,11 +19,7 @@ pub async fn post_add_admin_talk(
     headers: HeaderMap,
     body: String,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers.clone()).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -86,11 +82,7 @@ pub async fn put_edit_admin_talk(
     headers: HeaderMap,
     body: String,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers.clone()).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -167,11 +159,7 @@ pub async fn delete_delete_admin_talk(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let (user_agent, token) = process_login_header(headers.clone()).unwrap();
-    info!("User Agent: {} and JWT processed", user_agent);
-
-    if !verify_jwt(&token, &app_state.config.secrets.jwt_secret) {
-        info!("Unauthorized access.");
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret) {
         return get_401_unauthorized().await;
     }
 
@@ -197,8 +185,8 @@ pub async fn delete_delete_admin_talk(
         .await;
 
     if delete_result.is_none() {
-        info!("Failed to edit Talk with Id {}.", &path);
-        return get_404_not_found().await;
+        info!("Failed to delete Talk with Id {}.", &path);
+        return get_500_internal_server_error();
     }
 
     if delete_result.unwrap() != TalkCommandStatus::Deleted {

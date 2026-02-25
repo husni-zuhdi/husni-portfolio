@@ -1,20 +1,20 @@
 use crate::database::turso::TursoDatabase;
 use crate::model::tags::*;
-use crate::repo::tags::TagRepo;
+use crate::repo::tags::{TagDisplayRepo, TagOperationRepo};
 use async_trait::async_trait;
 use tracing::debug;
 
 #[async_trait]
-impl TagRepo for TursoDatabase {
+impl TagDisplayRepo for TursoDatabase {
     async fn find(&self, id: i64) -> Option<Tag> {
-        let prep_query = r#"
+        let prep_query = r"
             SELECT
                 id,
                 name
             FROM tags
             WHERE id=?1
             LIMIT 1
-        "#;
+        ";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
         let stmt = self
@@ -42,47 +42,19 @@ impl TagRepo for TursoDatabase {
             name: row.get(1).unwrap(),
         })
     }
-    async fn find_all_tags(&self) -> Option<Tags> {
-        let prep_query = r#"
-            SELECT
-                id,
-                name
-            FROM tags
-        "#;
-        debug!("Executing query {}", &prep_query);
-
-        let stmt = self
-            .conn
-            .prepare(prep_query)
-            .await
-            .expect("Failed to prepare find query.");
-
-        let mut rows = stmt.query(()).await.expect("Failed to query tags.");
-
-        let mut tags: Vec<Tag> = Vec::new();
-
-        while let Some(row) = rows.next().await.unwrap() {
-            debug!("Debug Row {:?}", &row);
-            tags.push(Tag {
-                id: row.get(0).unwrap(),
-                name: row.get(1).unwrap(),
-            });
-        }
-
-        Some(Tags { tags })
-    }
     async fn find_tags(&self, params: TagsListParams) -> Option<Tags> {
-        let start_seq = params.start.unwrap();
-        let end_seq = params.end.unwrap();
+        let sanitized_params = params.sanitize();
+        let start_seq = sanitized_params.start.unwrap();
+        let end_seq = sanitized_params.end.unwrap();
         let limit = end_seq - start_seq;
-        let prep_query = r#"
+        let prep_query = r"
             SELECT
                 id,
                 name
             FROM tags
             LIMIT ?1
             OFFSET ?2;
-        "#;
+        ";
         debug!(
             "Executing query {} with limit {} and start sequence {}",
             &prep_query, limit, start_seq
@@ -147,6 +119,10 @@ impl TagRepo for TursoDatabase {
 
         Some(Tags { tags })
     }
+}
+
+#[async_trait]
+impl TagOperationRepo for TursoDatabase {
     async fn get_new_id(&self) -> Option<i64> {
         let prep_query = "SELECT COUNT(id) AS length FROM tags";
         debug!("Executing lenght query {}", &prep_query);

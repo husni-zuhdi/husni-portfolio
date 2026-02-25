@@ -59,7 +59,7 @@ impl AuthRepo for AuthDBUseCase {
 }
 
 impl AuthDBUseCase {
-    pub fn new(auth_repo: Box<dyn AuthRepo + Send + Sync>) -> AuthDBUseCase {
-        AuthDBUseCase { auth_repo }
+    pub fn new(auth_repo: Box<dyn AuthRepo + Send + Sync>) -> Self {
+        Self { auth_repo }
     }
 }

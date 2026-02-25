@@ -11,7 +11,7 @@ use tracing::debug;
 /// - name: Talk Name
 /// - media_link: (Optional) Talk media (video/record) link
 /// - org_link: (Optional) Talk organisation link
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Talk {
     pub id: i64,
     pub name: String,
@@ -51,7 +51,7 @@ impl Talk {
     }
     /// Calculate size of Talks in u32
     /// Useful for weighing data size
-    pub fn data_size(&self) -> u32 {
+    pub const fn data_size(&self) -> u32 {
         (size_of_val(&self.id)
             + size_of_val(&self.name)
             + size_of_val(&self.date)
@@ -72,7 +72,7 @@ impl Talk {
             val => val.clone(),
         };
         let org_link = match &self.org_link {
-            None => Some(empty_value.clone()),
+            None => Some(empty_value),
             val => val.clone(),
         };
 
@@ -87,7 +87,7 @@ impl Talk {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Talks {
     pub talks: Vec<Talk>,
 }
@@ -123,7 +123,7 @@ impl Talks {
 
 /// TalksParams
 /// Axum parameters query for pagination
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TalksParams {
     pub start: Option<i64>,
     pub end: Option<i64>,
@@ -143,12 +143,12 @@ impl TalksParams {
         let end = match self.end {
             Some(val) if val >= 0 => val,
             _ => {
-                debug!("TalkParams: set default end to 10");
-                10_i64
+                debug!("TalkParams: set default end to 100");
+                100_i64
             }
         };
 
-        TalksParams {
+        Self {
             start: Some(start),
             end: Some(end),
         }
@@ -165,7 +165,7 @@ impl TalksParams {
 ///
 /// I think you should wrap this with Option so you can check if it `None`
 /// then check the value of the status
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TalkCommandStatus {
     Stored,
     Updated,

@@ -73,7 +73,7 @@ mod test {
 
     #[tokio::test]
     async fn test_insert_find_and_invalidate_talk() {
-        let cache = InMemoryCache::new(3600).await;
+        let cache = InMemoryCache::new(3600);
         let test_val = Talk {
             id: 1,
             name: "test".to_string(),
@@ -108,7 +108,7 @@ mod test {
 
     #[tokio::test]
     async fn test_insert_find_and_invalidate_talks() {
-        let cache = InMemoryCache::new(3600).await;
+        let cache = InMemoryCache::new(3600);
         let test_values = Talks {
             // Intentionally reversed order
             talks: vec![
