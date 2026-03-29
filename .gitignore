@@ -1,7 +1,7 @@
 **/target
 **/*env
-**husni-portfolio.db**
-tarpaulin-report.html
 **/*service_account.json
 **/.DS_Store
 **/local.db
+**husni-portfolio.db**
+tarpaulin-report.html
