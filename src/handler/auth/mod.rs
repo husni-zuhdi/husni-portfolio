@@ -10,7 +10,7 @@ use axum::http::{
 use jsonwebtoken::{
     decode as jwt_decode, encode as jwt_encode, DecodingKey, EncodingKey, Header, Validation,
 };
-use password_hash::{PasswordHash, PasswordVerifier};
+use password_hash::{phc::PasswordHash, PasswordVerifier};
 use regex::Regex;
 use tracing::info;
 use tracing::{debug, error, warn};
@@ -107,10 +107,10 @@ fn sanitize_password(password: &str) -> String {
 /// Compare password from user with hashed_passwrod in the DB
 fn is_password_match(password: &str, hashed_passwrod: &str) -> bool {
     let password_hash = PasswordHash::new(hashed_passwrod).expect("Invalid password hash");
-    let argon2_algo: &[&dyn PasswordVerifier] = &[&Argon2::default()];
+    let argon2_algo: &dyn PasswordVerifier<PasswordHash> = &Argon2::default();
 
-    if password_hash
-        .verify_password(argon2_algo, password)
+    if argon2_algo
+        .verify_password(password.as_ref(), &password_hash)
         .is_err()
     {
         error!("Password is not matched!");
