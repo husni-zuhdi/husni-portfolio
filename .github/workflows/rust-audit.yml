@@ -19,7 +19,7 @@ jobs:
     name: Rust Security Audit
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: EmbarkStudios/cargo-deny-action@v2
       with:
         rust-version: "1.89.0"
