@@ -7,6 +7,7 @@ use tracing::info;
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     // Setup Config
+    dotenv::dotenv().ok();
     let config = Config::from_envar().await;
     let endpoint = format!("{}:{}", &config.svc_endpoint, &config.svc_port);
 
