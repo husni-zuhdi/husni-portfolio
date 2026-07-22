@@ -10,16 +10,6 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     
 ## TODO
 ### User stories
-- [ ] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
-    - We can improve our web speed by introducing in-memory caching on server-side.
-    - Currently, `/blogs` took around 500ms to load while `/talks` took around 300ms.
-    - `/blogs/BLOG_ID` took around 200-300ms to load depend on the images and another files.
-    - I see some discussion in the Warframe Developer Discord channel about warframe-rs. They are using [moka](https://github.com/moka-rs/moka) for their API. I think we can explore this crate.
-    - Step:
-        1. Learn about [moka](https://github.com/moka-rs/moka) crate.
-        2. Try to implement it (maybe on) `handler` module.
-        3. If it works and can improve our website loading time. Let's be bulish lol.
-        4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
 - [ ] As an User, I need to zoom images to have a better view.
     - I can see images in mobile and I need to zoom it manually.
     - I think creating a zoom feature by clicking an image should do.
@@ -41,7 +31,23 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 - [ ] As an Engineer, I want to increase my code quiality by implementing test.
     - We have a bit of unit test for `config` and `state`.
     - I think we want to gradually increase the test coverage.
-- [ ] As an Engineer, I want to deprecate the `memory` database.
+
+## 0.3.6 TODO
+### User stories
+- [x] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
+    - We can improve our web speed by introducing in-memory caching on server-side.
+    - Currently, `/blogs` took around 500ms to load while `/talks` took around 300ms.
+    - `/blogs/BLOG_ID` took around 200-300ms to load depend on the images and another files.
+    - I see some discussion in the Warframe Developer Discord channel about warframe-rs. They are using [moka](https://github.com/moka-rs/moka) for their API. I think we can explore this crate.
+    - Step:
+        1. Learn about [moka](https://github.com/moka-rs/moka) crate.
+        2. Try to implement it (maybe on) `handler` module.
+        3. If it works and can improve our website loading time. Let's be bulish lol.
+        4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
+    - It's done
+
+### Engineering stories
+- [x] As an Engineer, I want to deprecate the `memory` database.
     - local `sqlite` database is far supperior for development
 
 ## 0.3.3 2025-10-24
