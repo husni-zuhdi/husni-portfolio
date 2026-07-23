@@ -24,8 +24,16 @@ _Avoid_: BlogTag, tag relation
 A lightweight projection of a Blog containing only id, name, filename, and tags — used for list views where the full body is unnecessary.
 _Avoid_: BlogSummary, BlogPreview
 
+**User**:
+An admin account that can authenticate and manage content. Multiple users are possible.
+_Avoid_: Admin, account, credentials
+
+**Session**:
+A short-lived token created on login and destroyed on logout. Tied to one User via user_id.
+_Avoid_: Token, login state
+
 **CommandStatus**:
-An enum returned by write operations (Stored, Updated, Deleted, CacheInserted, CacheInvalidated) indicating the outcome of a persistence action.
+An enum returned by write operations indicating the outcome (Stored, Updated, Deleted, and optionally CacheInserted, CacheInvalidated). Each entity defines its own variant.
 _Avoid_: Result, Status
 
 **Usecase**:
