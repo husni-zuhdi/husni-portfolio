@@ -32,6 +32,79 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - We have a bit of unit test for `config` and `state`.
     - I think we want to gradually increase the test coverage.
 
+### Bug fixes
+- [ ] As an Engineer, I want to fix SQL injection vulnerabilities in database queries.
+    - `find_blogs` interpolates tag names via `format!` into SQL (`src/database/turso/blogs.rs:88-90`).
+    - `search_tags` interpolates query into SQL via `format!` (`src/database/turso/tags.rs:73`).
+    - All UPDATE methods (blogs, talks, tags, users) interpolate values into SET clauses.
+    - Fix: Use parameterized queries or WHERE IN with bound parameters.
+    - Ref: `specs/database-layer.md`
+- [ ] As an Engineer, I want to fix the `BlogsParams::sanitize()` bug.
+    - `start` field uses `self.end` instead of `self.start` for the fallback default (`src/model/blogs.rs:110`).
+    - Same bug exists in `TagsSearchParams::sanitize()` (`src/model/tags.rs:124`).
+    - Ref: `specs/domain-model.md`
+- [ ] As an Engineer, I want to fix `process_blog_body` empty string tag bug.
+    - `blog_tags` is initialized with `vec![String::new()]`, so index 0 always contains an empty string.
+    - Ref: `specs/domain-model.md`
+- [ ] As an Engineer, I want to make body parsers consistent.
+    - `process_tag_body` and `process_blog_body` panic on bad input (`.expect()`), while `process_talk_body` returns `Option`.
+    - All should return `Option` for safe error handling.
+    - Ref: `specs/domain-model.md`
+- [ ] As an Engineer, I want to fix `delete_delete_admin_tag` expecting wrong command status.
+    - It checks for `TagCommandStatus::Updated` instead of `TagCommandStatus::Deleted` (`src/handler/admin/blogs/tags/operations.rs`).
+    - Ref: `specs/api-routes.md`
+- [ ] As an Engineer, I want to fix the `get_login_sucess` typo.
+    - Missing 'c' in "success" (`src/handler/auth/displays.rs:40`). Propagates to `operations.rs`.
+    - Ref: `specs/auth.md`
+- [ ] As an Engineer, I want to replace `.expect()` panics with proper error handling in database methods.
+    - Database methods use `.expect()` which crashes the process on failure.
+    - Should return `Result` types and be handled gracefully in handlers.
+    - Ref: `specs/database-layer.md`
+- [ ] As an Engineer, I want to remove dead code: `BlogSource::Github` variant.
+    - GitHub integration was removed in v0.2.x but the enum variant still exists (`src/model/blogs.rs:31`).
+    - Ref: `specs/domain-model.md`
+- [ ] As an Engineer, I want to remove dead code: `search_tags` redundant filter in cache.
+    - Iterator is created but never consumed (`src/cache/inmemory/tags.rs:86`).
+    - Ref: `specs/database-layer.md`
+- [ ] As an Engineer, I want to remove the unused `sessions` table and related repo methods.
+    - The `sessions` table exists in the schema but is not wired into the login flow.
+    - JWT tokens are stateless; session table serves no purpose.
+    - Ref: `specs/auth.md`
+- [ ] As an Engineer, I want to add rate limiting to the login endpoint.
+    - Currently no brute-force protection on `POST /login`.
+    - Ref: `specs/auth.md`
+- [ ] As an Engineer, I want to fix `Version::new()` to return `Err` instead of panicking.
+    - Return type is `Result<Self, String>` but it uses `.expect()` which panics on failure (`src/model/version.rs`).
+    - Ref: `specs/api-routes.md`
+- [ ] As an Engineer, I want to fix the log message in `get_base_admin`.
+    - Says "Talks askama template rendered" but actually renders `AdminTemplate` (`src/handler/admin/displays.rs`).
+    - Ref: `specs/api-routes.md`
+- [ ] As an Engineer, I want to upgrade the pinned RC dependency `argon2 = "=0.6.0-rc.8"`.
+    - Pinned to a pre-release version. Upgrade to stable once available.
+    - Ref: `specs/config-devops.md`
+- [ ] As an Engineer, I want to add a Docker HEALTHCHECK instruction.
+    - The Dockerfile has no health check endpoint or instruction.
+    - Ref: `specs/deployment.md`
+- [ ] As an Engineer, I want to fix the hardcoded version in release docker-compose.
+    - `build/release/docker-compose.yml` has version `0.3.5` hardcoded instead of using env var.
+    - Ref: `specs/deployment.md`
+- [ ] As an Engineer, I want to ensure `.gitignore` excludes service account files.
+    - `service_account.json` and `release.service_account.json` are in the working tree.
+    - Ref: `specs/deployment.md`
+- [ ] As an Engineer, I want to replace `Arc<Mutex<>>` with `Arc<RwLock<>>` for read-heavy usecases.
+    - Current exclusive locks serialize all concurrent requests across all entities.
+    - Ref: `specs/database-layer.md`
+- [ ] As an Engineer, I want to make `get_new_id` strategy consistent across entities.
+    - Blogs and tags use `COUNT(id)`, talks uses `SELECT id ORDER BY id DESC LIMIT 1`.
+    - Ref: `specs/database-layer.md`
+- [ ] As an Engineer, I want to replace empty string sentinel with actual `NULL` in talks table.
+    - `None` values for optional talk fields are stored as `""` instead of `NULL`.
+    - Ref: `specs/database-layer.md`
+- [ ] As an Engineer, I want to improve BTM cache lookup from O(n) to O(1).
+    - `find_by_blog_id` and `find_by_tag_id` iterate all cache entries.
+    - Consider storing by composite key or secondary indexes.
+    - Ref: `specs/database-layer.md`
+
 ## 0.3.6 TODO
 ### User stories
 - [x] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
