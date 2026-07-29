@@ -53,3 +53,128 @@ pub fn verify_csrf_token(headers: &HeaderMap) -> bool {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use axum::http::HeaderValue;
+
+    #[test]
+    fn test_generate_csrf_token_length() {
+        let token = generate_csrf_token();
+        assert_eq!(token.len(), 64);
+    }
+
+    #[test]
+    fn test_generate_csrf_token_unique() {
+        let token1 = generate_csrf_token();
+        let token2 = generate_csrf_token();
+        assert_ne!(token1, token2);
+    }
+
+    #[test]
+    fn test_generate_csrf_token_hex_only() {
+        let token = generate_csrf_token();
+        assert!(token.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_csrf_set_cookie_header_format() {
+        let token = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4";
+        let header = csrf_set_cookie_header(token);
+        assert_eq!(
+            header,
+            "_csrf_token=a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4; Secure; SameSite=Strict; Path=/"
+        );
+    }
+
+    #[test]
+    fn test_csrf_clear_cookie_header_format() {
+        let header = csrf_clear_cookie_header();
+        assert_eq!(
+            header,
+            "_csrf_token=; Secure; SameSite=Strict; Path=/; Max-Age=0"
+        );
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_found() {
+        let cookie = "_csrf_token=abc123; token=jwt456";
+        let result = extract_csrf_from_cookies(cookie);
+        assert_eq!(result, Some("abc123".to_string()));
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_missing() {
+        let cookie = "token=jwt456";
+        let result = extract_csrf_from_cookies(cookie);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_empty() {
+        let cookie = "";
+        let result = extract_csrf_from_cookies(cookie);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_first_position() {
+        let cookie = "_csrf_token=abc123";
+        let result = extract_csrf_from_cookies(cookie);
+        assert_eq!(result, Some("abc123".to_string()));
+    }
+
+    #[test]
+    fn test_verify_csrf_token_match() {
+        let mut headers = HeaderMap::new();
+        headers.insert(COOKIE, HeaderValue::from_str("_csrf_token=abc123").unwrap());
+        headers.insert(
+            CSRF_HEADER_NAME.clone(),
+            HeaderValue::from_str("abc123").unwrap(),
+        );
+        assert!(verify_csrf_token(&headers));
+    }
+
+    #[test]
+    fn test_verify_csrf_token_mismatch() {
+        let mut headers = HeaderMap::new();
+        headers.insert(COOKIE, HeaderValue::from_str("_csrf_token=abc123").unwrap());
+        headers.insert(
+            CSRF_HEADER_NAME.clone(),
+            HeaderValue::from_str("xyz789").unwrap(),
+        );
+        assert!(!verify_csrf_token(&headers));
+    }
+
+    #[test]
+    fn test_verify_csrf_token_missing_cookie() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            CSRF_HEADER_NAME.clone(),
+            HeaderValue::from_str("abc123").unwrap(),
+        );
+        assert!(!verify_csrf_token(&headers));
+    }
+
+    #[test]
+    fn test_verify_csrf_token_missing_header() {
+        let mut headers = HeaderMap::new();
+        headers.insert(COOKIE, HeaderValue::from_str("_csrf_token=abc123").unwrap());
+        assert!(!verify_csrf_token(&headers));
+    }
+
+    #[test]
+    fn test_verify_csrf_token_multiple_cookies() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            COOKIE,
+            HeaderValue::from_str("token=jwt; _csrf_token=abc123; session=xyz").unwrap(),
+        );
+        headers.insert(
+            CSRF_HEADER_NAME.clone(),
+            HeaderValue::from_str("abc123").unwrap(),
+        );
+        assert!(verify_csrf_token(&headers));
+    }
+}

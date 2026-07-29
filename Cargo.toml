@@ -13,6 +13,7 @@ tokio = { version = "1.43", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tower = { version = "0.5", features = ["util"] }
+tower_governor = { version = "0.8", features = ["axum"] }
 tower-http = { version = "0.7.0", features = ["fs", "trace", "compression-gzip"] }
 askama = { version = "0.16.0"}
 serde = { version="1.0.192", features = ["derive"]}
