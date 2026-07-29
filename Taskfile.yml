@@ -30,7 +30,7 @@ tasks:
   run:
     summary: Run application with hot-reload
     cmds:
-      - cargo watch -s 'tailwindcss -i ./statics/input.css -o ./statics/styles.css && export $(cat .env | xargs) && cargo run -- -release'
+      - cargo watch -s 'tailwindcss -i ./statics/input.css -o ./statics/styles.css && cargo run -- -release'
 
   sqlx-create:
     summary: Create db with sqlx
@@ -69,6 +69,7 @@ tasks:
       - docker-build
     cmds:
       - |
+        # Reading ADDRESS and PORT from .env
         export $(cat .env | xargs)
         export SVC_VERSION=$(cat version.json | jq --raw-output '.version')
         cd build/dev
@@ -77,6 +78,7 @@ tasks:
     summary: Teardown docker compose
     cmds:
       - |
+        # Reading ADDRESS and PORT from .env
         export $(cat .env | xargs)
         export SVC_VERSION=$(cat version.json | jq --raw-output '.version')
         cd build/dev

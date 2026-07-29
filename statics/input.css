@@ -1,8 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-nord: #2E3440;
+}
 
 @layer base {
     h1 {
@@ -117,7 +118,7 @@
     }
 
     .btn_text {
-        @apply  text-black hover:text-white dark:text-white dark:hover:text-black;
+        @apply text-black hover:text-white dark:text-white dark:hover:text-black;
     }
 
     .btn_red {

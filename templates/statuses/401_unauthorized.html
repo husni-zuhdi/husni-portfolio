@@ -1,19 +1,13 @@
 {% extends "base.html" %}
-
 {% block title %}401 Unauthorized{% endblock %}
 {% block description %}"You are unable to access this content"{% endblock %}
-
 {% block content %}
-<div class="grid min-h-full place-items-center py-24 sm:py-32 text-center">
-    <p class="text-base font-semibold text-red-700">401</p>
-    <h1 class="mt-4 text-3xl font-bold tracking-tight sm:text-5xl">
-        Unauthorized
-    </h1>
-    <p class="mt-6 text-base leading-7">
-        You are unable to access this content
-    </p>
-    <div class="mt-10 flex items-center justify-center gap-x-6">
-        <a href="/" class="btn_text btn_status btn_blue">Go back to Home</a>
+    <div class="grid min-h-full place-items-center py-24 sm:py-32 text-center">
+        <p class="text-base font-semibold text-red-700">401</p>
+        <h1 class="mt-4 text-3xl font-bold tracking-tight sm:text-5xl">Unauthorized</h1>
+        <p class="mt-6 text-base leading-7">You are unable to access this content</p>
+        <div class="mt-10 flex items-center justify-center gap-x-6">
+            <a href="/" class="btn_text btn_status btn_blue">Go back to Home</a>
+        </div>
     </div>
-</div>
 {% endblock content %}

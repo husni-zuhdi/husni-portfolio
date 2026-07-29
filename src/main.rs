@@ -7,6 +7,7 @@ use tracing::info;
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     // Setup Config
+    dotenvy::dotenv().ok();
     let config = Config::from_envar().await;
     let endpoint = format!("{}:{}", &config.svc_endpoint, &config.svc_port);
 
@@ -22,6 +23,11 @@ async fn main() -> std::io::Result<()> {
 
     // Start Axum Application
     let listener = tokio::net::TcpListener::bind(endpoint).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    .unwrap();
     Ok(())
 }
