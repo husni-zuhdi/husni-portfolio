@@ -178,12 +178,14 @@ impl Config {
                     .expect("Failed to parse RATE_LIMIT_BURST_SIZE from String to u32")
             })
             .unwrap_or(10_u32);
-        let rate_limit_replenish_period = Self::parse_optional("RATE_LIMIT_REPLENISH_PERIOD_SECOND")
-            .map(|v| {
-                v.parse::<u64>()
-                    .expect("Failed to parse RATE_LIMIT_REPLENISH_PERIOD_SECOND from String to u64")
-            })
-            .unwrap_or(60_u64);
+        let rate_limit_replenish_period =
+            Self::parse_optional("RATE_LIMIT_REPLENISH_PERIOD_SECOND")
+                .map(|v| {
+                    v.parse::<u64>().expect(
+                        "Failed to parse RATE_LIMIT_REPLENISH_PERIOD_SECOND from String to u64",
+                    )
+                })
+                .unwrap_or(60_u64);
         let secrets_bucket = Self::parse_optional("SECRETS_BUCKET");
         let secrets_object = Self::parse_optional("SECRETS_OBJECT");
 
@@ -537,7 +539,10 @@ mod test {
             Some(val) => env::set_var("CACHE_TTL", val.to_string()),
             None => env::set_var("CACHE_TTL", empty),
         }
-        env::set_var("RATE_LIMIT_BURST_SIZE", config.rate_limit_burst_size.to_string());
+        env::set_var(
+            "RATE_LIMIT_BURST_SIZE",
+            config.rate_limit_burst_size.to_string(),
+        );
         env::set_var(
             "RATE_LIMIT_REPLENISH_PERIOD_SECOND",
             config.rate_limit_replenish_period.to_string(),
