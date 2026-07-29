@@ -43,6 +43,33 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - I think we want to gradually increase the test coverage.
 - [ ] As an Engineer, I want to deprecate the `memory` database.
     - local `sqlite` database is far supperior for development
+- [ ] As an Engineer, I want to fix the PR CI trigger in `.github/workflows/rust-ci.yml`.
+    - `pull_request` is indented under `push`, making it a no-op subkey.
+- [ ] As an Engineer, I want to fix the cache startup panic in `state.rs:152`.
+    - `config.cache_ttl.unwrap()` panics if `CACHE_TYPE` is set but `CACHE_TTL` is omitted.
+- [ ] As an Engineer, I want to switch to `SmartIpKeyExtractor` for rate limiting behind Cloud Run.
+    - Currently uses default `PeerIpKeyExtractor` which sees the load balancer IP.
+
+## 0.3.5 2026-07-30
+### Engineering stories
+- [x] As an Engineer, I want to protect the admin endpoints against CSRF attacks.
+    - Implemented Double-Submit Cookie pattern with `ring`-based 32-byte random tokens.
+    - New module `src/handler/auth/csrf.rs`: `generate_csrf_token()`, `csrf_set_cookie_header()`, `csrf_clear_cookie_header()`, `verify_csrf_token()`.
+    - All 10 state-changing admin handlers (blogs, talks, tags) call `verify_csrf_token(&headers)`.
+    - `admin_base.html` includes `htmx:configRequest` script to send `X-CSRF-Token` header.
+    - JWT cookie upgraded to `SameSite=Strict` as defense-in-depth.
+- [x] As an Engineer, I want to add rate limiting on the login endpoint to prevent brute-force attacks.
+    - Added `tower-governor` with configurable burst size (default 10) and replenish period (default 60s).
+    - Rate-limited `POST /login` isolated via sub-router + merge; `GET /login` unaffected.
+    - Background cleanup task via `limiter.retain_recent()` every 60s.
+    - Known limitation: uses `PeerIpKeyExtractor` which is incorrect behind Cloud Run (sees LB IP).
+- [x] As an Engineer, I want unit tests for the CSRF module.
+    - 14 pure-function tests in `src/handler/auth/csrf.rs` covering token generation, cookie formatting, token extraction, and verification (match, mismatch, missing cookie/header, multiple cookies).
+
+### Found bugs during spec audit
+- [ ] **CI not triggered on PRs**: `.github/workflows/rust-ci.yml` has `pull_request` indented under `push` instead of at the same level. PRs don't trigger CI.
+- [ ] **Cache panic at startup**: `state.rs:152` does `config.cache_ttl.unwrap()` — if `CACHE_TYPE` is set but `CACHE_TTL` is omitted, the app panics at startup instead of providing a default or returning an error.
+- [ ] **Rate limiter key extractor**: Uses default `PeerIpKeyExtractor`, which sees the load balancer IP behind Cloud Run. Should switch to `SmartIpKeyExtractor` for proxy-aware IP extraction.
 
 ## 0.3.3 2025-10-24
 ### Engineering stories
