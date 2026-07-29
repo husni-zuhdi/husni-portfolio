@@ -33,7 +33,7 @@ pub fn convert_tags_string_to_vec(s: &str) -> Vec<String> {
 /// panic if failed to convert markdown to html with allow dangerous html option
 #[must_use]
 pub fn convert_markdown_to_html(body_md: &str) -> String {
-    to_html_with_options(
+    let html = to_html_with_options(
         body_md,
         &Options {
             parse: ParseOptions::gfm(),
@@ -43,7 +43,14 @@ pub fn convert_markdown_to_html(body_md: &str) -> String {
             },
         },
     )
-    .unwrap()
+    .unwrap();
+
+    ammonia::Builder::default()
+        .link_rel(None)
+        .url_relative(ammonia::UrlRelative::PassThrough)
+        .add_clean_content_tags(&["script", "style"])
+        .clean(&html)
+        .to_string()
 }
 
 #[cfg(test)]

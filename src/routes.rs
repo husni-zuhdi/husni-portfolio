@@ -16,16 +16,41 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use std::sync::Arc;
+use std::time::Duration;
 use tower::ServiceBuilder;
+use tower_governor::governor::GovernorConfigBuilder;
+use tower_governor::GovernorLayer;
 use tower_http::compression::CompressionLayer;
 use tower_http::services::{ServeDir, ServeFile};
 
 pub fn main_route(app_state: AppState) -> Router {
+    let governor_conf = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(app_state.config.rate_limit_replenish_period)
+            .burst_size(app_state.config.rate_limit_burst_size)
+            .use_headers()
+            .finish()
+            .unwrap(),
+    );
+
+    let limiter = governor_conf.limiter().clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            limiter.retain_recent();
+        }
+    });
+
+    let login_rate_limited = Router::new()
+        .route("/login", post(ao::post_login))
+        .layer(GovernorLayer::new(governor_conf));
+
     Router::new()
         .route("/", get(profile::get_profile))
         .route("/version", get(version::get_version))
         .route("/login", get(ad::get_login))
-        .route("/login", post(ao::post_login))
+        .merge(login_rate_limited)
         .route("/logout", delete(ao::delete_logout))
         .route("/etc/passwd", get(status::get_418_i_am_a_teapot))
         .nest("/blogs", blogs_route())

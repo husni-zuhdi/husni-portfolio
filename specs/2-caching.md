@@ -1,13 +1,14 @@
 # Caching
 
 ## Goals
-Implement in-memory caching to reduce latency from DB -> App while maintain
-data concistency by correctly implement Cache.
+Implement in-memory caching to reduce latency from DB -> App while maintaining
+data consistency by correctly implementing cache invalidation.
 
 ## Criterias
-- Cache configurations such as cache type and cache timeout should be configurable via environment variable (envar/s)
-- Public endpoints cache implementation follow this flow get data, store in cache, invalidate after timeout, and get the latest data
-- Auth-protected endpoints cache implementation should be followed by imediate update when we add, update, or delete data
+- Cache type and TTL are configurable via environment variables
+- Cache is **disabled by default** (enabled by setting `CACHE_TYPE`)
+- Public endpoints: get data, store in cache, invalidate after TTL, refresh
+- Auth-protected endpoints: immediate invalidation on add/update/delete
 
 ## Usage
 The in-memory cache is suitable for the initial iteration since we don't have
@@ -15,19 +16,15 @@ to add another infrastructure resources.
 [Moka](https://github.com/moka-rs/moka) is one of the most common cache library
 available in Rust. We can try to use this for the initial phase.
 
-Cache is enabled when `CACHE_TYPE` is not `None`. The other configurations 
-envars such as `CACHE_TTL_SECOND`, etc should be declared as optional envars.
-
-Draft of envars:
-- CACHE_TYPE
-    - String
-    - Choose Cache types. Currently we only provide `in-memory` type.
-    - We can add `redis` later
-    - Default to `in-memory`
-- CACHE_TTL_SECOND
-    - number
-    - Cache timeout duration in second
-    - Default to 3600
+### Env vars
+- `CACHE_TYPE`
+    - Optional string
+    - Currently supports `InMemory`. Absent means cache is disabled.
+    - Default: `None` (disabled)
+- `CACHE_TTL`
+    - Optional number (seconds)
+    - Cache timeout duration. **Required** when `CACHE_TYPE` is set, otherwise `unwrap()` panics at startup.
+    - Default: no default (must be set if cache is enabled)
 
 ## Flow
 

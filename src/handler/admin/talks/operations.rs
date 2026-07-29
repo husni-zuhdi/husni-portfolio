@@ -1,5 +1,6 @@
 use crate::handler::admin::talks::displays::{get_admin_talk, get_admin_talks_list};
 use crate::handler::admin::talks::process_talk_body;
+use crate::handler::auth::csrf::verify_csrf_token;
 use crate::handler::auth::is_auth_verified;
 use crate::handler::status::get_401_unauthorized;
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
@@ -19,7 +20,9 @@ pub async fn post_add_admin_talk(
     headers: HeaderMap,
     body: String,
 ) -> Html<String> {
-    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret) {
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret)
+        || !verify_csrf_token(&headers)
+    {
         return get_401_unauthorized().await;
     }
 
@@ -82,7 +85,9 @@ pub async fn put_edit_admin_talk(
     headers: HeaderMap,
     body: String,
 ) -> Html<String> {
-    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret) {
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret)
+        || !verify_csrf_token(&headers)
+    {
         return get_401_unauthorized().await;
     }
 
@@ -159,7 +164,9 @@ pub async fn delete_delete_admin_talk(
     State(app_state): State<AppState>,
     headers: HeaderMap,
 ) -> Html<String> {
-    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret) {
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret)
+        || !verify_csrf_token(&headers)
+    {
         return get_401_unauthorized().await;
     }
 
