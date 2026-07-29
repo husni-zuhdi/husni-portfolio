@@ -70,8 +70,15 @@ feature-depth = 1
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-    { id = "RUSTSEC-2023-0071", reason = "Wait until jsonwebtoken change the deps"},
+    { id = "RUSTSEC-2023-0071", reason = "No plan so far. We need to find alternative crates"},
     { id = "RUSTSEC-2025-0134", reason = "Wait until libsql and google libs change the deps"},
+    { id = "RUSTSEC-2025-0141", reason = "Wait until libsql to change dependencies"},
+    { id = "RUSTSEC-2026-0044", reason = "Wait until libsql, google, and hyper-rustls to upgrade rustls-webpki"},
+    { id = "RUSTSEC-2026-0048", reason = "Wait until libsql, google, and hyper-rustls to upgrade rustls-webpki"},
+    { id = "RUSTSEC-2026-0049", reason = "Wait until libsql and hyper-rustls to upgrade rustls-webpki"},
+    { id = "RUSTSEC-2026-0098", reason = "Wait until libsql and hyper-rustls to upgrade rustls-webpki"},
+    { id = "RUSTSEC-2026-0099", reason = "Wait until libsql and hyper-rustls to upgrade rustls-webpki"},
+    { id = "RUSTSEC-2026-0104", reason = "Wait until libsql and hyper-rustls to upgrade rustls-webpki"},
     #"RUSTSEC-0000-0000",
     #{ id = "RUSTSEC-0000-0000", reason = "you can specify a reason the advisory is ignored" },
     #"a-crate-that-is-yanked@0.1.1", # you can also ignore yanked crate versions if you wish
@@ -97,6 +104,9 @@ allow = [
     "ISC",
     "BSD-3-Clause",
     "CDLA-Permissive-2.0",
+    "OpenSSL",
+    "MPL-2.0",
+    "Zlib"
 ]
 # The confidence threshold for detecting a license from license text.
 # The higher the value, the more closely the license text must be to the

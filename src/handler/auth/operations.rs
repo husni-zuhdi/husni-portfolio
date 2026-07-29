@@ -1,3 +1,6 @@
+use crate::handler::auth::csrf::{
+    csrf_clear_cookie_header, csrf_set_cookie_header, generate_csrf_token, verify_csrf_token,
+};
 use crate::handler::auth::displays::{get_login_retry, get_login_sucess, get_logout};
 use crate::handler::auth::{
     create_jwt, is_auth_verified, is_password_match, process_login_body, sanitize_email,
@@ -49,9 +52,17 @@ pub async fn post_login(State(app_state): State<AppState>, body: String) -> impl
         return get_login_retry(None).await;
     }
 
+    let csrf_token = generate_csrf_token();
     let mut header_map = HeaderMap::new();
-    let jwt_token_cookie = format!("token={}; Secure; HttpOnly; SameSite=Lax", token.unwrap());
+    let jwt_token_cookie = format!(
+        "token={}; Secure; HttpOnly; SameSite=Strict",
+        token.unwrap()
+    );
     header_map.insert(SET_COOKIE, jwt_token_cookie.parse().unwrap());
+    header_map.append(
+        SET_COOKIE,
+        csrf_set_cookie_header(&csrf_token).parse().unwrap(),
+    );
     header_map.insert(HX_REDIRECT, "/admin".parse().unwrap());
 
     // Render HTML with header to set JWT Token in header
@@ -67,7 +78,9 @@ pub async fn delete_logout(
 ) -> impl IntoResponse {
     let mut resp_headers = HeaderMap::new();
 
-    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret) {
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret)
+        || !verify_csrf_token(&headers)
+    {
         let unauthorized = get_401_unauthorized().await;
         return (resp_headers, unauthorized);
     }
@@ -75,8 +88,11 @@ pub async fn delete_logout(
     // Redirect User if token present to Admin Blogs
     resp_headers.insert(
         SET_COOKIE,
-        "token=; Secure; HttpOnly; SameSite=Lax".parse().unwrap(),
+        "token=; Secure; HttpOnly; SameSite=Strict; Max-Age=0"
+            .parse()
+            .unwrap(),
     );
+    resp_headers.append(SET_COOKIE, csrf_clear_cookie_header().parse().unwrap());
     resp_headers.insert(HX_REDIRECT, "/".parse().unwrap());
 
     get_logout(resp_headers).await

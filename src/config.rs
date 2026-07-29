@@ -62,6 +62,16 @@ pub struct Config {
     /// Example: 3600
     /// Default to None
     pub cache_ttl: Option<i64>,
+    /// Rate Limit Burst Size
+    /// Max attempt before rate limit applied
+    /// Example: 10
+    /// Default to 10
+    pub rate_limit_burst_size: u32,
+    /// Rate Limit Replenish Period
+    /// Time to replenish a rate limit bucket in second
+    /// Example: 60
+    /// Default to 60
+    pub rate_limit_replenish_period: u64,
 }
 
 /// Environment Type
@@ -138,6 +148,8 @@ impl Default for Config {
             secrets_object: None,
             cache_type: None,
             cache_ttl: None,
+            rate_limit_burst_size: 10,
+            rate_limit_replenish_period: 60,
         }
     }
 }
@@ -160,6 +172,20 @@ impl Config {
             c.parse::<i64>()
                 .expect("Failed to parse CACHE_TTL from String to i64")
         });
+        let rate_limit_burst_size = Self::parse_optional("RATE_LIMIT_BURST_SIZE")
+            .map(|v| {
+                v.parse::<u32>()
+                    .expect("Failed to parse RATE_LIMIT_BURST_SIZE from String to u32")
+            })
+            .unwrap_or(10_u32);
+        let rate_limit_replenish_period =
+            Self::parse_optional("RATE_LIMIT_REPLENISH_PERIOD_SECOND")
+                .map(|v| {
+                    v.parse::<u64>().expect(
+                        "Failed to parse RATE_LIMIT_REPLENISH_PERIOD_SECOND from String to u64",
+                    )
+                })
+                .unwrap_or(60_u64);
         let secrets_bucket = Self::parse_optional("SECRETS_BUCKET");
         let secrets_object = Self::parse_optional("SECRETS_OBJECT");
 
@@ -206,6 +232,8 @@ impl Config {
             secrets_object,
             cache_type,
             cache_ttl,
+            rate_limit_burst_size,
+            rate_limit_replenish_period,
         }
     }
     async fn load_gcs_secrets(secrets_bucket: &str, secrets_object: &str) -> Secrets {
@@ -371,6 +399,8 @@ mod test {
         assert_eq!(result.secrets_object, None);
         assert_eq!(result.cache_type, None);
         assert_eq!(result.cache_ttl, None);
+        assert_eq!(result.rate_limit_burst_size, 10);
+        assert_eq!(result.rate_limit_replenish_period, 60);
     }
 
     #[tokio::test]
@@ -401,6 +431,8 @@ mod test {
             secrets_object: None,
             cache_type: None,
             cache_ttl: None,
+            rate_limit_burst_size: 10,
+            rate_limit_replenish_period: 60,
         });
 
         let result = Config::from_envar().await;
@@ -417,6 +449,8 @@ mod test {
         assert_eq!(result.secrets_object, None);
         assert_eq!(result.cache_type, None);
         assert_eq!(result.cache_ttl, None);
+        assert_eq!(result.rate_limit_burst_size, 10);
+        assert_eq!(result.rate_limit_replenish_period, 60);
 
         remove_envars()
     }
@@ -451,6 +485,8 @@ mod test {
             secrets_object,
             cache_type: cache_type.clone(),
             cache_ttl,
+            rate_limit_burst_size: 20,
+            rate_limit_replenish_period: 30,
         });
 
         let result = Config::from_envar().await;
@@ -467,6 +503,8 @@ mod test {
         assert_eq!(result.secrets_object, None);
         assert_eq!(result.cache_type, cache_type);
         assert_eq!(result.cache_ttl, cache_ttl);
+        assert_eq!(result.rate_limit_burst_size, 20);
+        assert_eq!(result.rate_limit_replenish_period, 30);
 
         remove_envars()
     }
@@ -501,6 +539,14 @@ mod test {
             Some(val) => env::set_var("CACHE_TTL", val.to_string()),
             None => env::set_var("CACHE_TTL", empty),
         }
+        env::set_var(
+            "RATE_LIMIT_BURST_SIZE",
+            config.rate_limit_burst_size.to_string(),
+        );
+        env::set_var(
+            "RATE_LIMIT_REPLENISH_PERIOD_SECOND",
+            config.rate_limit_replenish_period.to_string(),
+        );
     }
 
     fn remove_envars() {
@@ -516,5 +562,7 @@ mod test {
         env::remove_var("SECRETS_OBJECT");
         env::remove_var("CACHE_TYPE");
         env::remove_var("CACHE_TTL");
+        env::remove_var("RATE_LIMIT_BURST_SIZE");
+        env::remove_var("RATE_LIMIT_REPLENISH_PERIOD_SECOND");
     }
 }
