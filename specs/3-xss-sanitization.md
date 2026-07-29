@@ -24,7 +24,7 @@ bypass regex-based sanitizers.
 Add `ammonia` to `Cargo.toml`:
 ```toml
 [dependencies]
-ammonia = "4.1"
+ammonia = "4.1.3"
 ```
 
 Ammonia is configured with a `Builder` to define which tags and attributes are allowed.
@@ -85,10 +85,8 @@ sequenceDiagram
 
 | File | Change |
 |---|---|
-| `Cargo.toml` | Add `ammonia = "4.1"` dependency |
+| `Cargo.toml` | Add `ammonia = "4.1.3"` dependency |
 | `src/utils.rs` | Import `ammonia`, create static `Builder`, call `builder.clean()` in `convert_markdown_to_html()` |
-| `tests/dump.sql` | Add test seed data with dangerous HTML to verify sanitization |
-| `src/utils.rs` (tests) | Add unit tests for sanitization (dangerous tags stripped, safe tags preserved) |
 
 ## References
 - [Ammonia crate docs](https://docs.rs/ammonia/latest/ammonia/)

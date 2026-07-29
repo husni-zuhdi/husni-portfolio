@@ -30,10 +30,11 @@ tower-governor = { version = "0.8", features = ["axum"] }
 ```
 
 ### Key extractor
-Use `SmartIpKeyExtractor` instead of the default `PeerIpKeyExtractor`. Behind Cloud Run
-(and most reverse proxies), the peer IP is the load balancer's IP. `SmartIpKeyExtractor`
-checks `X-Forwarded-For`, `X-Real-IP`, and `Forwarded` headers in order, falling back
-to the peer IP. This is correct for the Cloud Run deployment.
+The current implementation uses the default `PeerIpKeyExtractor`, which extracts the
+peer's socket address directly. **This is incorrect behind Cloud Run** (and similar
+reverse proxies) where the peer IP is always the load balancer. A future improvement
+should switch to `SmartIpKeyExtractor`, which checks `X-Forwarded-For`, `X-Real-IP`,
+and `Forwarded` headers in order before falling back to the peer IP.
 
 ### Configuration via environment variables
 Follow the existing pattern (like `CACHE_TYPE`, `CACHE_TTL`):
@@ -64,7 +65,7 @@ sequenceDiagram
     participant H as Login Handler
 
     U->>RL: POST /login
-    RL->>RL: Check IP bucket (key: SmartIp)
+    RL->>RL: Check IP bucket (key: PeerIp)
     RL->>RL: Token available? Yes (decrement)
     RL->>H: Forward request
     H->>H: Validate credentials
@@ -79,12 +80,12 @@ sequenceDiagram
     participant RL as Rate Limiter (Governor)
     participant H as Login Handler
 
-    U->>RL: POST /login (attempt 6)
+    U->>RL: POST /login (attempt 11)
     RL->>RL: Check IP bucket
     RL->>RL: Token available? No (bucket empty)
     RL-->>U: 429 Too Many Requests
-    Note over U: Headers: Retry-After: 45, x-ratelimit-after: 45
-    U->>RL: POST /login (attempt 7)
+    Note over U: Headers: Retry-After: 60, x-ratelimit-after: 60
+    U->>RL: POST /login (attempt 12)
     RL-->>U: 429 Too Many Requests
     Note over U: Must wait for token replenishment
 ```
@@ -105,53 +106,56 @@ sequenceDiagram
 ## Implementation locations
 
 | File | Change |
-|---|---|
+|---|---|---|
 | `Cargo.toml` | Add `tower-governor = { version = "0.8", features = ["axum"] }` |
 | `src/config.rs` | Add `rate_limit_burst_size: u32` and `rate_limit_replenish_period: u64` fields to `Config`, read from env vars with defaults |
-| `src/routes.rs` | Create `GovernorConfig` with `SmartIpKeyExtractor`, attach `GovernorLayer` only to the `POST /login` route |
-| `src/main.rs` | Change `axum::serve(listener, app)` to `axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())` |
-| `src/main.rs` | Spawn background task for `limiter.retain_recent()` every 60 seconds |
+| `src/routes.rs` | Create `GovernorConfig` (default `PeerIpKeyExtractor`), isolate `POST /login` into sub-router with `GovernorLayer`, spawn background cleanup task |
+| `src/main.rs` | Switch to `axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())` |
 
 ### Route-level layer attachment
-The rate limiter must be scoped to `POST /login` only. This is done by applying the
-layer to a sub-router:
+The rate limiter is scoped to `POST /login` only. This is done by isolating the POST
+handler into a sub-router and merging it after the main route table. The GET login
+route stays outside the rate-limited sub-router to avoid blocking the login page itself:
 
 ```rust
 // In routes.rs
-fn login_route(rate_limit_config: Arc<GovernorConfig>) -> Router<AppState> {
-    Router::new()
-        .route("/login", post(ao::post_login))
-        .layer(GovernorLayer::new(rate_limit_config))
-}
+let login_rate_limited = Router::new()
+    .route("/login", post(ao::post_login))
+    .layer(GovernorLayer::new(governor_conf));
 
-// main_route merges it
-.route("/login", get(ad::get_login))  // GET is not rate-limited
-.nest("/login", login_route(rate_limit_config))
+Router::new()
+    .route("/login", get(ad::get_login))  // GET is not rate-limited
+    .merge(login_rate_limited)             // POST is rate-limited
 ```
-
-Alternatively, apply the layer directly to the POST handler using `axum::routing::post`
-with a `.layer()` on that specific route.
 
 ### GovernorConfig construction
 ```rust
+use std::sync::Arc;
 use tower_governor::governor::GovernorConfigBuilder;
-use tower_governor::key_extractor::SmartIpKeyExtractor;
+use tower_governor::GovernorLayer;
 
-let governor_conf = GovernorConfigBuilder::default()
-    .per_second(config.rate_limit_replenish_period)
-    .burst_size(config.rate_limit_burst_size)
-    .use_headers()
-    .finish()
-    .unwrap();
+let governor_conf = Arc::new(
+    GovernorConfigBuilder::default()
+        .per_second(app_state.config.rate_limit_replenish_period)
+        .burst_size(app_state.config.rate_limit_burst_size)
+        .use_headers()
+        .finish()
+        .unwrap(),
+);
 ```
 
 ### Startup change
-```rust
-// main.rs — current
-axum::serve(listener, app).await.unwrap();
+The server must use `.into_make_service_with_connect_info::<SocketAddr>()` so the rate
+limiter's key extractor can access the peer's IP address:
 
-// main.rs — required for SmartIpKeyExtractor to access peer SocketAddr
-axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
+```rust
+// main.rs
+axum::serve(
+    listener,
+    app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+)
+.await
+.unwrap();
 ```
 
 ## Testing

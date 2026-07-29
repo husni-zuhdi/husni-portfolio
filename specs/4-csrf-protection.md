@@ -39,7 +39,8 @@ This works because:
 
 ### Draft of envars
 No new environment variables are required. The CSRF token cookie uses a fixed name
-(`_csrf_token`) and the same `Secure`/`SameSite`/`Path` properties as the JWT cookie.
+(`_csrf_token`) and is set with `Secure; SameSite=Strict; Path=/`. Unlike the JWT
+cookie, it is **not** `HttpOnly` (so JavaScript can read it for the HTMX header).
 
 ## Flow
 
@@ -112,16 +113,12 @@ sequenceDiagram
 ## Implementation locations
 
 | File | Change |
-|---|---|
-| `src/handler/auth/mod.rs` | Add `generate_csrf_token()` function (32 random bytes via `rand` or `ring`) |
-| `src/handler/auth/operations.rs` | `post_login`: set `_csrf_token` cookie on success. `delete_logout`: clear `_csrf_token` cookie |
-| `src/handler/admin/mod.rs` | Add `verify_csrf_token(cookie_header, header_map) -> bool` helper function |
-| `src/handler/admin/*/operations.rs` | Call `verify_csrf_token()` at the top of every POST/PUT/DELETE handler |
-| `src/model/auth.rs` | Add `csrf_token: String` field to `Claims` struct (optional — token can also live purely in cookie) |
-| `templates/base.html` or `admin/admin_base.html` | Add `hx-headers` with CSRF token from cookie via small inline script |
-| `templates/admin/**/*.html` | All forms get `hx-headers` attribute pointing to CSRF token |
-| `Cargo.toml` | Add `rand` dependency (for secure random token generation) |
-| `src/routes.rs` | Ensure `SameSite=Strict` in cookie strings for both JWT and CSRF cookies |
+|---|---|---|
+| `src/handler/auth/csrf.rs` | New module: `generate_csrf_token()` (32 random bytes via `ring`), `csrf_set_cookie_header()`, `csrf_clear_cookie_header()`, `verify_csrf_token()` |
+| `src/handler/auth/operations.rs` | `post_login`: calls `generate_csrf_token()` + `csrf_set_cookie_header()`. `delete_logout`: calls `csrf_clear_cookie_header()` |
+| `src/handler/admin/*/operations.rs` | Call `verify_csrf_token(&headers)` at the top of every POST/PUT/DELETE handler |
+| `templates/admin/admin_base.html` | Add `htmx:configRequest` handler that reads `_csrf_token` cookie and sets `X-CSRF-Token` header |
+| `Cargo.toml` | Add `ring = "0.17.14"` dependency (for cryptographically secure random token generation) |
 
 ### HTMX hx-headers integration
 In `templates/admin/admin_base.html`, add a small script that reads the `_csrf_token`
@@ -171,4 +168,4 @@ Unit tests live in `src/handler/auth/csrf.rs` under `#[cfg(test)] mod test`:
 - [OWASP Double-Submit Cookie Pattern](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie-pattern)
 - [HTMX hx-headers attribute](https://htmx.org/attributes/hx-headers/)
 - [HTMX htmx:configRequest event](https://htmx.org/events/#htmx:configRequest)
-- [SameSite cookie attribute](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesamesite-value)
+- [SameSite cookie attribute](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesite-value)
