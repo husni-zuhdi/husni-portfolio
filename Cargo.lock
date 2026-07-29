@@ -1849,6 +1849,7 @@ dependencies = [
  "moka",
  "password-hash",
  "regex",
+ "ring",
  "serde",
  "serde_json",
  "test-log",

@@ -1,3 +1,4 @@
+pub mod csrf;
 pub mod displays;
 pub mod operations;
 
