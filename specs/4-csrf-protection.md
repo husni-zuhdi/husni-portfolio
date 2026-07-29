@@ -149,9 +149,26 @@ The login form (`POST /login`) does not need CSRF protection because the user is
 yet authenticated — there is no session to forge. CSRF protection applies only to
 authenticated state-changing requests.
 
+## Testing
+Unit tests live in `src/handler/auth/csrf.rs` under `#[cfg(test)] mod test`:
+- `test_generate_csrf_token_length` — output is 64 hex chars
+- `test_generate_csrf_token_unique` — two calls produce different tokens
+- `test_generate_csrf_token_hex_only` — output contains only `[0-9a-f]`
+- `test_csrf_set_cookie_header_format` — correct Set-Cookie format
+- `test_csrf_clear_cookie_header_format` — correct clear-Cookie format
+- `test_extract_csrf_from_cookies_found` — extracts token from cookie
+- `test_extract_csrf_from_cookies_missing` — returns `None` when absent
+- `test_extract_csrf_from_cookies_empty` — returns `None` on empty string
+- `test_extract_csrf_from_cookies_first_position` — works when CSRF is the only cookie
+- `test_verify_csrf_token_match` — returns `true` when cookie == header
+- `test_verify_csrf_token_mismatch` — returns `false` when they differ
+- `test_verify_csrf_token_missing_cookie` — returns `false` with no cookie
+- `test_verify_csrf_token_missing_header` — returns `false` with no header
+- `test_verify_csrf_token_multiple_cookies` — works among other cookies
+
 ## References
 - [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 - [OWASP Double-Submit Cookie Pattern](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie-pattern)
 - [HTMX hx-headers attribute](https://htmx.org/attributes/hx-headers/)
 - [HTMX htmx:configRequest event](https://htmx.org/events/#htmx:configRequest)
-- [SameSite cookie attribute](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesitesamesite-value)
+- [SameSite cookie attribute](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesamesite-value)
