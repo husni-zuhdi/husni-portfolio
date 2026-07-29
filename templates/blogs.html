@@ -1,37 +1,36 @@
 {% extends "base.html" %}
-
 {% block title %}Blogs{% endblock %}
 {% block description %}"Husni Naufal Zuhdi Blogs"{% endblock %}
-
 {% block content %}
-<div>
-    <h1 class="mb-4 font-semibold uppercase md:justify-start">
-        Blogs
-    </h1>
-</div>
-<hr>
-
-<div id="blogs_target">
-    {% for blog in blogs %}
-        <h2 class="mb-2 hover:font-bold md:justify-start">
-            <div id="blog_{{blog.id}}_target">
-                <a href="/blogs/{{blog.id}}">{{blog.name}}</a>
-                {% for tag in blog.tags %}
-                    {% if tag == "" %}
-                       <!-- No tag to render  -->
-                       <!-- Skip this tag -->
-                    {% else if active_tags.contains(tag) %}
-                        <button class="active_tag" hx-get="/blogs" hx-target="#body_target" hx-swap="innerHTML" hx-replace-url="true">
-                            {{tag}}
-                        </button>
-                    {% else %}
-                        <button class="inactive_tag" hx-get="/blogs?tags={{tag}}" hx-target="#body_target" hx-swap="innerHTML" hx-replace-url="true">
-                            {{tag}}
-                        </button>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </h2>
-    {% endfor %}
-</div>
+    <div>
+        <h1 class="mb-4 font-semibold uppercase md:justify-start">Blogs</h1>
+    </div>
+    <hr>
+    <div id="blogs_target">
+        {% for blog in blogs %}
+            <h2 class="mb-2 hover:font-bold md:justify-start">
+                <div id="blog_{{ blog.id }}_target">
+                    <a href="/blogs/{{ blog.id }}">{{ blog.name }}</a>
+                    {% for tag in blog.tags %}
+                        {% if tag == "" %}
+                            <!-- No tag to render  -->
+                            <!-- Skip this tag -->
+                        {% else if active_tags.contains(tag) %}
+                            <button class="active_tag"
+                                    hx-get="/blogs"
+                                    hx-target="#body_target"
+                                    hx-swap="innerHTML"
+                                    hx-replace-url="true">{{ tag }}</button>
+                        {% else %}
+                            <button class="inactive_tag"
+                                    hx-get="/blogs?tags={{ tag }}"
+                                    hx-target="#body_target"
+                                    hx-swap="innerHTML"
+                                    hx-replace-url="true">{{ tag }}</button>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </h2>
+        {% endfor %}
+    </div>
 {% endblock content %}

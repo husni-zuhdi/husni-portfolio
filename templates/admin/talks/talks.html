@@ -1,34 +1,25 @@
 {% extends "admin/admin_base.html" %}
-
 {% block title %}Admin Talks{% endblock %}
 {% block description %}"Husni Naufal Zuhdi Admin Talks"{% endblock %}
-
 {% block content %}
-<div id="talks_top_section_target" class="top_section">
-    <h1 class="mb-4 font-semibold uppercase md:justify-start">
-        Admin Talks
-    </h1>
-    <p>Manage your Talks. Yapping all day and night.</p>
-
-    <div class="flex flex-col justify-between lg:flex-row">
-        <div class="top_section">
-            <button class="btn_text btn_green"
-                hx-get="/admin/talks/add"
-                hx-target="#talks_target"
-                hx-swap="innerHTML">
-                +
-            </button>
+    <div id="talks_top_section_target" class="top_section">
+        <h1 class="mb-4 font-semibold uppercase md:justify-start">Admin Talks</h1>
+        <p>Manage your Talks. Yapping all day and night.</p>
+        <div class="flex flex-col justify-between lg:flex-row">
+            <div class="top_section">
+                <button class="btn_text btn_green"
+                        hx-get="/admin/talks/add"
+                        hx-target="#talks_target"
+                        hx-swap="innerHTML">+</button>
+            </div>
+            <!-- <div class="top_section"> -->
+            <!--     <input type="search" name="query" placeholder="Type to Search Talks..." -->
+            <!--         hx-get="/admin/talks/search" -->
+            <!--         hx-trigger="input changed delay:500ms, keyup[key=='Enter'], load" -->
+            <!--         hx-target="#talks_target"> -->
+            <!-- </div> -->
         </div>
-        <!-- <div class="top_section"> -->
-        <!--     <input type="search" name="query" placeholder="Type to Search Talks..." -->
-        <!--         hx-get="/admin/talks/search" -->
-        <!--         hx-trigger="input changed delay:500ms, keyup[key=='Enter'], load" -->
-        <!--         hx-target="#talks_target"> -->
-        <!-- </div> -->
     </div>
-</div>
-<hr>
-
-<div id="talks_target" hx-get="/admin/talks/list" hx-trigger="load">
-</div>
+    <hr>
+    <div id="talks_target" hx-get="/admin/talks/list" hx-trigger="load"></div>
 {% endblock content %}
