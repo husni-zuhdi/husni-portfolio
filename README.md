@@ -7,6 +7,7 @@ My Portfolio webiste
 * [Askama](https://github.com/djc/askama)
 * [Markdown-rs](https://github.com/wooorm/markdown-rs)
 * [Taskfile](https://taskfile.dev/)
+* [Prek](https://prek.j178.dev/)
 * [TailwindCSS](https://tailwindcss.com/)
 * [Turso](https://turso.tech/)
 * [Google Cloud Storage](https://cloud.google.com/storage)

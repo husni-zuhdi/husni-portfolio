@@ -1,0 +1,13 @@
+<!-- Dark Mode FOUC Prevention -->
+<script src="/theme.js"></script>
+<script>
+            var is_theme_dark = localStorage.getItem('color-theme') === 'dark';
+            var is_theme_in_local_storage = 'color-theme' in localStorage;
+            var is_window_dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (is_theme_dark || (!is_theme_in_local_storage && is_window_dark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+</script>
