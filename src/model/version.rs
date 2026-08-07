@@ -24,3 +24,16 @@ impl Version {
         Ok(version)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_version_new_reads_manifest() {
+        let version = Version::new().expect("Failed to read version.json");
+        assert!(!version.version.is_empty());
+        assert!(!version.build_hash.is_empty());
+        assert!(!version.build_date.is_empty());
+    }
+}
