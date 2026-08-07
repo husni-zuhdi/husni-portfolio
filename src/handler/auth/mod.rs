@@ -17,6 +17,9 @@ use tracing::info;
 use tracing::{debug, error, warn};
 use urlencoding::decode as url_decode;
 
+/// Name of the JWT auth cookie as it appears in the `Cookie` header.
+const JWT_COOKIE_NAME: &str = "token=";
+
 /// Take request body String from POST login to get email and password
 fn process_login_body(body: &str) -> Option<(String, String)> {
     // Initialize fields
@@ -38,7 +41,26 @@ fn process_login_body(body: &str) -> Option<(String, String)> {
     Some((email, password))
 }
 
-/// Take HeaderMap to verify the auth headers
+/// Extract a cookie value by name from a `Cookie` header.
+///
+/// The header is split on `"; "` and each segment is matched with
+/// `starts_with(cookie_name)`. Matching per-segment (instead of searching for a
+/// substring) avoids false hits, e.g. `token=` must not match the
+/// `_csrf_token=` cookie.
+///
+/// Returns `None` when the cookie is absent.
+pub fn extract_cookie_from_cookies(cookie_header: &str, cookie_name: &str) -> Option<String> {
+    cookie_header
+        .split("; ")
+        .find(|c| c.starts_with(cookie_name))
+        .map(|c| c[cookie_name.len()..].to_string())
+}
+
+/// Verify the `token` cookie holds a valid JWT signed with `jwt_secret`.
+///
+/// Returns `true` only when the JWT is present, well-formed, and not expired.
+/// Missing, empty, or invalid tokens return `false` (resulting in a 401).
+/// The `token` cookie is read via [`extract_cookie_from_cookies`].
 pub fn is_auth_verified(header: HeaderMap, jwt_secret: &str) -> bool {
     let mut user_agent = String::new();
     let mut token = String::new();
@@ -47,12 +69,14 @@ pub fn is_auth_verified(header: HeaderMap, jwt_secret: &str) -> bool {
         match *key {
             USER_AGENT => user_agent = value.to_str().unwrap().to_string(),
             COOKIE => {
-                let tkn = value.to_str().unwrap().split_once("token=");
-                if tkn.is_none() {
-                    debug!("No token in cookie");
-                    continue;
-                }
-                token = tkn.unwrap().1.to_string()
+                let tkn = extract_cookie_from_cookies(value.to_str().unwrap(), JWT_COOKIE_NAME);
+                match tkn {
+                    Some(v) => token = v,
+                    None => {
+                        debug!("No token in cookies");
+                        continue;
+                    }
+                };
             }
             _ => {
                 debug!("Unrecognized key/value: {:?}/{:?}", key, value);
@@ -162,5 +186,172 @@ pub fn verify_jwt(token: &str, secret: &str) -> bool {
             warn!("Failed to verify JWT Token. {:?}", e);
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::handler::auth::csrf::CSRF_COOKIE_NAME;
+    use axum::http::HeaderValue;
+
+    const SECRET: &str = "test-secret";
+
+    fn insert_cookie(headers: &mut HeaderMap, cookie: &str) {
+        if !cookie.is_empty() {
+            headers.insert(COOKIE, HeaderValue::from_str(cookie).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_extract_csrf_and_jwt_from_cookies_found() {
+        let cookies = "_csrf_token=abc123; token=jwt456";
+        let csrf = extract_cookie_from_cookies(cookies, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookies, JWT_COOKIE_NAME);
+        assert_eq!(csrf, Some("abc123".to_string()));
+        assert_eq!(jwt, Some("jwt456".to_string()));
+    }
+
+    #[test]
+    fn test_extract_cookies_token_first() {
+        let cookies = "token=jwt456; _csrf_token=abc123";
+        let csrf = extract_cookie_from_cookies(cookies, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookies, JWT_COOKIE_NAME);
+        assert_eq!(csrf, Some("abc123".to_string()));
+        assert_eq!(jwt, Some("jwt456".to_string()));
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_missing() {
+        let cookie = "token=jwt456";
+        let csrf = extract_cookie_from_cookies(cookie, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookie, JWT_COOKIE_NAME);
+        assert_eq!(csrf, None);
+        assert_eq!(jwt, Some("jwt456".to_string()));
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_empty() {
+        let cookie = "";
+        let csrf = extract_cookie_from_cookies(cookie, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookie, JWT_COOKIE_NAME);
+        assert_eq!(csrf, None);
+        assert_eq!(jwt, None);
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_first_position() {
+        let cookie = "_csrf_token=abc123";
+        let csrf = extract_cookie_from_cookies(cookie, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookie, JWT_COOKIE_NAME);
+        assert_eq!(jwt, None);
+        assert_eq!(csrf, Some("abc123".to_string()));
+    }
+
+    #[test]
+    fn test_extract_cookies_prefix_safe() {
+        let cookies = "token_abc=xyz; _csrf_token=def";
+        let jwt = extract_cookie_from_cookies(cookies, JWT_COOKIE_NAME);
+        let csrf = extract_cookie_from_cookies(cookies, CSRF_COOKIE_NAME);
+        assert_eq!(jwt, None);
+        assert_eq!(csrf, Some("def".to_string()));
+    }
+
+    #[test]
+    fn test_create_jwt_structure() {
+        let token = create_jwt(SECRET).expect("should create a JWT");
+        assert_eq!(token.split('.').count(), 3);
+    }
+
+    #[test]
+    fn test_verify_jwt_valid_token() {
+        let token = create_jwt(SECRET).unwrap();
+        assert!(verify_jwt(&token, SECRET));
+    }
+
+    #[test]
+    fn test_verify_jwt_empty_token() {
+        assert!(!verify_jwt("", SECRET));
+    }
+
+    #[test]
+    fn test_verify_jwt_garbage_token() {
+        assert!(!verify_jwt("not.a.jwt", SECRET));
+    }
+
+    #[test]
+    fn test_verify_jwt_wrong_secret() {
+        let token = create_jwt(SECRET).unwrap();
+        assert!(!verify_jwt(&token, "different-secret"));
+    }
+
+    #[test]
+    fn test_verify_jwt_expired_token() {
+        let now = chrono::Utc::now().timestamp() as usize;
+        let expired_claims = Claims {
+            exp: now.saturating_sub(3600),
+            iat: now.saturating_sub(7200),
+        };
+        let token = jwt_encode(
+            &Header::default(),
+            &expired_claims,
+            &EncodingKey::from_secret(SECRET.as_ref()),
+        )
+        .unwrap();
+        assert!(!verify_jwt(&token, SECRET));
+    }
+
+    #[test]
+    fn test_verify_jwt_tampered_token() {
+        let token = create_jwt(SECRET).unwrap();
+        let mut bytes = token.into_bytes();
+        let last = bytes.last_mut().unwrap();
+        *last = if *last == b'X' { b'Y' } else { b'X' };
+        let tampered = String::from_utf8(bytes).unwrap();
+        assert!(!verify_jwt(&tampered, SECRET));
+    }
+
+    #[test]
+    fn test_is_auth_verified_valid_token_first() {
+        let token = create_jwt(SECRET).unwrap();
+        let mut headers = HeaderMap::new();
+        insert_cookie(&mut headers, &format!("token={token}; _csrf_token=abc123"));
+        assert!(is_auth_verified(headers, SECRET));
+    }
+
+    #[test]
+    fn test_is_auth_verified_csrf_first() {
+        let token = create_jwt(SECRET).unwrap();
+        let mut headers = HeaderMap::new();
+        insert_cookie(&mut headers, &format!("_csrf_token=abc123; token={token}"));
+        assert!(is_auth_verified(headers, SECRET));
+    }
+
+    #[test]
+    fn test_is_auth_verified_missing_token_cookie() {
+        let mut headers = HeaderMap::new();
+        insert_cookie(&mut headers, "_csrf_token=abc123");
+        assert!(!is_auth_verified(headers, SECRET));
+    }
+
+    #[test]
+    fn test_is_auth_verified_no_cookie_header() {
+        let headers = HeaderMap::new();
+        assert!(!is_auth_verified(headers, SECRET));
+    }
+
+    #[test]
+    fn test_is_auth_verified_garbage_token() {
+        let mut headers = HeaderMap::new();
+        insert_cookie(&mut headers, "token=garbage; _csrf_token=abc123");
+        assert!(!is_auth_verified(headers, SECRET));
+    }
+
+    #[test]
+    fn test_is_auth_verified_wrong_secret() {
+        let token = create_jwt(SECRET).unwrap();
+        let mut headers = HeaderMap::new();
+        insert_cookie(&mut headers, &format!("token={token}; _csrf_token=abc123"));
+        assert!(!is_auth_verified(headers, "different-secret"));
     }
 }

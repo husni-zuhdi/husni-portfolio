@@ -115,6 +115,7 @@ sequenceDiagram
 | File | Change |
 |---|---|---|
 | `src/handler/auth/csrf.rs` | New module: `generate_csrf_token()` (32 random bytes via `ring`), `csrf_set_cookie_header()`, `csrf_clear_cookie_header()`, `verify_csrf_token()` |
+| `src/handler/auth/mod.rs` | Shared `extract_cookie_from_cookies()` used by `is_auth_verified` (JWT cookie) and `verify_csrf_token` (CSRF cookie) — splits the `Cookie` header on `"; "` and matches each segment by prefix, so `token=` never swallows `_csrf_token=` |
 | `src/handler/auth/operations.rs` | `post_login`: calls `generate_csrf_token()` + `csrf_set_cookie_header()`. `delete_logout`: calls `csrf_clear_cookie_header()` |
 | `src/handler/admin/*/operations.rs` | Call `verify_csrf_token(&headers)` at the top of every POST/PUT/DELETE handler |
 | `templates/admin/admin_base.html` | Add `htmx:configRequest` handler that reads `_csrf_token` cookie and sets `X-CSRF-Token` header |
@@ -147,21 +148,36 @@ yet authenticated — there is no session to forge. CSRF protection applies only
 authenticated state-changing requests.
 
 ## Testing
-Unit tests live in `src/handler/auth/csrf.rs` under `#[cfg(test)] mod test`:
+Unit tests live in `src/handler/auth/csrf.rs` and `src/handler/auth/mod.rs` under
+`#[cfg(test)] mod test`.
+
+`src/handler/auth/csrf.rs`:
 - `test_generate_csrf_token_length` — output is 64 hex chars
 - `test_generate_csrf_token_unique` — two calls produce different tokens
 - `test_generate_csrf_token_hex_only` — output contains only `[0-9a-f]`
 - `test_csrf_set_cookie_header_format` — correct Set-Cookie format
 - `test_csrf_clear_cookie_header_format` — correct clear-Cookie format
-- `test_extract_csrf_from_cookies_found` — extracts token from cookie
-- `test_extract_csrf_from_cookies_missing` — returns `None` when absent
-- `test_extract_csrf_from_cookies_empty` — returns `None` on empty string
-- `test_extract_csrf_from_cookies_first_position` — works when CSRF is the only cookie
 - `test_verify_csrf_token_match` — returns `true` when cookie == header
 - `test_verify_csrf_token_mismatch` — returns `false` when they differ
 - `test_verify_csrf_token_missing_cookie` — returns `false` with no cookie
 - `test_verify_csrf_token_missing_header` — returns `false` with no header
 - `test_verify_csrf_token_multiple_cookies` — works among other cookies
+
+`src/handler/auth/mod.rs` (shared `extract_cookie_from_cookies` helper + auth checks):
+- `test_extract_csrf_and_jwt_from_cookies_found` — extracts both cookies from one header
+- `test_extract_cookies_token_first` — extracts when `token=` precedes `_csrf_token=` (login order)
+- `test_extract_csrf_from_cookies_missing` — returns `None` when a cookie is absent
+- `test_extract_csrf_from_cookies_empty` — returns `None` on empty string
+- `test_extract_csrf_from_cookies_first_position` — works when CSRF is the only cookie
+- `test_extract_cookies_prefix_safe` — `token=` does not match `token_*` cookie names
+- `test_create_jwt_structure` — token has 3 dot-separated segments
+- `test_verify_jwt_*` — valid, empty, garbage, wrong-secret, expired, and tampered token paths
+- `test_is_auth_verified_valid_token_first` — true with `token=<jwt>; _csrf_token=<csrf>` (regression: the JWT cookie must not swallow the CSRF cookie)
+- `test_is_auth_verified_csrf_first` — true with reversed cookie order
+- `test_is_auth_verified_missing_token_cookie` — false when only `_csrf_token` is present (no panic)
+- `test_is_auth_verified_no_cookie_header` — false with no `Cookie` header
+- `test_is_auth_verified_garbage_token` — false on a malformed token
+- `test_is_auth_verified_wrong_secret` — false with a mismatched secret
 
 ## References
 - [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)

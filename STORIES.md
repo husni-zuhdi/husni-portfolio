@@ -10,16 +10,6 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     
 ## TODO
 ### User stories
-- [ ] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
-    - We can improve our web speed by introducing in-memory caching on server-side.
-    - Currently, `/blogs` took around 500ms to load while `/talks` took around 300ms.
-    - `/blogs/BLOG_ID` took around 200-300ms to load depend on the images and another files.
-    - I see some discussion in the Warframe Developer Discord channel about warframe-rs. They are using [moka](https://github.com/moka-rs/moka) for their API. I think we can explore this crate.
-    - Step:
-        1. Learn about [moka](https://github.com/moka-rs/moka) crate.
-        2. Try to implement it (maybe on) `handler` module.
-        3. If it works and can improve our website loading time. Let's be bulish lol.
-        4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
 - [ ] As an User, I need to zoom images to have a better view.
     - I can see images in mobile and I need to zoom it manually.
     - I think creating a zoom feature by clicking an image should do.
@@ -34,6 +24,11 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - I think it's better to have some kind of *versioning* for profile.
     - For example by set the `datetime` as profile_id. We can roll-back or see the historical profile.
     - The versioning can be implemented in another features like `Blogs` too.
+- [ ] As an Admin, I want to have a better experience to write the blog in the admin website.
+    - In the blogs admin management page, the user still have a lot of caveat to write their blogs directly in the admin page
+        - Use double slash "\" to add in-line math notation
+        - Wrap table inside a div with "overflow-x: auto;" style to allow table overflow
+        - Use """ to create a single double quote
 
 ### Engineering stories
 - [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
@@ -51,6 +46,18 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - Currently uses default `PeerIpKeyExtractor` which sees the load balancer IP.
 
 ## 0.3.5 2026-07-30
+### User Stories
+- [x] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
+    - We can improve our web speed by introducing in-memory caching on server-side.
+    - Currently, `/blogs` took around 500ms to load while `/talks` took around 300ms.
+    - `/blogs/BLOG_ID` took around 200-300ms to load depend on the images and another files.
+    - I see some discussion in the Warframe Developer Discord channel about warframe-rs. They are using [moka](https://github.com/moka-rs/moka) for their API. I think we can explore this crate.
+    - Step:
+        1. Learn about [moka](https://github.com/moka-rs/moka) crate.
+        2. Try to implement it (maybe on) `handler` module.
+        3. If it works and can improve our website loading time. Let's be bulish lol.
+        4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
+
 ### Engineering stories
 - [x] As an Engineer, I want to protect the admin endpoints against CSRF attacks.
     - Implemented Double-Submit Cookie pattern with `ring`-based 32-byte random tokens.
@@ -64,12 +71,20 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - Background cleanup task via `limiter.retain_recent()` every 60s.
     - Known limitation: uses `PeerIpKeyExtractor` which is incorrect behind Cloud Run (sees LB IP).
 - [x] As an Engineer, I want unit tests for the CSRF module.
-    - 14 pure-function tests in `src/handler/auth/csrf.rs` covering token generation, cookie formatting, token extraction, and verification (match, mismatch, missing cookie/header, multiple cookies).
+    - `src/handler/auth/csrf.rs`: token generation, cookie formatting, and `verify_csrf_token` (match, mismatch, missing cookie/header, multiple cookies).
+    - `src/handler/auth/mod.rs`: shared `extract_cookie_from_cookies()` tests (found, missing, empty, first-position, token-first, prefix-safe).
+- [x] As an Engineer, I want to fix the JWT cookie parsing that broke admin access after the CSRF feature.
+    - `is_auth_verified` used `split_once("token=")` on the whole `Cookie` header, which swallowed the `_csrf_token` cookie into the JWT and failed base64url decoding (`InvalidByte(43, 59)`).
+    - Added a shared `extract_cookie_from_cookies()` helper (segment-based `starts_with` matching) used by both `is_auth_verified` and `verify_csrf_token`.
+    - Added `verify_jwt`/`is_auth_verified`/`create_jwt` unit tests covering valid, empty, garbage, wrong-secret, expired, tampered, missing-cookie, no-cookie, and reversed-cookie-order cases.
+    - New spec `specs/6-jwt-authentication.md` documents the login flow, cookie layout, and verification.
 
-### Found bugs during spec audit
+### Bugs
 - [ ] **CI not triggered on PRs**: `.github/workflows/rust-ci.yml` has `pull_request` indented under `push` instead of at the same level. PRs don't trigger CI.
 - [ ] **Cache panic at startup**: `state.rs:152` does `config.cache_ttl.unwrap()` — if `CACHE_TYPE` is set but `CACHE_TTL` is omitted, the app panics at startup instead of providing a default or returning an error.
 - [ ] **Rate limiter key extractor**: Uses default `PeerIpKeyExtractor`, which sees the load balancer IP behind Cloud Run. Should switch to `SmartIpKeyExtractor` for proxy-aware IP extraction.
+- [x] Unable to access admin page due to regression from CSFR feature.
+    - Fixed in `22e3a4b`: `is_auth_verified` now parses cookies per-segment via the shared `extract_cookie_from_cookies()` instead of `split_once("token=")`.
 
 ## 0.3.3 2025-10-24
 ### Engineering stories

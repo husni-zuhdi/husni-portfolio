@@ -2,8 +2,10 @@ use axum::http::{header::COOKIE, HeaderMap, HeaderName};
 use ring::rand::{SecureRandom, SystemRandom};
 use tracing::warn;
 
-const CSRF_COOKIE_NAME: &str = "_csrf_token=";
-const CSRF_HEADER_NAME: HeaderName = HeaderName::from_static("x-csrf-token");
+use crate::handler::auth::extract_cookie_from_cookies;
+
+pub const CSRF_COOKIE_NAME: &str = "_csrf_token=";
+pub const CSRF_HEADER_NAME: HeaderName = HeaderName::from_static("x-csrf-token");
 
 /// Generate 32 crypto random bytes as a 64-char hex string
 pub fn generate_csrf_token() -> String {
@@ -26,19 +28,11 @@ pub fn csrf_clear_cookie_header() -> String {
     "_csrf_token=; Secure; SameSite=Strict; Path=/; Max-Age=0".to_string()
 }
 
-/// Extract CSRF token from Cookie header
-fn extract_csrf_from_cookies(cookie_header: &str) -> Option<String> {
-    cookie_header
-        .split("; ")
-        .find(|c| c.starts_with(CSRF_COOKIE_NAME))
-        .map(|c| c[CSRF_COOKIE_NAME.len()..].to_string())
-}
-
 pub fn verify_csrf_token(headers: &HeaderMap) -> bool {
     let cookie_val = headers
         .get(COOKIE)
         .and_then(|v| v.to_str().ok())
-        .and_then(extract_csrf_from_cookies);
+        .and_then(|cookies| extract_cookie_from_cookies(cookies, CSRF_COOKIE_NAME));
 
     let header_val = headers
         .get(&CSRF_HEADER_NAME)
@@ -95,34 +89,6 @@ mod test {
             header,
             "_csrf_token=; Secure; SameSite=Strict; Path=/; Max-Age=0"
         );
-    }
-
-    #[test]
-    fn test_extract_csrf_from_cookies_found() {
-        let cookie = "_csrf_token=abc123; token=jwt456";
-        let result = extract_csrf_from_cookies(cookie);
-        assert_eq!(result, Some("abc123".to_string()));
-    }
-
-    #[test]
-    fn test_extract_csrf_from_cookies_missing() {
-        let cookie = "token=jwt456";
-        let result = extract_csrf_from_cookies(cookie);
-        assert_eq!(result, None);
-    }
-
-    #[test]
-    fn test_extract_csrf_from_cookies_empty() {
-        let cookie = "";
-        let result = extract_csrf_from_cookies(cookie);
-        assert_eq!(result, None);
-    }
-
-    #[test]
-    fn test_extract_csrf_from_cookies_first_position() {
-        let cookie = "_csrf_token=abc123";
-        let result = extract_csrf_from_cookies(cookie);
-        assert_eq!(result, Some("abc123".to_string()));
     }
 
     #[test]
