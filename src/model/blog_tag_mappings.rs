@@ -41,3 +41,17 @@ pub enum BlogTagMappingCommandStatus {
     CacheInserted,
     CacheInvalidated,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_blog_tag_mapping_data_size() {
+        let mapping = BlogTagMapping {
+            blog_id: 1,
+            tag_id: 2,
+        };
+        assert!(mapping.data_size() > 0);
+    }
+}

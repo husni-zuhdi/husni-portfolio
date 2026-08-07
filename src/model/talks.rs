@@ -173,3 +173,175 @@ pub enum TalkCommandStatus {
     CacheInserted,
     CacheInvalidated,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn sample_talk() -> Talk {
+        Talk {
+            id: 1,
+            name: "Talk 1".to_string(),
+            date: "2024-01-01".to_string(),
+            media_link: Some("https://example.com/media".to_string()),
+            org_name: Some("Org".to_string()),
+            org_link: Some("https://example.com/org".to_string()),
+        }
+    }
+
+    fn talk_with_empty_media_org() -> Talk {
+        Talk {
+            id: 2,
+            name: "Talk 2".to_string(),
+            date: "2024-02-02".to_string(),
+            media_link: None,
+            org_name: None,
+            org_link: None,
+        }
+    }
+
+    #[test]
+    fn test_talk_to_template() {
+        let template = sample_talk().to_template();
+        assert_eq!(template.id, 1);
+        assert_eq!(template.name, "Talk 1");
+        assert_eq!(template.date, "2024-01-01");
+        assert_eq!(template.media_link, "https://example.com/media");
+        assert_eq!(template.org_name, "Org");
+        assert_eq!(template.org_link, "https://example.com/org");
+    }
+
+    #[test]
+    fn test_talk_to_admin_template() {
+        let talk = sample_talk();
+        let template = talk.to_admin_template();
+        assert_eq!(template.id, talk.id);
+        assert_eq!(template.name, talk.name);
+        assert_eq!(template.date, talk.date);
+        assert_eq!(template.media_link, talk.media_link.unwrap());
+        assert_eq!(template.org_name, talk.org_name.unwrap());
+        assert_eq!(template.org_link, talk.org_link.unwrap());
+    }
+
+    #[test]
+    fn test_talk_sanitize_talk_media_org_fills_empty_values() {
+        let sanitized = talk_with_empty_media_org().sanitize_talk_media_org();
+        assert_eq!(sanitized.media_link, Some(String::new()));
+        assert_eq!(sanitized.org_name, Some(String::new()));
+        assert_eq!(sanitized.org_link, Some(String::new()));
+        assert_eq!(sanitized.id, 2);
+        assert_eq!(sanitized.name, "Talk 2");
+        assert_eq!(sanitized.date, "2024-02-02");
+    }
+
+    #[test]
+    fn test_talk_sanitize_talk_media_org_keeps_present_values() {
+        let talk = sample_talk();
+        let sanitized = talk.sanitize_talk_media_org();
+        assert_eq!(sanitized.media_link, talk.media_link);
+        assert_eq!(sanitized.org_name, talk.org_name);
+        assert_eq!(sanitized.org_link, talk.org_link);
+    }
+
+    #[test]
+    fn test_talk_data_size() {
+        assert!(sample_talk().data_size() > 0);
+    }
+
+    #[test]
+    fn test_talks_sanitize() {
+        let talks = Talks {
+            talks: vec![sample_talk(), talk_with_empty_media_org()],
+        };
+        let sanitized = talks.sanitize();
+        assert_eq!(sanitized.talks.len(), 2);
+        assert_eq!(
+            sanitized.talks[0].media_link,
+            Some("https://example.com/media".to_string())
+        );
+        assert_eq!(sanitized.talks[1].media_link, Some(String::new()));
+        assert_eq!(sanitized.talks[1].org_name, Some(String::new()));
+        assert_eq!(sanitized.talks[1].org_link, Some(String::new()));
+    }
+
+    #[test]
+    fn test_talks_to_template() {
+        let template = Talks {
+            talks: vec![sample_talk()],
+        }
+        .to_template();
+        assert_eq!(template.talks.len(), 1);
+        assert_eq!(template.talks[0].id, 1);
+        assert_eq!(template.talks[0].name, "Talk 1");
+    }
+
+    #[test]
+    fn test_talks_to_admin_list_template() {
+        let template = Talks {
+            talks: vec![sample_talk()],
+        }
+        .to_admin_list_template();
+        assert_eq!(template.talks.len(), 1);
+        assert_eq!(template.talks[0].name, "Talk 1");
+    }
+
+    #[test]
+    fn test_talks_params_sanitize_defaults() {
+        let params = TalksParams {
+            start: None,
+            end: None,
+        };
+        assert_eq!(
+            params.sanitize(),
+            TalksParams {
+                start: Some(0),
+                end: Some(100)
+            }
+        );
+    }
+
+    #[test]
+    fn test_talks_params_sanitize_negative_values() {
+        let params = TalksParams {
+            start: Some(-5),
+            end: Some(-1),
+        };
+        assert_eq!(
+            params.sanitize(),
+            TalksParams {
+                start: Some(0),
+                end: Some(100)
+            }
+        );
+    }
+
+    #[test]
+    fn test_talks_params_sanitize_valid_values() {
+        let params = TalksParams {
+            start: Some(5),
+            end: Some(20),
+        };
+        assert_eq!(
+            params.sanitize(),
+            TalksParams {
+                start: Some(5),
+                end: Some(20)
+            }
+        );
+    }
+
+    #[test]
+    fn test_talks_params_sanitize_mixed() {
+        let params = TalksParams {
+            start: Some(5),
+            end: None,
+        };
+        assert_eq!(
+            params.sanitize(),
+            TalksParams {
+                start: Some(5),
+                end: Some(100)
+            }
+        );
+    }
+}

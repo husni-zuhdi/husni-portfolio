@@ -19,3 +19,16 @@ pub async fn get_profile() -> Html<String> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_get_profile_renders_template() {
+        let html = get_profile().await;
+        assert!(html
+            .0
+            .contains("Husni Naufal Zuhdi - Site Reliability Engineer"));
+    }
+}

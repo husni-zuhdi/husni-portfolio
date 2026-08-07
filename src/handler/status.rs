@@ -71,3 +71,38 @@ pub fn get_500_internal_server_error() -> Html<String> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_get_401_unauthorized_renders_template() {
+        let html = get_401_unauthorized().await;
+        assert!(html.0.contains("401"));
+        assert!(html.0.contains("You are unable to access this content"));
+    }
+
+    #[tokio::test]
+    async fn test_get_404_not_found_renders_template() {
+        let html = get_404_not_found().await;
+        assert!(html.0.contains("404"));
+        assert!(html
+            .0
+            .contains("Sorry, we couldn’t find the page you’re looking for"));
+    }
+
+    #[tokio::test]
+    async fn test_get_418_i_am_a_teapot_renders_template() {
+        let html = get_418_i_am_a_teapot().await;
+        assert!(html.0.contains("418"));
+        assert!(html.0.contains("I am a teapot"));
+    }
+
+    #[test]
+    fn test_get_500_internal_server_error_renders_template() {
+        let html = get_500_internal_server_error();
+        assert!(html.0.contains("500"));
+        assert!(html.0.contains("Internal Server Error"));
+    }
+}
