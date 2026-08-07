@@ -16,9 +16,9 @@ hooks = [
   { id = "djlint", name = "djlint (HTML)", language = "system", entry = "djlint --reformat --profile askama", types_or = ["html"] },
 ]
 
-[[repos]]
-repo = "https://github.com/rbubley/mirrors-prettier"
-rev = "v3.5.2"
-hooks = [
-  { id = "prettier", types_or = ["css", "dockerfile"] },
-]
+# [[repos]]
+# repo = "https://github.com/rbubley/mirrors-prettier"
+# rev = "v3.5.2"
+# hooks = [
+#   { id = "prettier", types_or = ["css", "dockerfile"] },
+# ]
