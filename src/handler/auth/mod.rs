@@ -17,6 +17,8 @@ use tracing::info;
 use tracing::{debug, error, warn};
 use urlencoding::decode as url_decode;
 
+const JWT_COOKIE_NAME: &str = "token=";
+
 /// Take request body String from POST login to get email and password
 fn process_login_body(body: &str) -> Option<(String, String)> {
     // Initialize fields
@@ -38,6 +40,14 @@ fn process_login_body(body: &str) -> Option<(String, String)> {
     Some((email, password))
 }
 
+/// Extract CSRF token from Cookie header
+pub fn extract_cookie_from_cookies(cookie_header: &str, cookie_name: &str) -> Option<String> {
+    cookie_header
+        .split("; ")
+        .find(|c| c.starts_with(cookie_name))
+        .map(|c| c[cookie_name.len()..].to_string())
+}
+
 /// Take HeaderMap to verify the auth headers
 pub fn is_auth_verified(header: HeaderMap, jwt_secret: &str) -> bool {
     let mut user_agent = String::new();
@@ -47,12 +57,14 @@ pub fn is_auth_verified(header: HeaderMap, jwt_secret: &str) -> bool {
         match *key {
             USER_AGENT => user_agent = value.to_str().unwrap().to_string(),
             COOKIE => {
-                let tkn = value.to_str().unwrap().split_once("token=");
-                if tkn.is_none() {
-                    debug!("No token in cookie");
-                    continue;
-                }
-                token = tkn.unwrap().1.to_string()
+                let tkn = extract_cookie_from_cookies(value.to_str().unwrap(), JWT_COOKIE_NAME);
+                match tkn {
+                    Some(v) => token = v,
+                    None => {
+                        debug!("No token in cookies");
+                        continue;
+                    }
+                };
             }
             _ => {
                 debug!("Unrecognized key/value: {:?}/{:?}", key, value);
@@ -162,5 +174,47 @@ pub fn verify_jwt(token: &str, secret: &str) -> bool {
             warn!("Failed to verify JWT Token. {:?}", e);
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::handler::auth::csrf::CSRF_COOKIE_NAME;
+
+    #[test]
+    fn test_extract_csrf_and_jwt_from_cookies_found() {
+        let cookies = "_csrf_token=abc123; token=jwt456";
+        let csrf = extract_cookie_from_cookies(cookies, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookies, JWT_COOKIE_NAME);
+        assert_eq!(csrf, Some("abc123".to_string()));
+        assert_eq!(jwt, Some("jwt456".to_string()));
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_missing() {
+        let cookie = "token=jwt456";
+        let csrf = extract_cookie_from_cookies(cookie, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookie, JWT_COOKIE_NAME);
+        assert_eq!(csrf, None);
+        assert_eq!(jwt, Some("jwt456".to_string()));
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_empty() {
+        let cookie = "";
+        let csrf = extract_cookie_from_cookies(cookie, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookie, JWT_COOKIE_NAME);
+        assert_eq!(csrf, None);
+        assert_eq!(jwt, None);
+    }
+
+    #[test]
+    fn test_extract_csrf_from_cookies_first_position() {
+        let cookie = "_csrf_token=abc123";
+        let csrf = extract_cookie_from_cookies(cookie, CSRF_COOKIE_NAME);
+        let jwt = extract_cookie_from_cookies(cookie, JWT_COOKIE_NAME);
+        assert_eq!(jwt, None);
+        assert_eq!(csrf, Some("abc123".to_string()));
     }
 }
