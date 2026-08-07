@@ -78,6 +78,11 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - Added a shared `extract_cookie_from_cookies()` helper (segment-based `starts_with` matching) used by both `is_auth_verified` and `verify_csrf_token`.
     - Added `verify_jwt`/`is_auth_verified`/`create_jwt` unit tests covering valid, empty, garbage, wrong-secret, expired, tampered, missing-cookie, no-cookie, and reversed-cookie-order cases.
     - New spec `specs/6-jwt-authentication.md` documents the login flow, cookie layout, and verification.
+- [x] As an Engineer, I want to increase unit test coverage for models and static handlers.
+    - Added tests for `model::talks`, `model::tags`, `model::blogs`, `model::blog_tag_mappings`, `model::version`, `handler::status`, and `handler::profile`.
+    - Test count went from 50 to 92.
+    - Fixed `BlogsParams::sanitize` and `TagsSearchParams::sanitize` copy-paste bug where `start` was derived from `end` (start always equaled end).
+    - Known quirks documented in tests: `sanitize_query` uses `Regex::replace` (only first non-alphanumeric run) and strips dashes despite the doc comment; `BlogsParams`/`TagsSearchParams` pass negative pagination values through while `TalksParams`/`TagsListParams` clamp them to defaults.
 
 ### Bugs
 - [ ] **CI not triggered on PRs**: `.github/workflows/rust-ci.yml` has `pull_request` indented under `push` instead of at the same level. PRs don't trigger CI.
