@@ -71,13 +71,20 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - Background cleanup task via `limiter.retain_recent()` every 60s.
     - Known limitation: uses `PeerIpKeyExtractor` which is incorrect behind Cloud Run (sees LB IP).
 - [x] As an Engineer, I want unit tests for the CSRF module.
-    - 14 pure-function tests in `src/handler/auth/csrf.rs` covering token generation, cookie formatting, token extraction, and verification (match, mismatch, missing cookie/header, multiple cookies).
+    - `src/handler/auth/csrf.rs`: token generation, cookie formatting, and `verify_csrf_token` (match, mismatch, missing cookie/header, multiple cookies).
+    - `src/handler/auth/mod.rs`: shared `extract_cookie_from_cookies()` tests (found, missing, empty, first-position, token-first, prefix-safe).
+- [x] As an Engineer, I want to fix the JWT cookie parsing that broke admin access after the CSRF feature.
+    - `is_auth_verified` used `split_once("token=")` on the whole `Cookie` header, which swallowed the `_csrf_token` cookie into the JWT and failed base64url decoding (`InvalidByte(43, 59)`).
+    - Added a shared `extract_cookie_from_cookies()` helper (segment-based `starts_with` matching) used by both `is_auth_verified` and `verify_csrf_token`.
+    - Added `verify_jwt`/`is_auth_verified`/`create_jwt` unit tests covering valid, empty, garbage, wrong-secret, expired, tampered, missing-cookie, no-cookie, and reversed-cookie-order cases.
+    - New spec `specs/6-jwt-authentication.md` documents the login flow, cookie layout, and verification.
 
 ### Bugs
 - [ ] **CI not triggered on PRs**: `.github/workflows/rust-ci.yml` has `pull_request` indented under `push` instead of at the same level. PRs don't trigger CI.
 - [ ] **Cache panic at startup**: `state.rs:152` does `config.cache_ttl.unwrap()` — if `CACHE_TYPE` is set but `CACHE_TTL` is omitted, the app panics at startup instead of providing a default or returning an error.
 - [ ] **Rate limiter key extractor**: Uses default `PeerIpKeyExtractor`, which sees the load balancer IP behind Cloud Run. Should switch to `SmartIpKeyExtractor` for proxy-aware IP extraction.
 - [x] Unable to access admin page due to regression from CSFR feature.
+    - Fixed in `22e3a4b`: `is_auth_verified` now parses cookies per-segment via the shared `extract_cookie_from_cookies()` instead of `split_once("token=")`.
 
 ## 0.3.3 2025-10-24
 ### Engineering stories
