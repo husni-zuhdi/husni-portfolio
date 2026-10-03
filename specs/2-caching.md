@@ -1,79 +1,47 @@
-# Caching
+# In-memory caching
 
-## Goals
-Implement in-memory caching to reduce latency from DB -> App while maintaining
-data consistency by correctly implementing cache invalidation.
+**Status: Implemented.** This note describes the current code, including a known
+startup failure mode. The database remains the source of persisted content.
 
-## Criterias
-- Cache type and TTL are configurable via environment variables
-- Cache is **disabled by default** (enabled by setting `CACHE_TYPE`)
-- Public endpoints: get data, store in cache, invalidate after TTL, refresh
-- Auth-protected endpoints: immediate invalidation on add/update/delete
+Decision: [ADR-0007](../docs/adr/0007-process-local-moka-cache.md).
 
-## Usage
-The in-memory cache is suitable for the initial iteration since we don't have
-to add another infrastructure resources.
-[Moka](https://github.com/moka-rs/moka) is one of the most common cache library
-available in Rust. We can try to use this for the initial phase.
+## Behavior
 
-### Env vars
-- `CACHE_TYPE`
-    - Optional string
-    - Currently supports `InMemory`. Absent means cache is disabled.
-    - Default: `None` (disabled)
-- `CACHE_TTL`
-    - Optional number (seconds)
-    - Cache timeout duration. **Required** when `CACHE_TYPE` is set, otherwise `unwrap()` panics at startup.
-    - Default: no default (must be set if cache is enabled)
+- Caching is disabled unless `CACHE_TYPE` is set to `InMemory` (the parser also
+  accepts `inmemory`).
+- `CACHE_TTL` is a duration in seconds and is required when caching is enabled.
+  `src/state.rs` currently unwraps this setting during startup, so omitting it
+  causes a panic.
+- The Moka in-memory adapter caches Blogs, Talks, Tags, and Blog-tag mappings.
+  It is local to one running process; separate app instances do not share cache
+  entries.
+- Public reads can use cached records. Content changes made through the Admin area
+  update or invalidate the corresponding cache entries after database changes.
 
-## Flow
+## Configuration
 
-### Profile endpoint example
+| Variable | Meaning |
+|---|---|
+| `CACHE_TYPE` | Optional; `InMemory` enables the in-process cache. Any other value is treated as disabled. |
+| `CACHE_TTL` | Optional integer number of seconds; required when `CACHE_TYPE` enables caching. |
 
-```mermaid
-%% Profile request/response
-sequenceDiagram
-    User->>App: request /profile
-    App->>Cache: check cache
-    critical Cache hit
-        Cache->>App: return cached data
-    option Cache miss or expired
-        App->>Database: retrive data
-        Database->>App: return data
-        App->>Cache: set cache
-    end
-    App->>User: return /profile
+Example:
+
+```dotenv
+CACHE_TYPE=InMemory
+CACHE_TTL=3600
 ```
 
-### Talk Admin endpoint example
+## Main paths
 
-```mermaid
-%% Talk Admin GET request
-sequenceDiagram
-    User->>App: request /admin/talks
-    App->>Cache: check cache
-    critical Cache hit
-        Cache->>App: return cached data
-    option Cache miss or expired
-        App->>Database: retrive data
-        Database->>App: return data
-        App->>Cache: set cache
-    end
-    App->>User: return /admin/talks
-```
+- Cache construction and startup prefill: `src/state.rs`
+- Cache adapter: `src/cache/inmemory/`
+- Cache data-access interfaces: `src/repo/`
+- Admin area cache updates/invalidation: `src/handler/admin/`
+- Configuration parsing: `src/config.rs`
 
-```mermaid
-%% Talk Admin Add POST request
-sequenceDiagram
-    User->>App: request /admin/talks/add
-    App->>Cache: check cache
-    critical Cache hit
-        App->>Database: add new talk
-        Cache->>Cache: invalidate
-    option Cache miss or expired
-        App->>Database: add new talk
-    end
-    App->>User: return /admin/talks/add
-```
+## Known limitation
 
-## References
+When `CACHE_TYPE` enables the cache and `CACHE_TTL` is absent, application startup
+panics at `src/state.rs` while constructing the adapter. Set both variables or
+disable caching. This failure mode is tracked in `STORIES.md`.
