@@ -7,14 +7,13 @@ env:
 
 tasks:
   lint:
-    summary: Run lint with clippy
+    summary: Run CI-equivalent Clippy checks with warnings denied
     cmds:
-      # - cargo clippy -- -D clippy::pedantic -D clippy::nursery
-      - cargo clippy -- -D clippy::nursery
+      - cargo clippy --locked -- -D warnings
   test:
-    summary: Run unit test with logs
+    summary: Run all-feature tests serially, as in CI
     cmds:
-      - RUST_LOG=debug cargo test --all-features -- --test-threads=1
+      - RUST_LOG=debug cargo test --all-features --locked -- --test-threads=1
   coverage:
     summary: Run tarpaulin for code coverage and produce html output
     cmds:
@@ -24,28 +23,13 @@ tasks:
     cmds:
       - cargo fmt
   audit:
-    summary: Run rust audit with cargo-deny
+    summary: Run CI-equivalent cargo-deny checks
     cmds:
       - cargo deny check all
   run:
     summary: Run application with hot-reload
     cmds:
       - cargo watch -s 'tailwindcss -i ./statics/input.css -o ./statics/styles.css && cargo run -- -release'
-
-  sqlx-create:
-    summary: Create db with sqlx
-    cmds:
-      - sqlx db create --database-url $DATABASE_URL
-  sqlx-migrate-run:
-    summary: Migrate db with sqlx
-    cmds:
-      - sqlx migrate run --source internal/migrations --database-url $DATABASE_URL
-  sqlx-migrate-add:
-    summary: Creata new migration db with sqlx. Please pass migration description too
-    vars:
-      DESCRIPTION: '{{index .MATCH 0}}'
-    cmds:
-      - sqlx migrate add --source internal/migrations --database_url $DATABASE_URL {{.DESCRIPTION}}
 
   docker-build:
     summary: Build Docker Image
