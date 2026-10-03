@@ -1,37 +1,29 @@
-# Github Actions specification
+# GitHub Actions
 
-## Goals
-I want Github Actions to ease my development experience by handling test, security audit, testing, and release.
+**Status: Implemented.** This note describes the current workflow triggers and
+checks. The YAML files in `.github/workflows/` are authoritative.
 
-## Usage
-- rust-audit: Do rust security audit when a new **PR** created or **scheduled**
-- rust-ci: Do CI things when a new **PR** created
-    - Linting
-    - Formatting check
-    - Unit Testing with cargo and nextest
-    - Code coverage
-- rust-push-build: Build docker image and push it to container registry when a new **tag** created
-- rust-release: Bump, update changelog, and release a new version when a new **PR merged to main**
+## Workflows
 
-## Flow
+| Workflow | Trigger | Checks or action |
+|---|---|---|
+| `rust-ci.yml` | Pull requests and non-`main` branch pushes affecting Rust manifests, Rust source, Askama templates, CI/task configuration, or `env.example` | Serial Cargo tests, Nextest, formatting, Clippy, and coverage |
+| `rust-audit.yml` | Weekly schedule; pull requests and non-`main` pushes affecting Cargo dependencies, `deny.toml`, or the audit workflow | `cargo-deny` dependency/license/advisory checks |
+| `rust-release.yml` | Pushes to `main` | Runs release-plz to open/update a release pull request |
+| `rust-push-build.yml` | Any pushed tag | Builds and pushes the Docker image to Google Container Registry |
 
-### A new PR created
-```mermaid
-flowchart LR
-    A[PR created] -->|Trigger| B[Rust Security Audit]
-    A[PR created] -->|Trigger| C[Rust CI]
-    B --> D{Merge to main?}
-    C --> D{Merge to main?}
-    D --> |Yes| E[Merged]
-    D --> |No| F[Closed]
-    E --> G[Rust Release]
-    G --> |Create a Release PR| A
-```
+The Rust CI and audit pull-request triggers are top-level `on.pull_request`
+entries. Their path filters mean unrelated documentation-only changes do not run
+those workflows.
 
-### A new tag created
-```mermaid
-flowchart LR
-    A[Release PR] --> |Merged to main| B
-    B[(Manually) Tag Created] --> |Trigger| C[Rust Push Build]
-```
+## Release notes
 
+The release workflow is configured with `changelog_update = false` in
+`release-plz.toml`; it does not update `CHANGELOG.md` automatically. Keep the
+changelog aligned with tagged releases and unreleased behavior changes.
+
+## Verification
+
+The local CI-equivalent Rust checks are documented in the repository root
+[`AGENTS.md`](../AGENTS.md). Test commands use serial execution because some
+configuration tests mutate process-wide environment variables.
