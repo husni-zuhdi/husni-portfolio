@@ -12,18 +12,6 @@ on:
       - '**/Cargo.lock'
       - 'deny.toml'
       - '.github/workflows/rust-audit.yml'
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    paths:
-      - 'Cargo.toml'
-      - '**/Cargo.toml'
-      - 'Cargo.lock'
-      - '**/Cargo.lock'
-      - 'deny.toml'
-      - '.github/workflows/rust-audit.yml'
 
 jobs:
   rust_security_audit:
