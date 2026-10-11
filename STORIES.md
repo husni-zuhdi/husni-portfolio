@@ -18,34 +18,34 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - As a website creator, I just want to make something cool. I don't care what others think of me.
     - I just want to make something that worth my time and effort!
 
-### Admin stories
-- [ ] As an Admin, I want to have a page to update my profile.
-    - In the admin management page, we can add `Profile` section to edit profile.
+### Administrator stories
+- [ ] As an Administrator, I want to have a page to update my profile.
+    - In the Admin area, we can add a `Profile` section to edit the profile.
     - I think it's better to have some kind of *versioning* for profile.
     - For example by set the `datetime` as profile_id. We can roll-back or see the historical profile.
     - The versioning can be implemented in another features like `Blogs` too.
-- [ ] As an Admin, I want to have a better experience to write the blog in the admin website.
-    - In the blogs admin management page, the user still have a lot of caveat to write their blogs directly in the admin page
+- [ ] As an Administrator, I want a better experience writing Blogs in the Admin area.
+    - The Blogs section of the Admin area still has many caveats for writing content directly.
         - Use double slash "\" to add in-line math notation
         - Wrap table inside a div with "overflow-x: auto;" style to allow table overflow
         - Use """ to create a single double quote
 
 ### Engineering stories
-- [ ] As an Engineer, I want to have a nice CHANGELOG.md file to track my changes and versioning.
-    - We can use [git-cliff](https://git-cliff.org/) but we need to upgrade the rust version to 1.8.3 or newer
+- [x] As an Engineer, I want to have a useful CHANGELOG.md file to track releases.
+    - Release entries now cover the tagged 0.3.4 and 0.3.5 releases and current unreleased work.
 - [ ] As an Engineer, I want to increase my code quiality by implementing test.
     - We have a bit of unit test for `config` and `state`.
     - I think we want to gradually increase the test coverage.
 - [ ] As an Engineer, I want to deprecate the `memory` database.
     - local `sqlite` database is far supperior for development
-- [ ] As an Engineer, I want to fix the PR CI trigger in `.github/workflows/rust-ci.yml`.
-    - `pull_request` is indented under `push`, making it a no-op subkey.
+- [x] As an Engineer, I want CI and the dependency audit to run for relevant pull requests.
+    - Both workflows now define `pull_request` as a top-level trigger and include follow-up commits.
 - [ ] As an Engineer, I want to fix the cache startup panic in `state.rs:152`.
     - `config.cache_ttl.unwrap()` panics if `CACHE_TYPE` is set but `CACHE_TTL` is omitted.
-- [ ] As an Engineer, I want to switch to `SmartIpKeyExtractor` for rate limiting behind Cloud Run.
-    - Currently uses default `PeerIpKeyExtractor` which sees the load balancer IP.
+- [ ] As an Engineer, I want to evaluate proxy-aware rate-limit keys for Cloud Run.
+    - The current peer-IP key can see the load balancer address. Only trust forwarded headers when the deployment proxy is configured to sanitize them.
 
-## 0.3.5 2026-07-30
+## 0.3.5 2026-02-25
 ### User Stories
 - [x] As an User, I want to experience quick loading when accessing husni zuhdi portfolio website.
     - We can improve our web speed by introducing in-memory caching on server-side.
@@ -58,12 +58,14 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
         3. If it works and can improve our website loading time. Let's be bulish lol.
         4. The first time to load might be not different, but the second-thrid-and-so-on should be faster. right?
 
+## Unreleased (work documented 2026-07-30)
+
 ### Engineering stories
-- [x] As an Engineer, I want to protect the admin endpoints against CSRF attacks.
+- [x] As an Engineer, I want to protect Admin area endpoints against CSRF attacks.
     - Implemented Double-Submit Cookie pattern with `ring`-based 32-byte random tokens.
     - New module `src/handler/auth/csrf.rs`: `generate_csrf_token()`, `csrf_set_cookie_header()`, `csrf_clear_cookie_header()`, `verify_csrf_token()`.
-    - All 10 state-changing admin handlers (blogs, talks, tags) call `verify_csrf_token(&headers)`.
-    - `admin_base.html` includes `htmx:configRequest` script to send `X-CSRF-Token` header.
+    - All 10 state-changing handlers for Blogs, Talks, and Tags call `verify_csrf_token(&headers)`.
+    - The Admin area base template includes an `htmx:configRequest` script to send the `X-CSRF-Token` header.
     - JWT cookie upgraded to `SameSite=Strict` as defense-in-depth.
 - [x] As an Engineer, I want to add rate limiting on the login endpoint to prevent brute-force attacks.
     - Added `tower-governor` with configurable burst size (default 10) and replenish period (default 60s).
@@ -73,7 +75,7 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
 - [x] As an Engineer, I want unit tests for the CSRF module.
     - `src/handler/auth/csrf.rs`: token generation, cookie formatting, and `verify_csrf_token` (match, mismatch, missing cookie/header, multiple cookies).
     - `src/handler/auth/mod.rs`: shared `extract_cookie_from_cookies()` tests (found, missing, empty, first-position, token-first, prefix-safe).
-- [x] As an Engineer, I want to fix the JWT cookie parsing that broke admin access after the CSRF feature.
+- [x] As an Engineer, I want to fix the JWT cookie parsing that broke Admin area access after the CSRF feature.
     - `is_auth_verified` used `split_once("token=")` on the whole `Cookie` header, which swallowed the `_csrf_token` cookie into the JWT and failed base64url decoding (`InvalidByte(43, 59)`).
     - Added a shared `extract_cookie_from_cookies()` helper (segment-based `starts_with` matching) used by both `is_auth_verified` and `verify_csrf_token`.
     - Added `verify_jwt`/`is_auth_verified`/`create_jwt` unit tests covering valid, empty, garbage, wrong-secret, expired, tampered, missing-cookie, no-cookie, and reversed-cookie-order cases.
@@ -85,10 +87,10 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - Known quirks documented in tests: `sanitize_query` uses `Regex::replace` (only first non-alphanumeric run) and strips dashes despite the doc comment; `BlogsParams`/`TagsSearchParams` pass negative pagination values through while `TalksParams`/`TagsListParams` clamp them to defaults.
 
 ### Bugs
-- [ ] **CI not triggered on PRs**: `.github/workflows/rust-ci.yml` has `pull_request` indented under `push` instead of at the same level. PRs don't trigger CI.
+- [x] **CI not triggered on PRs**: fixed by moving `pull_request` to a top-level workflow trigger in the Rust CI and audit workflows.
 - [ ] **Cache panic at startup**: `state.rs:152` does `config.cache_ttl.unwrap()` — if `CACHE_TYPE` is set but `CACHE_TTL` is omitted, the app panics at startup instead of providing a default or returning an error.
-- [ ] **Rate limiter key extractor**: Uses default `PeerIpKeyExtractor`, which sees the load balancer IP behind Cloud Run. Should switch to `SmartIpKeyExtractor` for proxy-aware IP extraction.
-- [x] Unable to access admin page due to regression from CSFR feature.
+- [ ] **Rate limiter key extractor**: Uses default `PeerIpKeyExtractor`, which can see the load balancer IP behind Cloud Run. Evaluate proxy-aware extraction only with a trusted/sanitized forwarded-header configuration.
+- [x] Unable to access the Admin area due to a regression from the CSRF feature.
     - Fixed in `22e3a4b`: `is_auth_verified` now parses cookies per-segment via the shared `extract_cookie_from_cookies()` instead of `split_once("token=")`.
 
 ## 0.3.3 2025-10-24
@@ -120,13 +122,12 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - So the current workaround is to add a notes in the add and edit blog pages.
     - To add a div manually in the markdown file :") Yeah it's not ideal but it's what we have.
     - Also we enabled allo dangerous html in the markdown compiler config.
-### Admin stories
-- [x] As an Admin, I want to have an administrator pages to manage my contents.
-    - We have implemented the `Blogs` and `Talks` administrator pages.
-    - We have implemented the `Tags` administrator pages.
+### Administrator stories
+- [x] As an Administrator, I want pages to manage my content.
+    - The Admin area includes `Blogs`, `Talks`, and `Tags` pages.
     - Updated UI and core components
-    - Admin pages are created.
-- [x] As an Admin, I want to have a safe way to access my admin pages.
+    - The Admin area pages are implemented.
+- [x] As an Administrator, I want a safe way to access the Admin area.
     - I think we can use authentication like `google` that match our google account only.
     - It's the frist time we play with authentication service. So excited! lol
     - For the initial step, we are implemented password-bassed auth with JWT
@@ -140,20 +141,20 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - First is to find blog id with tags.
     - Second is to get tags and blogs from those blog ids.
 
-### Admin stories
-- [x] As an Admin, I want to have an access to edit blogs.
-    - We can explore it by creating `/admin` page and working on how to edit a `talks` (since it's easiest than `blogs`).
+### Administrator stories
+- [x] As an Administrator, I want to edit Blogs.
+    - We can explore this by creating the `/admin` area and starting with editing a `Talk` (simpler than a Blog).
     - Then we can work on the `blogs` feature.
-    - At 2025-07-30 I start to work on Talk Admin page. We finally use HTMX in this project.
+    - On 2025-07-30, work began on the Talks section of the Admin area, introducing HTMX to the project.
     - So far we tackle the edit button. Next we need to setup PUT endpoint.
     - There is an opportunity to improve the codebase readability.
-    - We've finished the `talks` and `blogs` admin implementation.
+    - The Talks and Blogs sections of the Admin area were completed.
 
 ### Engineering stories
 - [x] As an Engineer, I want to finish my tech debt to properly implement `tags` and `blog_tag_mapping` tables on `blogs` databse adapter
     - As the title said, fix it please when you have time.
-    - We need to fix this during/before we build our admin pages.
-    - The tech debt is kind of paid with the current admin pages implementation.
+    - We need to fix this during or before building the Admin area pages.
+    - The current Admin area implementation addresses this tech debt.
     - We separate `tags` and `blog_tag_mappings` database implementation from `blogs`.
     - We did that to achieve segragation for each tables.
 

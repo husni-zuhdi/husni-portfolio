@@ -1,187 +1,49 @@
-# CSRF Protection
+# CSRF protection
 
-## Goals
-Prevent Cross-Site Request Forgery (CSRF) attacks on all state-changing HTMX forms
-(login, logout, admin CRUD). An attacker could craft a malicious page that auto-submits
-forms to `husni-zuhdi.com` while the admin is logged in. The browser automatically
-attaches the JWT cookie, and without CSRF validation, the server cannot distinguish
-legitimate from forged requests.
+**Status: Implemented.** Current behavior is described below; the original
+proposal's expected `403` response is not how the current handlers respond.
 
-## Criterias
-- All state-changing HTMX forms (`hx-post`, `hx-put`, `hx-delete`) include a CSRF token
-- The CSRF token is validated server-side on every state-changing request
-- The token is tied to the authenticated session (generated at login, cleared at logout)
-- The approach uses `hx-headers` for HTMX integration (no additional JS required)
-- No heavy session management crate is added (no `axum-sessions`, `tower-sessions`)
-- The JWT cookie is upgraded from `SameSite=Lax` to `SameSite=Strict` as a defense-in-depth layer
+Decision: [ADR-0004](../docs/adr/0004-double-submit-csrf-protection.md).
 
-## Usage
-This implementation uses the **Double-Submit Cookie** pattern as recommended by OWASP for
-SPA/HTMX backends:
+## Behavior
 
-1. On successful login, generate a random CSRF token and set it in a **non-HttpOnly** cookie
-   (so HTMX's JavaScript can read it). The JWT cookie remains HttpOnly (inaccessible to JS).
-2. HTMX forms include the token via `hx-headers='{"X-CSRF-Token": "<token>"}'`
-3. On every state-changing request, the server compares the cookie value with the header value.
-   If they don't match, the request is rejected with 403.
+- Double-submit cookie validation was chosen to protect cookie-authenticated
+  HTMX writes without adding a heavy session-management crate. `SameSite=Strict`
+  is defense-in-depth, not a substitute for the CSRF token check.
+- Successful login creates a random 32-byte CSRF token represented as 64
+  hexadecimal characters and sets it in `_csrf_token`.
+- The browser-readable CSRF cookie is sent with `Secure; SameSite=Strict; Path=/`.
+  The JWT cookie is `HttpOnly; Secure; SameSite=Strict`.
+- The Admin area base template listens for HTMX's `htmx:configRequest` event and adds
+  the cookie value as the `X-CSRF-Token` request header.
+- Blog, Tag, and Talk write requests made through the Admin area, along with
+  `DELETE /logout`, require a valid JWT and an exact match between the CSRF cookie
+  and request header. Administrator sign-in itself is not CSRF-checked.
+- Logout clears both authentication cookies.
+- A missing or mismatched token returns the unauthorized HTML template via
+  `Html<String>`. The handler does not set an explicit HTTP status code, so this
+  response currently uses Axum's default success status despite the template's
+  “401 Unauthorized” content.
 
-This works because:
-- An attacker on `evil.com` can cause the browser to **send** the cookie (same-site), but
-  **cannot read** the cookie value (Same-Origin Policy), so they cannot set the `X-CSRF-Token`
-  header to match.
-- The `SameSite=Strict` JWT cookie prevents cross-site cookie submission entirely, adding
-  a second layer of defense.
+Cookie extraction splits the `Cookie` header into segments and matches cookie
+names, so the `_csrf_token` value cannot be mistaken for the `token` JWT.
 
-### Token properties
-- 32-byte cryptographically random hex string (64 hex characters)
-- Generated once per login session (stored as a field in the JWT Claims or a separate cookie)
-- Cleared on logout (cookie expired)
+## Main paths
 
-### Draft of envars
-No new environment variables are required. The CSRF token cookie uses a fixed name
-(`_csrf_token`) and is set with `Secure; SameSite=Strict; Path=/`. Unlike the JWT
-cookie, it is **not** `HttpOnly` (so JavaScript can read it for the HTMX header).
+- Token generation, verification, and cookie formatting:
+  `src/handler/auth/csrf.rs`
+- Shared cookie extraction and JWT verification: `src/handler/auth/mod.rs`
+- Login and logout: `src/handler/auth/operations.rs`
+- Admin area write operations: `src/handler/admin/`
+- HTMX request header setup: `templates/admin/admin_base.html`
 
-## Flow
+## Tests
 
-### Login — token generation
-
-```mermaid
-sequenceDiagram
-    participant U as User (Browser)
-    participant H as Handler
-    participant JWT as JWT Claims
-
-    U->>H: POST /login (email + password)
-    H->>H: Validate credentials
-    H->>JWT: Create JWT (exp: 3h)
-    H->>H: Generate 32-byte random CSRF token
-    H-->>U: Set-Cookie: token=<JWT>; HttpOnly; Secure; SameSite=Strict
-    H-->>U: Set-Cookie: _csrf_token=<CSRF>; Secure; SameSite=Strict
-    H-->>U: HX-Redirect: /admin
-```
-
-### Form submission — token validation
-
-```mermaid
-sequenceDiagram
-    participant U as User (Browser)
-    participant H as Handler
-
-    U->>H: POST /admin/blogs/add
-    Note over U: Cookie: token=<JWT>, _csrf_token=<CSRF>
-    Note over U: Header: X-CSRF-Token: <CSRF>
-    H->>H: Read _csrf_token from Cookie header
-    H->>H: Read X-CSRF-Token from request header
-    alt Token matches
-        H->>H: Process request (add blog)
-        H-->>U: 200 OK
-    else Token missing or mismatch
-        H-->>U: 403 Forbidden
-    end
-```
-
-### CSRF attack — blocked
-
-```mermaid
-sequenceDiagram
-    participant V as Victim Browser
-    participant E as Evil Website
-    participant S as husni-zuhdi.com
-
-    E->>V: Serve malicious page with hidden form
-    V->>S: POST /admin/blogs/add (auto-sends JWT cookie)
-    Note over V: Cookie: token=<JWT> (auto-attached)
-    Note over V: Header: X-CSRF-Token: MISSING (JS can't read HttpOnly cookie)
-    S->>S: Compare cookie _csrf_token with header X-CSRF-Token
-    S-->>V: 403 Forbidden
-```
-
-### Logout — token cleared
-
-```mermaid
-sequenceDiagram
-    participant U as User (Browser)
-    participant H as Handler
-
-    U->>H: DELETE /logout
-    H-->>U: Set-Cookie: token=; Max-Age=0
-    H-->>U: Set-Cookie: _csrf_token=; Max-Age=0
-    H-->>U: HX-Redirect: /
-```
-
-## Implementation locations
-
-| File | Change |
-|---|---|---|
-| `src/handler/auth/csrf.rs` | New module: `generate_csrf_token()` (32 random bytes via `ring`), `csrf_set_cookie_header()`, `csrf_clear_cookie_header()`, `verify_csrf_token()` |
-| `src/handler/auth/mod.rs` | Shared `extract_cookie_from_cookies()` used by `is_auth_verified` (JWT cookie) and `verify_csrf_token` (CSRF cookie) — splits the `Cookie` header on `"; "` and matches each segment by prefix, so `token=` never swallows `_csrf_token=` |
-| `src/handler/auth/operations.rs` | `post_login`: calls `generate_csrf_token()` + `csrf_set_cookie_header()`. `delete_logout`: calls `csrf_clear_cookie_header()` |
-| `src/handler/admin/*/operations.rs` | Call `verify_csrf_token(&headers)` at the top of every POST/PUT/DELETE handler |
-| `templates/admin/admin_base.html` | Add `htmx:configRequest` handler that reads `_csrf_token` cookie and sets `X-CSRF-Token` header |
-| `Cargo.toml` | Add `ring = "0.17.14"` dependency (for cryptographically secure random token generation) |
-
-### HTMX hx-headers integration
-In `templates/admin/admin_base.html`, add a small script that reads the `_csrf_token`
-cookie and configures HTMX to include it in all requests:
-
-```html
-<script>
-    document.addEventListener('htmx:configRequest', function(evt) {
-        const csrfToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('_csrf_token='))
-            ?.split('=')[1];
-        if (csrfToken) {
-            evt.detail.headers['X-CSRF-Token'] = csrfToken;
-        }
-    });
-</script>
-```
-
-This single script in the admin base template covers all child forms — no need to add
-`hx-headers` individually to each form element.
-
-### CSRF token in login form
-The login form (`POST /login`) does not need CSRF protection because the user is not
-yet authenticated — there is no session to forge. CSRF protection applies only to
-authenticated state-changing requests.
-
-## Testing
-Unit tests live in `src/handler/auth/csrf.rs` and `src/handler/auth/mod.rs` under
-`#[cfg(test)] mod test`.
-
-`src/handler/auth/csrf.rs`:
-- `test_generate_csrf_token_length` — output is 64 hex chars
-- `test_generate_csrf_token_unique` — two calls produce different tokens
-- `test_generate_csrf_token_hex_only` — output contains only `[0-9a-f]`
-- `test_csrf_set_cookie_header_format` — correct Set-Cookie format
-- `test_csrf_clear_cookie_header_format` — correct clear-Cookie format
-- `test_verify_csrf_token_match` — returns `true` when cookie == header
-- `test_verify_csrf_token_mismatch` — returns `false` when they differ
-- `test_verify_csrf_token_missing_cookie` — returns `false` with no cookie
-- `test_verify_csrf_token_missing_header` — returns `false` with no header
-- `test_verify_csrf_token_multiple_cookies` — works among other cookies
-
-`src/handler/auth/mod.rs` (shared `extract_cookie_from_cookies` helper + auth checks):
-- `test_extract_csrf_and_jwt_from_cookies_found` — extracts both cookies from one header
-- `test_extract_cookies_token_first` — extracts when `token=` precedes `_csrf_token=` (login order)
-- `test_extract_csrf_from_cookies_missing` — returns `None` when a cookie is absent
-- `test_extract_csrf_from_cookies_empty` — returns `None` on empty string
-- `test_extract_csrf_from_cookies_first_position` — works when CSRF is the only cookie
-- `test_extract_cookies_prefix_safe` — `token=` does not match `token_*` cookie names
-- `test_create_jwt_structure` — token has 3 dot-separated segments
-- `test_verify_jwt_*` — valid, empty, garbage, wrong-secret, expired, and tampered token paths
-- `test_is_auth_verified_valid_token_first` — true with `token=<jwt>; _csrf_token=<csrf>` (regression: the JWT cookie must not swallow the CSRF cookie)
-- `test_is_auth_verified_csrf_first` — true with reversed cookie order
-- `test_is_auth_verified_missing_token_cookie` — false when only `_csrf_token` is present (no panic)
-- `test_is_auth_verified_no_cookie_header` — false with no `Cookie` header
-- `test_is_auth_verified_garbage_token` — false on a malformed token
-- `test_is_auth_verified_wrong_secret` — false with a mismatched secret
+CSRF token and cookie checks are tested in `src/handler/auth/csrf.rs`; shared
+cookie parsing and JWT behavior are tested in `src/handler/auth/mod.rs`. These are
+module-level tests run by `task test`.
 
 ## References
+
 - [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
-- [OWASP Double-Submit Cookie Pattern](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#double-submit-cookie-pattern)
-- [HTMX hx-headers attribute](https://htmx.org/attributes/hx-headers/)
-- [HTMX htmx:configRequest event](https://htmx.org/events/#htmx:configRequest)
-- [SameSite cookie attribute](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesite-value)
+- [HTMX `htmx:configRequest` event](https://htmx.org/events/#htmx:configRequest)

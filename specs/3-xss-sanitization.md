@@ -1,5 +1,10 @@
 # XSS Sanitization
 
+**Status: Implemented.** Markdown output is passed through Ammonia in
+`src/utils.rs` before it is rendered in Blog templates.
+
+Decision: [ADR-0005](../docs/adr/0005-sanitize-authored-blog-html.md).
+
 ## Goals
 Prevent cross-site scripting (XSS) attacks by sanitizing HTML output from the markdown
 compiler while keeping `allow_dangerous_html: true` enabled. This preserves the ability

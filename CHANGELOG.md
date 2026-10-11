@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add double-submit-cookie CSRF checks to authenticated state-changing Admin area requests.
+- Rate-limit `POST /login` with configurable burst and replenish settings.
+- Sanitize rendered Markdown HTML before including it in Blog pages.
+
+### Fixed
+
+- Fix Administrator authentication when the JWT and CSRF cookies are sent together.
+- Expand unit coverage for domain models and static handlers.
+- Fix the dark-mode toggle behavior.
+
+### Security
+
+- Apply dependency and application security updates.
+
+## [0.3.5](https://github.com/husni-zuhdi/husni-portfolio/releases/tag/0.3.5) - 2026-02-25
+
+### Added
+
+- Add optional in-memory caching for content data.
+
+### Other
+
+- Update Rust dependencies and fix Docker image build permissions.
+
+## [0.3.4](https://github.com/husni-zuhdi/husni-portfolio/releases/tag/0.3.4) - 2026-01-18
+
+### Fixed
+
+- Fix Docker image build behavior.
+
 ## [0.3.3](https://github.com/husni-zuhdi/husni-portfolio/releases/tag/v0.3.3) - 2025-12-12
 
 ### Added

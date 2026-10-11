@@ -5,13 +5,12 @@ on:
   push:
     branches-ignore:
       - 'main'
-    pull_request:
-      types:
-        - opened
     paths: 
+      - 'Cargo.toml'
       - '**/Cargo.toml'
+      - 'Cargo.lock'
       - '**/Cargo.lock'
-      - '**.rs'
+      - 'deny.toml'
       - '.github/workflows/rust-audit.yml'
 
 jobs:

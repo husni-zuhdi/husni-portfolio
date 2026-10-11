@@ -1,17 +1,24 @@
 # JWT Authentication
 
+**Status: Implemented.** Current handlers render the unauthorized HTML template
+when authentication fails. They return `Html<String>` without setting an explicit
+HTTP status code, so the response status is Axum's default success status even
+though the template displays “401 Unauthorized.”
+
+Decision: [ADR-0003](../docs/adr/0003-password-and-jwt-authentication.md).
+
 ## Goals
-Allow the admin to log in with email/password and receive a short-lived JSON Web
-Token (JWT) stored in an HttpOnly cookie. Every `/admin` request is authenticated
-by verifying that cookie's signature and expiry before serving admin pages or
-mutating content.
+Allow an Administrator to sign in with email and password and receive a short-lived
+JSON Web Token (JWT) stored in an HttpOnly cookie. Every `/admin` request is
+authenticated by verifying that cookie's signature and expiry before serving Admin
+area pages or changing content.
 
 ## Criterias
 - Login is password-based (Argon2id hash comparison) and issues a JWT with `iat` and `exp` claims
 - The JWT lifetime is 3 hours
 - The JWT is stored in an HttpOnly, `Secure`, `SameSite=Strict` cookie named `token`
 - A separate non-HttpOnly `_csrf_token` cookie is set at login for CSRF protection
-- Every admin handler calls `is_auth_verified()` and returns a 401 on failure
+- Admin area handlers check `is_auth_verified()` and render the unauthorized page on failure
 - Cookie parsing matches cookie segments by prefix (`token=` vs `_csrf_token=`) so
   one cookie never swallows the other
 - Expired, malformed, empty, or incorrectly-signed tokens fail verification
@@ -73,9 +80,9 @@ sequenceDiagram
     H->>H: extract_cookie_from_cookies(Cookie, "token=")
     H->>H: verify_jwt(token, JWT_SECRET)
     alt Token valid and not expired
-        H-->>U: 200 OK (admin page)
+        H-->>U: 200 OK (Admin area page)
     else Token missing, expired, or invalid
-        H-->>U: 401 Unauthorized
+        H-->>U: Unauthorized HTML page (default HTTP status)
     end
 ```
 
@@ -90,7 +97,7 @@ sequenceDiagram
     Note over U: Cookie: _csrf_token=<CSRF> (no token)
     H->>H: extract_cookie_from_cookies -> None
     H->>H: verify_jwt("") -> false
-    H-->>U: 401 Unauthorized
+    H-->>U: Unauthorized HTML page (default HTTP status)
 ```
 
 ### Logout — cookies cleared
@@ -113,7 +120,7 @@ sequenceDiagram
 | `src/handler/auth/mod.rs` | `create_jwt()` (HS256, `exp` = now + 3h), `verify_jwt()`, `is_auth_verified()`, shared `extract_cookie_from_cookies()` |
 | `src/handler/auth/operations.rs` | `post_login` issues the token + CSRF cookie; `delete_logout` clears both |
 | `src/handler/auth/displays.rs` | `get_login` redirects to `/admin` when `is_auth_verified()` passes |
-| `src/handler/admin/*/displays.rs` | Every admin page gates on `is_auth_verified()` → 401 |
+| `src/handler/admin/*/displays.rs` | Admin area pages gate on `is_auth_verified()` and render the unauthorized page on failure (default HTTP status) |
 | `src/model/auth.rs` | `Claims { exp, iat }` struct |
 
 ## Testing
