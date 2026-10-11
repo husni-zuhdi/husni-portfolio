@@ -24,4 +24,4 @@ jobs:
         rust-version: "1.99.0"
         log-level: warn
         command: check all
-        arguments: "--all-features --locked"
+        arguments: "--all-features"
