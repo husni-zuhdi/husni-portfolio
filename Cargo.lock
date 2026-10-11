@@ -1915,7 +1915,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "urlencoding",
- "vergen-gitcl",
+ "vergen",
 ]
 
 [[package]]
@@ -4752,20 +4752,6 @@ dependencies = [
  "bon",
  "rustversion",
  "time",
- "vergen-lib",
-]
-
-[[package]]
-name = "vergen-gitcl"
-version = "10.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55d813ef078c9e739ebe9a121b8319964e1a03cc9e3d2fe30c6cf812d4c57289"
-dependencies = [
- "anyhow",
- "bon",
- "rustversion",
- "time",
- "vergen",
  "vergen-lib",
 ]
 

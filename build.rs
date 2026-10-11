@@ -1,10 +1,8 @@
 use anyhow::Result;
-use vergen_gitcl::{BuildBuilder, Emitter};
+use vergen::{Build, Emitter};
 
 pub fn main() -> Result<()> {
-    let timestamp_builder = BuildBuilder::default().build_timestamp(true).build()?;
+    let timestamp_builder = Build::builder().build_timestamp(true).build();
 
-    Emitter::default()
-        .add_instructions(&timestamp_builder)?
-        .emit()
+    Emitter::new().add_instructions(&timestamp_builder)?.emit()
 }
