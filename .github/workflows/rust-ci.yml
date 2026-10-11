@@ -31,15 +31,15 @@ jobs:
       uses: actions/checkout@v7
     - &install-rust
       name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@1.91.0
+      uses: dtolnay/rust-toolchain@1.99.0
       with:
         components: "rustfmt, clippy"
     - &set-sccache
       name: Setup sccache
       uses: mozilla-actions/sccache-action@v0.0.11
       with:
-        version: "v0.18.0"
-    - run: cargo test --all-features --locked -- --test-threads=1
+        version: "v0.12.0"
+    - run: cargo test --all-features -- --test-threads=1
   
   nextest_unit_test:
     name: Nextest
@@ -51,7 +51,7 @@ jobs:
       with:
         tool: cargo-nextest@0.9.114
     - *set-sccache
-    - run: cargo nextest run --locked
+    - run: cargo nextest run
   
   format:
     name: Formatting
@@ -68,7 +68,7 @@ jobs:
     - *checkout
     - *install-rust
     - *set-sccache
-    - run: cargo clippy --locked -- -D warnings
+    - run: cargo clippy -- -D warnings
   
   coverage:
     name: Code coverage
@@ -80,4 +80,4 @@ jobs:
       with:
         tool: cargo-tarpaulin@0.34.1
     - *set-sccache
-    - run: cargo tarpaulin --ignore-tests --follow-exec --locked --coveralls ${{ secrets.COVERALLS_REPO_TOKEN }}
+    - run: cargo tarpaulin --ignore-tests --follow-exec --coveralls ${{ secrets.COVERALLS_REPO_TOKEN }}
