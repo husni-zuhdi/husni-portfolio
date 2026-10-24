@@ -41,4 +41,4 @@ dotenvy = "0.15"
 
 [build-dependencies]
 anyhow = "1.0"
-vergen-gitcl = { version = "9.0", features = ["build"] }
+vergen-gitcl = { version = "10.0", features = ["build"] }
