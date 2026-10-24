@@ -9,7 +9,9 @@
     <script src="https://unpkg.com/@highlightjs/cdn-assets@11.11.1/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
     <!-- MathJax-->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script id="MathJax-script"
+            async
+            src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>
         MathJax = {
           output: {
@@ -36,7 +38,7 @@
                             hx-target="#body_target"
                             hx-swap="innerHTML"
                             hx-replace-url="true"
-                            class="inactive_tag">{{ tag }}</button>
+                            class="inactive_tag"><span aria-hidden="true">{% include "admin/partials/icons/tag.html" %}</span>{{ tag }}</button>
                 {% endif %}
             {% endfor %}
         </p>

@@ -1,23 +1,36 @@
-<form hx-put="/admin/blogs/tags/{{ id }}/edit"
-      hx-target="#tag_{{ id }}_target"
-      hx-swap="innerHTML">
-    <button class="btn_text btn_green" type="submit">Submit</button>
-    <button class="btn_text btn_red"
-            hx-get="/admin/blogs/tags/list"
-            hx-target="#tags_target"
-            hx-swap="innerHTML">Cancel</button>
-    <div>
-        <label for=tag_id>Tag ID :</label>
-        <input type="text"
-               id="tag_id"
-               name="tag_id"
-               value="{{ id }}"
-               class="readonly"
-               readonly>
-    </div>
-    <div class="admin_input">
-        <label for=tag_name>Name :</label>
-        <input type="text" id="tag_name" name="tag_name" value="{{ name }}">
-        <br>
-    </div>
-</form>
+<tr id="tag_{{ id }}_target">
+    <td colspan="3">
+        <form class="admin_panel"
+              hx-put="/admin/blogs/tags/{{ id }}/edit"
+              hx-target="#tag_{{ id }}_target"
+              hx-swap="outerHTML">
+            <h3>Edit Tag #{{ id }}</h3>
+            <div class="admin_input">
+                <label for=tag_id>Tag ID :</label>
+                <input type="text"
+                       id="tag_id"
+                       name="tag_id"
+                       value="{{ id }}"
+                       class="readonly"
+                       readonly>
+            </div>
+            <div class="admin_input">
+                <label for=tag_name>Name :</label>
+                <input type="text" id="tag_name" name="tag_name" value="{{ name }}">
+                <br>
+            </div>
+            <div class="admin_input flex gap-1">
+                <button class="btn_text btn_green admin_icon"
+                        type="submit"
+                        aria-label="Save tag"
+                        title="Save tag">{% include "admin/partials/icons/check.html" %}</button>
+                <button class="btn_text btn_red admin_icon"
+                        aria-label="Cancel editing tag"
+                        title="Cancel"
+                        hx-get="/admin/blogs/tags/{{ id }}"
+                        hx-target="#tag_{{ id }}_target"
+                        hx-swap="outerHTML">{% include "admin/partials/icons/x.html" %}</button>
+            </div>
+        </form>
+    </td>
+</tr>

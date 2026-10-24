@@ -7,10 +7,12 @@
         <p>Manage your Talks. Yapping all day and night.</p>
         <div class="flex flex-col justify-between lg:flex-row">
             <div class="top_section">
-                <button class="btn_text btn_green"
+                <button class="btn_text btn_green admin_icon"
+                        aria-label="Add talk"
+                        title="Add talk"
                         hx-get="/admin/talks/add"
                         hx-target="#talks_target"
-                        hx-swap="innerHTML">+</button>
+                        hx-swap="innerHTML">{% include "admin/partials/icons/plus.html" %}</button>
             </div>
             <!-- <div class="top_section"> -->
             <!--     <input type="search" name="query" placeholder="Type to Search Talks..." -->

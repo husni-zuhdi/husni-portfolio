@@ -1,0 +1,21 @@
+{% if error_message != "" %}
+    <p class="font-bold text-red-600">{{ error_message }}</p>
+{% endif %}
+<table class="admin_table">
+    <thead>
+        <tr>
+            <th>Position</th>
+            <th>Title</th>
+            <th>Layout</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for section in sections %}
+            {% include "admin/profile/partials/section_row.html" %}
+        {% endfor %}
+    </tbody>
+</table>
+{% if sections.is_empty() %}
+    <p>No profile sections yet. Click + to add one.</p>
+{% endif %}

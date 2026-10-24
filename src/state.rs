@@ -3,15 +3,18 @@ use crate::config::Config;
 use crate::database::turso::TursoDatabase;
 use crate::model::axum::AppState;
 use crate::model::blogs::BlogsParams;
+use crate::model::profile::ProfilePage;
 use crate::model::tags::TagsListParams;
 use crate::model::talks::TalksParams;
 use crate::repo::blog_tag_mappings::BlogTagMappingDisplayRepo;
 use crate::repo::blogs::BlogDisplayRepo;
+use crate::repo::profile::ProfileDisplayRepo;
 use crate::repo::tags::TagDisplayRepo;
 use crate::repo::talks::TalkDisplayRepo;
 use crate::usecase::auth::AuthDBUseCase;
 use crate::usecase::blog_tag_mappings::{BlogTagMappingCacheUseCase, BlogTagMappingDBUseCase};
 use crate::usecase::blogs::{BlogCacheUseCase, BlogDBUseCase};
+use crate::usecase::profile::{ProfileCacheUseCase, ProfileDBUseCase};
 use crate::usecase::tags::{TagCacheUseCase, TagDBUseCase};
 use crate::usecase::talks::{TalkCacheUseCase, TalkDBUseCase};
 use std::sync::Arc;
@@ -24,6 +27,7 @@ struct DBUsecases {
     talk: TalkDBUseCase,
     tag: TagDBUseCase,
     btm: BlogTagMappingDBUseCase,
+    profile: ProfileDBUseCase,
 }
 #[derive(Debug)]
 struct CacheUsecases {
@@ -31,6 +35,7 @@ struct CacheUsecases {
     talk: TalkCacheUseCase,
     tag: TagCacheUseCase,
     btm: BlogTagMappingCacheUseCase,
+    profile: ProfileCacheUseCase,
 }
 
 /// Pre-fill InMemory cache before application starting
@@ -137,6 +142,29 @@ async fn prefill_inmemory_cache(db_usecases: DBUsecases, mut cache_usecases: Cac
             }
         }
     }
+
+    let sections_opt = db_usecases.profile.find_sections().await;
+    let meta_opt = db_usecases.profile.find_meta().await;
+    match (sections_opt, meta_opt) {
+        (Some(sections), Some(meta)) => {
+            info!("Inserting profile page cache");
+            let insert_opt = cache_usecases
+                .profile
+                .profile_operation_repo
+                .insert_page(ProfilePage { sections, meta })
+                .await;
+            if insert_opt.is_none() {
+                warn!("Failed to insert profile page into cache");
+            }
+        }
+        (sections_opt, meta_opt) => {
+            warn!(
+                "Profile sections or meta from database are empty (sections: {}, meta: {})",
+                sections_opt.is_none(),
+                meta_opt.is_none()
+            );
+        }
+    }
 }
 
 /// Create In-Memory cache usecases
@@ -147,6 +175,7 @@ async fn create_inmemory_cache_usecases(
     Option<TalkCacheUseCase>,
     Option<TagCacheUseCase>,
     Option<BlogTagMappingCacheUseCase>,
+    Option<ProfileCacheUseCase>,
 ) {
     info!("Building In Memory usecases.");
     let cache_repo = InMemoryCache::new(config.cache_ttl.unwrap());
@@ -165,6 +194,10 @@ async fn create_inmemory_cache_usecases(
         )),
         Some(BlogTagMappingCacheUseCase::new(
             Box::new(cache_repo.clone()),
+            Box::new(cache_repo.clone()),
+        )),
+        Some(ProfileCacheUseCase::new(
+            Box::new(cache_repo.clone()),
             Box::new(cache_repo),
         )),
     )
@@ -178,6 +211,7 @@ async fn create_sqlite_db_usecases(
     Option<TalkDBUseCase>,
     Option<TagDBUseCase>,
     Option<BlogTagMappingDBUseCase>,
+    Option<ProfileDBUseCase>,
     Option<AuthDBUseCase>,
 ) {
     info!("Building SQLite usecases.");
@@ -204,6 +238,10 @@ async fn create_sqlite_db_usecases(
             Box::new(db_repo.clone()),
             Box::new(db_repo.clone()),
         )),
+        Some(ProfileDBUseCase::new(
+            Box::new(db_repo.clone()),
+            Box::new(db_repo.clone()),
+        )),
         Some(AuthDBUseCase::new(Box::new(db_repo))),
     )
 }
@@ -216,6 +254,7 @@ async fn create_turso_db_usecases(
     Option<TalkDBUseCase>,
     Option<TagDBUseCase>,
     Option<BlogTagMappingDBUseCase>,
+    Option<ProfileDBUseCase>,
     Option<AuthDBUseCase>,
 ) {
     info!("Building Turso usecases.");
@@ -239,6 +278,10 @@ async fn create_turso_db_usecases(
             Box::new(db_repo.clone()),
         )),
         Some(BlogTagMappingDBUseCase::new(
+            Box::new(db_repo.clone()),
+            Box::new(db_repo.clone()),
+        )),
+        Some(ProfileDBUseCase::new(
             Box::new(db_repo.clone()),
             Box::new(db_repo.clone()),
         )),
@@ -272,24 +315,25 @@ pub async fn state_factory(config: Config) -> AppState {
         config.data_source == "turso" && config.secrets.turso_auth_token.is_some();
     let cache_is_enabled = config.cache_type.is_some();
 
-    let (blog_db_uc, talk_db_uc, tag_db_uc, btm_db_uc, auth_db_uc) =
+    let (blog_db_uc, talk_db_uc, tag_db_uc, btm_db_uc, profile_db_uc, auth_db_uc) =
         if data_source_is_configured_turso {
             create_turso_db_usecases(config.clone()).await
         } else if data_source_is_configured_sqlite {
             create_sqlite_db_usecases(config.clone()).await
         } else {
-            (None, None, None, None, None)
+            (None, None, None, None, None, None)
         };
 
     if blog_db_uc.is_none() {
         panic!("In version 0.3.5+, we drop the memory database support. Please use SQLite or Turso Database.");
     }
 
-    let (blog_cache_uc, talk_cache_uc, tag_cache_uc, btm_cache_uc) = if cache_is_enabled {
-        create_inmemory_cache_usecases(config.clone()).await
-    } else {
-        (None, None, None, None)
-    };
+    let (blog_cache_uc, talk_cache_uc, tag_cache_uc, btm_cache_uc, profile_cache_uc) =
+        if cache_is_enabled {
+            create_inmemory_cache_usecases(config.clone()).await
+        } else {
+            (None, None, None, None, None)
+        };
 
     if cache_is_enabled {
         prefill_inmemory_cache(
@@ -298,12 +342,14 @@ pub async fn state_factory(config: Config) -> AppState {
                 talk: talk_db_uc.clone().unwrap(),
                 tag: tag_db_uc.clone().unwrap(),
                 btm: btm_db_uc.clone().unwrap(),
+                profile: profile_db_uc.clone().unwrap(),
             },
             CacheUsecases {
                 blog: blog_cache_uc.clone().unwrap(),
                 talk: talk_cache_uc.clone().unwrap(),
                 tag: tag_cache_uc.clone().unwrap(),
                 btm: btm_cache_uc.clone().unwrap(),
+                profile: profile_cache_uc.clone().unwrap(),
             },
         )
         .await;
@@ -313,11 +359,13 @@ pub async fn state_factory(config: Config) -> AppState {
     let talk_db_usecase = Arc::new(Mutex::new(talk_db_uc));
     let tag_db_usecase = Arc::new(Mutex::new(tag_db_uc));
     let blog_tag_mapping_db_usecase = Arc::new(Mutex::new(btm_db_uc));
+    let profile_db_usecase = Arc::new(Mutex::new(profile_db_uc.unwrap()));
     let auth_db_usecase = Arc::new(Mutex::new(auth_db_uc));
     let talk_cache_usecase = Arc::new(Mutex::new(talk_cache_uc));
     let tag_cache_usecase = Arc::new(Mutex::new(tag_cache_uc));
     let blog_cache_usecase = Arc::new(Mutex::new(blog_cache_uc));
     let blog_tag_mapping_cache_usecase = Arc::new(Mutex::new(btm_cache_uc));
+    let profile_cache_usecase = Arc::new(Mutex::new(profile_cache_uc));
 
     AppState {
         config,
@@ -325,11 +373,13 @@ pub async fn state_factory(config: Config) -> AppState {
         talk_db_usecase,
         tag_db_usecase,
         blog_tag_mapping_db_usecase,
+        profile_db_usecase,
         auth_db_usecase,
         talk_cache_usecase,
         tag_cache_usecase,
         blog_cache_usecase,
         blog_tag_mapping_cache_usecase,
+        profile_cache_usecase,
     }
 }
 
@@ -347,12 +397,14 @@ mod test {
         let talk_uc = state.talk_db_usecase.lock().await.take();
         let tag_uc = state.tag_db_usecase.lock().await.take();
         let blogtag_uc = state.blog_tag_mapping_db_usecase.lock().await.take();
+        let profile_uc = state.profile_db_usecase.lock().await;
         let auth_uc = state.auth_db_usecase.lock().await.take();
 
         assert!(talk_uc.is_some(), "TalkDBUseCase is None");
         assert!(tag_uc.is_some(), "TagDBUseCase is None");
         assert!(blogtag_uc.is_some(), "BlogTagMappingDBUseCase is None");
         assert!(auth_uc.is_some(), "AuthDBUseCase is None");
+        drop(profile_uc);
     }
 
     //#[tokio::test]

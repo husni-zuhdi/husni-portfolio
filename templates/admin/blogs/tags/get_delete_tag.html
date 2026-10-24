@@ -1,10 +1,22 @@
-<form hx-delete="/admin/blogs/tags/{{ id }}/delete"
-      hx-target="#tags_target"
-      hx-swap="innerHTML">
-    <button class="btn_text btn_red" type="submit">Submit</button>
-    <button class="btn_text btn_blue"
-            hx-get="/admin/blogs/tags/{{ id }}"
-            hx-target="#talk_{{ id }}_target"
-            hx-swap="innerHTML">Cancel</button>
-    <label for=talk_id>Are you sure you want to delete Tag with ID {{ id }}?</label>
-</form>
+<tr id="tag_{{ id }}_target">
+    <td colspan="3">
+        <form class="admin_panel"
+              hx-delete="/admin/blogs/tags/{{ id }}/delete"
+              hx-target="#tags_target"
+              hx-swap="innerHTML">
+            <p>Are you sure you want to delete Tag with ID {{ id }}?</p>
+            <div class="admin_input flex gap-1">
+                <button class="btn_text btn_red admin_icon"
+                        type="submit"
+                        aria-label="Confirm delete tag"
+                        title="Delete tag">{% include "admin/partials/icons/trash-2.html" %}</button>
+                <button class="btn_text btn_blue admin_icon"
+                        aria-label="Cancel deleting tag"
+                        title="Cancel"
+                        hx-get="/admin/blogs/tags/{{ id }}"
+                        hx-target="#tag_{{ id }}_target"
+                        hx-swap="outerHTML">{% include "admin/partials/icons/x.html" %}</button>
+            </div>
+        </form>
+    </td>
+</tr>

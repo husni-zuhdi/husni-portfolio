@@ -2,7 +2,20 @@ use askama::Template;
 
 #[derive(Template, Debug)]
 #[template(path = "profile.html")]
-pub struct ProfileTemplate;
+pub struct ProfileTemplate {
+    pub page_title: String,
+    pub description: String,
+    pub sections: Vec<ProfileSectionTemplate>,
+}
+
+#[derive(Debug)]
+pub struct ProfileSectionTemplate {
+    pub id: i64,
+    pub position: i64,
+    pub title: String,
+    pub html_body: String,
+    pub css_class: String,
+}
 
 #[derive(Template, Debug)]
 #[template(path = "blogs.html")]

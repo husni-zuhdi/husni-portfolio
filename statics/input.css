@@ -110,11 +110,11 @@
     }
 
     .active_tag {
-        @apply bg-gray-700 text-white hover:text-red-300 dark:hover:text-red-300;
+        @apply inline-flex items-center gap-1 rounded-full border-2 border-gray-300 bg-gray-700 px-2 py-0.5 text-sm text-white hover:font-bold hover:text-white dark:hover:text-white [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:fill-none;
     }
 
     .inactive_tag {
-        @apply text-black hover:text-white dark:text-black dark:hover:text-white;
+        @apply inline-flex items-center gap-1 rounded-full border-2 border-gray-300 bg-gray-200 hover:bg-gray-200 px-2 py-0.5 text-sm text-black hover:text-gray-500 [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:fill-none dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white;
     }
 
     .btn_text {
@@ -171,6 +171,26 @@
 
     .btn_theme {
         @apply bg-gray-50 hover:bg-gray-50 dark:bg-slate-900 dark:hover:bg-slate-900;
+    }
+
+    .admin_card {
+        @apply flex flex-col items-center gap-3 p-6 text-center rounded-lg border-2 border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800 hover:border-gray-700 dark:hover:border-slate-300 transition-colors no-underline text-black dark:text-slate-300;
+    }
+
+    .admin_panel {
+        @apply my-3 p-4 rounded-lg border-2 border-gray-300 dark:border-slate-600 bg-gray-100 dark:bg-slate-800;
+    }
+
+    .admin_table {
+        @apply w-full text-left;
+    }
+
+    .admin_icon {
+        @apply inline-flex items-center [&>svg]:h-5 [&>svg]:w-5 [&>svg]:fill-none;
+    }
+
+    .admin_icon_lg {
+        @apply inline-flex items-center [&>svg]:h-10 [&>svg]:w-10 [&>svg]:fill-none;
     }
 }
 

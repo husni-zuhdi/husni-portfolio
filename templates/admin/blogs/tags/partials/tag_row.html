@@ -1,0 +1,20 @@
+<tr id="tag_{{ tag.id }}_target">
+    <td>{{ tag.id }}</td>
+    <td>{{ tag.name }}</td>
+    <td>
+        <div class="flex gap-1">
+            <button class="btn_text btn_blue admin_icon"
+                    aria-label="Edit tag"
+                    title="Edit tag"
+                    hx-get="/admin/blogs/tags/{{ tag.id }}/edit"
+                    hx-target="#tag_{{ tag.id }}_target"
+                    hx-swap="outerHTML">{% include "admin/partials/icons/pencil.html" %}</button>
+            <button class="btn_text btn_red admin_icon"
+                    aria-label="Delete tag"
+                    title="Delete tag"
+                    hx-get="/admin/blogs/tags/{{ tag.id }}/delete"
+                    hx-target="#tag_{{ tag.id }}_target"
+                    hx-swap="outerHTML">{% include "admin/partials/icons/trash-2.html" %}</button>
+        </div>
+    </td>
+</tr>
