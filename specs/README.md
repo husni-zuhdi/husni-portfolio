@@ -12,6 +12,7 @@ as proposals rather than describing them as current behavior.
 | [CSRF protection](./4-csrf-protection.md) | Implemented; unauthorized HTML response has no explicit status code | `src/handler/auth/csrf.rs`, `src/handler/admin/` | [ADR-0004](../docs/adr/0004-double-submit-csrf-protection.md) |
 | [Login rate limiting](./5-rate-limiting.md) | Implemented; reverse-proxy IP limitation | `src/routes.rs` | — |
 | [JWT authentication](./6-jwt-authentication.md) | Implemented; unauthorized page has no explicit status code | `src/handler/auth/`, `src/model/auth.rs` | [ADR-0003](../docs/adr/0003-password-and-jwt-authentication.md) |
+| [Profile sections](./7-profile-sections.md) | Implemented; shared page shell remains hardcoded (TODO) | `src/handler/profile.rs`, `src/handler/admin/profile/`, `src/database/turso/profile.rs` | — |
 
 `0-template.md` is a template for future feature notes. `references.md` is a
 collection of implementation references.

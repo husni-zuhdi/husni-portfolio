@@ -1,0 +1,28 @@
+<form hx-put="/admin/profile/meta/edit"
+      hx-target="#profile_target"
+      hx-swap="innerHTML">
+    <div>
+        <label for=meta_id>Meta ID :</label>
+        <input type="text"
+               id="meta_id"
+               name="meta_id"
+               value="1"
+               class="readonly"
+               readonly>
+    </div>
+    <div class="admin_input">
+        <label for=meta_description>Meta Description :</label>
+        <input type="text"
+               id="meta_description"
+               name="meta_description"
+               value="{{ description }}">
+        <br>
+    </div>
+    <div>
+        <button class="btn_text btn_green" type="submit">o</button>
+        <button class="btn_text btn_red"
+                hx-get="/admin/profile/list"
+                hx-target="#profile_target"
+                hx-swap="innerHTML">x</button>
+    </div>
+</form>

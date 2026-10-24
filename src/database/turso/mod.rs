@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod blog_tag_mappings;
 pub mod blogs;
+pub mod profile;
 pub mod tags;
 pub mod talks;
 
@@ -99,6 +100,23 @@ impl TursoDatabase {
                     expire TEXT NOT NULL
                 )",
             ),
+            (
+                "2025-10-24 Profile Sections Migration",
+                r"CREATE TABLE IF NOT EXISTS profile_sections (
+                    id INTEGER PRIMARY KEY NOT NULL,
+                    position INTEGER NOT NULL,
+                    title TEXT NOT NULL,
+                    body TEXT NOT NULL,
+                    layout TEXT NOT NULL
+                    );",
+            ),
+            (
+                "2025-10-24 Profile Meta Migration",
+                r"CREATE TABLE IF NOT EXISTS profile_meta (
+                    id INTEGER PRIMARY KEY NOT NULL,
+                    description TEXT NOT NULL
+                    );",
+            ),
         ]);
 
         for (mig_name, mig_command) in &migration_commands {
@@ -108,10 +126,60 @@ impl TursoDatabase {
                 .await
                 .expect("Failed to migrate tables.");
         }
+
+        seed_profile_tables(&conn).await;
         info!("Database Setup is finished");
 
         Self { conn }
     }
+}
+
+/// Seed the Profile tables when they are empty.
+/// Idempotent: runs on every startup and only inserts rows when the
+/// corresponding table has no rows yet.
+async fn seed_profile_tables(conn: &Connection) {
+    let count = table_count(conn, "profile_sections").await;
+    if count == 0 {
+        info!("Seeding profile sections...");
+        for (idx, (title, layout, body)) in profile::PROFILE_SECTIONS_SEED.iter().enumerate() {
+            let position = (idx + 1) as i64;
+            let command = "INSERT INTO profile_sections (id, position, title, body, layout)
+                VALUES (?1, ?2, ?3, ?4, ?5)";
+            let _ = conn
+                .execute(command, (position, position, *title, *body, *layout))
+                .await
+                .expect("Failed to seed profile section.");
+        }
+    }
+
+    let count = table_count(conn, "profile_meta").await;
+    if count == 0 {
+        info!("Seeding profile meta...");
+        let command = "INSERT INTO profile_meta (id, description) VALUES (1, ?1)";
+        let _ = conn
+            .execute(command, [profile::PROFILE_META_SEED])
+            .await
+            .expect("Failed to seed profile meta.");
+    }
+}
+
+/// Count rows of a table
+async fn table_count(conn: &Connection, table_name: &str) -> i64 {
+    let query = format!("SELECT COUNT(*) FROM {}", table_name);
+    let stmt = conn
+        .prepare(&query)
+        .await
+        .unwrap_or_else(|_| panic!("Failed to prepare row count query of {table_name}."));
+    let mut rows = stmt
+        .query(())
+        .await
+        .unwrap_or_else(|_| panic!("Failed to query row count of {table_name}."));
+    let row = rows
+        .next()
+        .await
+        .unwrap_or_else(|_| panic!("Failed to access row count row of {table_name}."))
+        .expect("Failed to access row count row of {table_name}.");
+    row.get(0).unwrap()
 }
 
 /// Trimming the last ',' for UPDATE command

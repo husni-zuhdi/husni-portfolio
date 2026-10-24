@@ -5,6 +5,7 @@ use crate::handler::{
             tags::{displays as btd, operations as bto},
         },
         displays as add,
+        profile::{displays as pd, operations as po},
         talks::{displays as td, operations as to},
     },
     auth::{displays as ad, operations as ao},
@@ -83,8 +84,41 @@ fn talks_route() -> Router<AppState> {
 fn admin_route() -> Router<AppState> {
     Router::new()
         .route("/", get(add::get_base_admin))
+        .nest("/profile", admin_profile_route())
         .nest("/talks", admin_talks_route())
         .nest("/blogs", admin_blogs_route())
+}
+
+fn admin_profile_route() -> Router<AppState> {
+    Router::new()
+        .route("/", get(pd::get_base_admin_profile))
+        .route("/list", get(pd::get_admin_profile_list))
+        .route("/meta/edit", get(pd::get_admin_profile_meta_edit))
+        .route("/meta/edit", put(po::put_admin_profile_meta_edit))
+        .route("/preview", post(po::post_admin_profile_preview))
+        .route("/add", get(pd::get_add_admin_profile_section))
+        .route("/add", post(po::post_add_admin_profile_section))
+        .route("/{section_id}", get(pd::get_admin_profile_section))
+        .route(
+            "/{section_id}/edit",
+            get(pd::get_edit_admin_profile_section),
+        )
+        .route(
+            "/{section_id}/edit",
+            put(po::put_edit_admin_profile_section),
+        )
+        .route(
+            "/{section_id}/move",
+            post(po::post_move_admin_profile_section),
+        )
+        .route(
+            "/{section_id}/delete",
+            get(pd::get_delete_admin_profile_section),
+        )
+        .route(
+            "/{section_id}/delete",
+            delete(po::delete_delete_admin_profile_section),
+        )
 }
 
 fn admin_talks_route() -> Router<AppState> {

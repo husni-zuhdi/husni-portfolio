@@ -1,0 +1,22 @@
+{% if protected %}
+    <p class="font-bold text-red-600">Section with ID {{ id }} is the page title section. It cannot be deleted.</p>
+    <button class="btn_text btn_blue"
+            hx-get="/admin/profile/{{ id }}"
+            hx-target="#profile_section_{{ id }}_target"
+            hx-swap="innerHTML">Back</button>
+{% else %}
+    <form hx-delete="/admin/profile/{{ id }}/delete"
+          hx-target="#profile_target"
+          hx-swap="innerHTML">
+        <div>
+            <label for=section_id>Are you sure you want to delete Profile Section with ID {{ id }}?</label>
+        </div>
+        <div>
+            <button class="btn_text btn_red" type="submit">o</button>
+            <button class="btn_text btn_blue"
+                    hx-get="/admin/profile/{{ id }}"
+                    hx-target="#profile_section_{{ id }}_target"
+                    hx-swap="innerHTML">x</button>
+        </div>
+    </form>
+{% endif %}
