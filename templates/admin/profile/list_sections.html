@@ -3,34 +3,7 @@
 {% endif %}
 {% for section in sections %}
     <h2 class="hover:font-bold">
-        <div id="profile_section_{{ section.id }}_target">
-            {% if section.is_title %}
-                [Title]
-            {% endif %}
-            Position {{ section.position }} |
-            {% if section.title != "" %}
-                {{ section.title }}
-            {% else %}
-                (Page Title Section)
-            {% endif %}
-            | Layout: {{ section.layout }}
-            <button class="btn_text btn_blue"
-                    hx-get="/admin/profile/{{ section.id }}/edit"
-                    hx-target="#profile_section_{{ section.id }}_target"
-                    hx-swap="innerHTML">*</button>
-            <button class="btn_text btn_red"
-                    hx-get="/admin/profile/{{ section.id }}/delete"
-                    hx-target="#profile_section_{{ section.id }}_target"
-                    hx-swap="innerHTML">x</button>
-            <button class="btn_text btn_green"
-                    hx-post="/admin/profile/{{ section.id }}/move?dir=up"
-                    hx-target="#profile_target"
-                    hx-swap="innerHTML">&#8593;</button>
-            <button class="btn_text btn_green"
-                    hx-post="/admin/profile/{{ section.id }}/move?dir=down"
-                    hx-target="#profile_target"
-                    hx-swap="innerHTML">&#8595;</button>
-        </div>
+        <div id="profile_section_{{ section.id }}_target">{% include "admin/profile/partials/section_row.html" %}</div>
     </h2>
 {% endfor %}
 {% if sections.is_empty() %}

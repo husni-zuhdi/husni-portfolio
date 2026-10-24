@@ -177,8 +177,10 @@ pub async fn get_admin_profile_section(
     };
     // If cache hit, return early
     if let Some(res) = cache_result {
+        // Flag the page title section so the row renders the [Title] badge
+        let is_title = is_protected_section(&app_state, &res).await;
         let section_res = AdminGetProfileSectionTemplate {
-            section: res.to_admin_template(false),
+            section: res.to_admin_template(is_title),
         }
         .render();
         match section_res {
@@ -219,8 +221,10 @@ pub async fn get_admin_profile_section(
     }
 
     // Render Profile Section
+    let section = db_result.unwrap();
+    let is_title = is_protected_section(&app_state, &section).await;
     let section_res = AdminGetProfileSectionTemplate {
-        section: db_result.unwrap().to_admin_template(false),
+        section: section.to_admin_template(is_title),
     }
     .render();
     match section_res {
@@ -564,5 +568,60 @@ async fn is_protected_section(
     match sections.and_then(|sections| sections.first().cloned()) {
         Some(first) => first.id == section.id,
         None => false,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::model::profile::{Layout, ProfileSection, ProfileSections};
+
+    fn sample_title_section() -> ProfileSection {
+        ProfileSection {
+            id: 1,
+            position: 1,
+            title: String::new(),
+            body: "# Husni Naufal Zuhdi - Site Reliability Engineer".to_string(),
+            layout: Layout::Stacked,
+        }
+    }
+
+    /// Regression test: the standalone section view (returned after an edit
+    /// is accepted or canceled) must render the same row markup as the
+    /// section list so the swapped-in fragment looks identical to the
+    /// original list row.
+    #[test]
+    fn test_get_section_row_matches_list_row_markup() {
+        let section = sample_title_section();
+
+        // Standalone row fragment (get_section.html)
+        let row = AdminGetProfileSectionTemplate {
+            section: section.to_admin_template(true),
+        }
+        .render()
+        .unwrap();
+
+        // The list renders the same section via the shared partial
+        let list = AdminListProfileSectionsTemplate {
+            sections: ProfileSections {
+                sections: vec![section],
+            }
+            .to_admin_template(),
+            error_message: String::new(),
+        }
+        .render()
+        .unwrap();
+
+        // Both must carry the same row content and controls
+        for html in [&row, &list] {
+            assert!(html.contains("[Title]"));
+            assert!(html.contains("Position 1"));
+            assert!(html.contains("(Page Title Section)"));
+            assert!(html.contains("| Layout: stacked"));
+            assert!(html.contains("hx-get=\"/admin/profile/1/edit\""));
+            assert!(html.contains("hx-get=\"/admin/profile/1/delete\""));
+            assert!(html.contains("hx-post=\"/admin/profile/1/move?dir=up\""));
+            assert!(html.contains("hx-post=\"/admin/profile/1/move?dir=down\""));
+        }
     }
 }
