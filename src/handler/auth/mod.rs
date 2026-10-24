@@ -10,6 +10,7 @@ use axum::http::{
 };
 use base64::engine::general_purpose::STANDARD_NO_PAD;
 use base64::engine::Engine;
+use hmac::KeyInit;
 use hmac::{Hmac, Mac};
 use password_hash::{phc::PasswordHash, PasswordVerifier};
 use regex::Regex;
