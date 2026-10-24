@@ -74,7 +74,7 @@ impl BlogOperationRepo for InMemoryCache {
     /// Take a `Blog` object and store it in the `InMemoryCache`
     /// Return Option of `BlogCommandStatus`. If `None`, insertion failed
     async fn insert(&mut self, blog: Blog) -> Option<BlogCommandStatus> {
-        let key = format!("{BLOG_KEY_PREFIX}-{}", &blog.id);
+        let key = format!("{BLOG_KEY_PREFIX}-{}", blog.id);
         info!("Inserting {} into InMemoryCache", &key);
         self.blogs_cache.insert(key, blog).await;
         Some(BlogCommandStatus::CacheInserted)

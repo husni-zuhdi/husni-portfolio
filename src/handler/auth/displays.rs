@@ -37,7 +37,7 @@ pub async fn get_login(
 /// get_login_retry
 /// Serve Login Retry HTML template
 pub async fn get_login_retry(header_map: Option<HeaderMap>) -> (HeaderMap, Html<String>) {
-    let header_map_final = header_map.map_or_else(HeaderMap::new, |hm| hm);
+    let header_map_final = header_map.unwrap_or_else(HeaderMap::new);
     let login_retry = LoginRetryTemplate.render();
     match login_retry {
         Ok(res) => {
@@ -54,7 +54,7 @@ pub async fn get_login_retry(header_map: Option<HeaderMap>) -> (HeaderMap, Html<
 /// get_login_success
 /// Serve Login Success HTML template
 pub async fn get_login_sucess(header_map: Option<HeaderMap>) -> (HeaderMap, Html<String>) {
-    let header_map_final = header_map.map_or_else(HeaderMap::new, |hm| hm);
+    let header_map_final = header_map.unwrap_or_else(HeaderMap::new);
     let login_success = LoginSuccessTemplate.render();
     match login_success {
         Ok(res) => {

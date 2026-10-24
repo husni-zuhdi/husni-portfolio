@@ -41,17 +41,16 @@ pub async fn get_talks(
     };
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let talks_res = res.sanitize().to_template().render();
-        if talks_res.is_err() {
-            error!(
-                "Failed to render get_talks.html. {}",
-                talks_res.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        let talks_res = match res.sanitize().to_template().render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render get_talks.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("Talks askama template rendered.");
-        return Html(talks_res.unwrap());
+        return Html(talks_res);
     }
     // If not, get data from database
     let db_result = talk_db_uc
@@ -84,16 +83,15 @@ pub async fn get_talks(
     }
 
     // Render Talks
-    let talks_res = db_result.unwrap().sanitize().to_template().render();
-    if talks_res.is_err() {
-        error!(
-            "Failed to render get_talks.html. {}",
-            talks_res.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    let talks_res = match db_result.unwrap().sanitize().to_template().render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render get_talks.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("Talks askama template rendered.");
-    Html(talks_res.unwrap())
+    Html(talks_res)
 }
 
 //#[cfg(test)]

@@ -95,7 +95,7 @@ impl TagOperationRepo for InMemoryCache {
     /// Take a `Tag` object and store it in the `InMemoryCache`
     /// Return Option of `TagCommandStatus`. If `None`, insertion failed
     async fn insert(&mut self, tag: Tag) -> Option<TagCommandStatus> {
-        let key = format!("{TAG_KEY_PREFIX}-{}", &tag.id);
+        let key = format!("{TAG_KEY_PREFIX}-{}", tag.id);
         info!("Inserting {} into InMemoryCache", &key);
         self.tags_cache.insert(key, tag).await;
         Some(TagCommandStatus::CacheInserted)

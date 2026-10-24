@@ -181,7 +181,7 @@ impl TagOperationRepo for TursoDatabase {
         let mut affected_col = "".to_string();
         match &name {
             Some(val) => {
-                affected_col = format!("{} name = '{}' ,", &affected_col, val);
+                affected_col = format!("{} name = '{}' ,", affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -191,7 +191,7 @@ impl TagOperationRepo for TursoDatabase {
 
         // Trimming the last ','
         affected_col = affected_col.as_str()[0..affected_col.len() - 1].to_string();
-        let prep_update_command = format!("UPDATE tags SET{}WHERE id = ?1", &affected_col);
+        let prep_update_command = format!("UPDATE tags SET{}WHERE id = ?1", affected_col);
         debug!("Executing query {} for id {}", &prep_update_command, &id);
 
         let stmt = self

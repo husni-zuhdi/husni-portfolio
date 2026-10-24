@@ -77,17 +77,16 @@ pub async fn get_admin_tags_list(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let tags_res = res.to_admin_list_template().render();
-        if tags_res.is_err() {
-            error!(
-                "Failed to render admin/blogs/tags/list_tags.html. {}",
-                tags_res.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        let tags_res = match res.to_admin_list_template().render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/blogs/tags/list_tags.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminBlogTagsList askama template rendered.");
-        return Html(tags_res.unwrap());
+        return Html(tags_res);
     }
 
     // If not, get data from database
@@ -119,16 +118,15 @@ pub async fn get_admin_tags_list(
     }
 
     // Render Admin Blog Tags List
-    let tags_res = db_result.unwrap().to_admin_list_template().render();
-    if tags_res.is_err() {
-        error!(
-            "Failed to render admin/blogs/tags/list_tags.html. {}",
-            tags_res.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    let tags_res = match db_result.unwrap().to_admin_list_template().render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/blogs/tags/list_tags.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("Admin Blogs askama template rendered.");
-    Html(tags_res.unwrap())
+    Html(tags_res)
 }
 
 /// get_admin_tags_search
@@ -169,17 +167,16 @@ pub async fn get_admin_tags_search(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let tags_res = res.to_admin_list_template().render();
-        if tags_res.is_err() {
-            error!(
-                "Failed to render admin/blogs/tags/list_tags.html. {}",
-                tags_res.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        let tags_res = match res.to_admin_list_template().render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/blogs/tags/list_tags.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminBlogTagsLists askama template rendered.");
-        return Html(tags_res.unwrap());
+        return Html(tags_res);
     }
 
     // If not, get data from database
@@ -212,16 +209,15 @@ pub async fn get_admin_tags_search(
     }
 
     // Render Admin Blog Tags List
-    let tags_res = db_result.unwrap().to_admin_list_template().render();
-    if tags_res.is_err() {
-        error!(
-            "Failed to render admin/blogs/tags/list_tags.html. {}",
-            tags_res.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    let tags_res = match db_result.unwrap().to_admin_list_template().render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/blogs/tags/list_tags.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("AdminBlogTagsList askama template rendered.");
-    Html(tags_res.unwrap())
+    Html(tags_res)
 }
 
 /// get_admin_tag
@@ -267,17 +263,16 @@ pub async fn get_admin_tag(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let tag_res = res.to_admin_template().render();
-        if tag_res.is_err() {
-            error!(
-                "Failed to render admin/blogs/tags/get_tag.html. {}",
-                tag_res.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        let tag_res = match res.to_admin_template().render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/blogs/tags/get_tag.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminGetTag askama template rendered.");
-        return Html(tag_res.unwrap());
+        return Html(tag_res);
     }
 
     // If not, get data from database
@@ -301,16 +296,15 @@ pub async fn get_admin_tag(
     }
 
     // Render Tag
-    let tag = db_result.unwrap().to_admin_template().render();
-    if tag.is_err() {
-        error!(
-            "Failed to render admin/blogs/tags/get_tag.html. {}",
-            tag.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    let tag = match db_result.unwrap().to_admin_template().render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/blogs/tags/get_tag.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("AdminGetTag askama template rendered.");
-    Html(tag.unwrap())
+    Html(tag)
 }
 
 /// get_add_admin_tag
@@ -335,19 +329,16 @@ pub async fn get_add_admin_tag(
     };
     debug!("Construct AdminGetAddTagTemplate for Tag Id {}", &id);
 
-    let add_tag = AdminGetAddTagTemplate { id }.render();
-    debug!("AdminGetAddTagTemplate : {:?}", &add_tag);
-
-    if add_tag.is_err() {
-        error!(
-            "Failed to render admin/blogs/get_add_tag.html. {}",
-            add_tag.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    let add_tag = match (AdminGetAddTagTemplate { id }).render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/blogs/get_add_tag.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
 
     info!("AdminGetAddTag askama template rendered.");
-    Html(add_tag.unwrap())
+    Html(add_tag)
 }
 
 /// get_edit_admin_tag
@@ -392,21 +383,23 @@ pub async fn get_edit_admin_tag(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let edit_tag = AdminGetEditTagTemplate {
+        let edit_tag_tmpl = AdminGetEditTagTemplate {
             id: res.id,
             name: res.name,
-        }
-        .render();
-        if edit_tag.is_err() {
-            error!(
-                "Failed to render admin/blogs/tags/get_edit_tag.html. {}",
-                edit_tag.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        };
+        let edit_tag = match edit_tag_tmpl.render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!(
+                    "Failed to render admin/blogs/tags/get_edit_tag.html. {}",
+                    err
+                );
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminGetEditTag askama template rendered.");
-        return Html(edit_tag.unwrap());
+        return Html(edit_tag);
     }
 
     // If not, get data from database
@@ -428,21 +421,23 @@ pub async fn get_edit_admin_tag(
             .await;
     }
 
-    let edit_tag = AdminGetEditTagTemplate {
+    let edit_tag_tmpl = AdminGetEditTagTemplate {
         id: id.clone().unwrap(),
         name: db_result.clone().unwrap().name,
-    }
-    .render();
-    if edit_tag.is_err() {
-        error!(
-            "Failed to render admin/blogs/tags/get_edit_tag.html. {}",
-            edit_tag.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    };
+    let edit_tag = match edit_tag_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!(
+                "Failed to render admin/blogs/tags/get_edit_tag.html. {}",
+                err
+            );
+            return get_500_internal_server_error();
+        }
+    };
 
     info!("AdminGetEditTag askama template rendered.");
-    Html(edit_tag.unwrap())
+    Html(edit_tag)
 }
 
 /// get_delete_admin_tag
@@ -488,17 +483,19 @@ pub async fn get_delete_admin_tag(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let delete_tag = AdminGetDeleteTagTemplate { id: res.id }.render();
-        if delete_tag.is_err() {
-            error!(
-                "Failed to render admin/blogs/tags/get_delete_tag.html. {}",
-                delete_tag.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        let delete_tag = match (AdminGetDeleteTagTemplate { id: res.id }).render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!(
+                    "Failed to render admin/blogs/tags/get_delete_tag.html. {}",
+                    err
+                );
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminGetDeleteTag askama template rendered.");
-        return Html(delete_tag.unwrap());
+        return Html(delete_tag);
     }
 
     // If not, get data from database
@@ -520,18 +517,20 @@ pub async fn get_delete_admin_tag(
             .await;
     }
 
-    let delete_tag = AdminGetDeleteTagTemplate {
+    let delete_tag_tmpl = AdminGetDeleteTagTemplate {
         id: id.clone().unwrap(),
-    }
-    .render();
-    if delete_tag.is_err() {
-        error!(
-            "Failed to render admin/blogs/tags/get_delete_tag.html. {}",
-            delete_tag.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    };
+    let delete_tag = match delete_tag_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!(
+                "Failed to render admin/blogs/tags/get_delete_tag.html. {}",
+                err
+            );
+            return get_500_internal_server_error();
+        }
+    };
 
     info!("AdminGetDeleteTag askama template rendered.");
-    Html(delete_tag.unwrap())
+    Html(delete_tag)
 }

@@ -51,7 +51,7 @@ impl TalkOperationRepo for InMemoryCache {
     /// Take a `Talk` object and store it in the `InMemoryCache`
     /// Return Option of `TalkCommandStatus`. If `None`, insertion failed
     async fn insert(&mut self, talk: Talk) -> Option<TalkCommandStatus> {
-        let key = format!("{TALK_KEY_PREFIX}-{}", &talk.id);
+        let key = format!("{TALK_KEY_PREFIX}-{}", talk.id);
         info!("Inserting {} into InMemoryCache", &key);
         self.talks_cache.insert(key, talk).await;
         Some(TalkCommandStatus::CacheInserted)

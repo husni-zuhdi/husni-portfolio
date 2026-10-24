@@ -9,7 +9,7 @@ async fn main() -> std::io::Result<()> {
     // Setup Config
     dotenvy::dotenv().ok();
     let config = Config::from_envar().await;
-    let endpoint = format!("{}:{}", &config.svc_endpoint, &config.svc_port);
+    let endpoint = format!("{}:{}", config.svc_endpoint, config.svc_port);
 
     // Initialize Tracing
     tracing_subscriber::fmt()
