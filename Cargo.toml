@@ -29,7 +29,9 @@ urlencoding = "2.1"
 chrono = "0.4"
 password-hash = {version = "0.6", features = ["phc"]}
 argon2 = "=0.6"
-jsonwebtoken = {version = "11.1", features = ["rust_crypto"] }
+hmac = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
 google-cloud-storage = "1.21"
 bytes = "1.12"
 moka = { version = "0.12", features = ["future"] }

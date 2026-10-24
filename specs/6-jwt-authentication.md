@@ -25,10 +25,19 @@ area pages or changing content.
 - Logout clears both the `token` and `_csrf_token` cookies
 
 ## Usage
-[JSON Web Tokens](https://jwt.io/) are created and verified with the
-[jsonwebtoken](https://github.com/Keats/jsonwebtoken) crate, signed with HS256 using
-the `JWT_SECRET` config value. The token only carries `iat` and `exp` claims (see
-`src/model/auth.rs`).
+[JSON Web Tokens](https://jwt.io/) are created and verified with a minimal
+HS256 implementation built on the `hmac`, `sha2`, and `base64` crates in
+`src/handler/auth/mod.rs`, signed with the `JWT_SECRET` config value. The token
+only carries `iat` and `exp` claims (see `src/model/auth.rs`).
+
+The standard JWT wire format is used: unpadded base64url header
+(`{"alg":"HS256","typ":"JWT"}`), claims, and an HMAC-SHA256 signature over
+`header.claims`. Verification rejects tokens with more or fewer than 3
+segments, a header declaring an algorithm other than HS256 (preventing
+algorithm confusion), an invalid signature (constant-time comparison), or an
+expired `exp` claim (60-second leeway). See
+[ADR-0011](../docs/adr/0011-dependency-advisory-risk-acceptance.md) for why the
+`jsonwebtoken` crate was replaced.
 
 ### Cookie layout
 Two cookies are set on a successful login:
@@ -117,7 +126,7 @@ sequenceDiagram
 
 | File | Change |
 |---|---|
-| `src/handler/auth/mod.rs` | `create_jwt()` (HS256, `exp` = now + 3h), `verify_jwt()`, `is_auth_verified()`, shared `extract_cookie_from_cookies()` |
+| `src/handler/auth/mod.rs` | `create_jwt()` (HS256, `exp` = now + 3h), `verify_jwt()`, `is_auth_verified()`, shared `extract_cookie_from_cookies()`; HS256 encode/decode helpers |
 | `src/handler/auth/operations.rs` | `post_login` issues the token + CSRF cookie; `delete_logout` clears both |
 | `src/handler/auth/displays.rs` | `get_login` redirects to `/admin` when `is_auth_verified()` passes |
 | `src/handler/admin/*/displays.rs` | Admin area pages gate on `is_auth_verified()` and render the unauthorized page on failure (default HTTP status) |
@@ -132,6 +141,8 @@ Unit tests live in `src/handler/auth/mod.rs` under `#[cfg(test)] mod test`:
 - `test_verify_jwt_wrong_secret` — mismatched secret fails
 - `test_verify_jwt_expired_token` — expired claims fail
 - `test_verify_jwt_tampered_token` — modified signature fails
+- `test_verify_jwt_wrong_algorithm_header` — token declaring HS512 fails
+- `test_verify_jwt_two_segments` — missing signature segment fails
 - `test_is_auth_verified_valid_token_first` — `token=<jwt>; _csrf_token=<csrf>` passes (regression for cookie-swallowing)
 - `test_is_auth_verified_csrf_first` — reversed cookie order passes
 - `test_is_auth_verified_missing_token_cookie` — only `_csrf_token` fails without panicking
@@ -140,8 +151,8 @@ Unit tests live in `src/handler/auth/mod.rs` under `#[cfg(test)] mod test`:
 - `test_is_auth_verified_wrong_secret` — mismatched secret fails
 
 ## References
-- [jsonwebtoken crate](https://github.com/Keats/jsonwebtoken)
 - [JSON Web Tokens](https://jwt.io/)
+- [hmac crate](https://crates.io/crates/hmac)
 - [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
 - [RFC 6265 HTTP State Management (cookies)](https://datatracker.ietf.org/doc/html/rfc6265)
 - [HTTP Cookie header (MDN)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cookie)
