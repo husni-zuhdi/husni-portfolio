@@ -82,14 +82,16 @@ pub async fn get_admin_blogs_list(
             .map(|b| b.as_blog_metadata().as_template())
             .collect();
         let active_tags = convert_tags_string_to_vec(&sanitized_params.tags.clone().unwrap());
-        let blogs_res = AdminListBlogsTemplate { blogs, active_tags }.render();
-        if blogs_res.is_err() {
-            error!("Failed to render blogs.html. {}", blogs_res.unwrap_err());
-            return get_500_internal_server_error();
-        }
+        let blogs_res = match (AdminListBlogsTemplate { blogs, active_tags }).render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render blogs.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("Blogs askama template rendered.");
-        return Html(blogs_res.unwrap());
+        return Html(blogs_res);
     }
 
     // If not, get data from database
@@ -132,17 +134,15 @@ pub async fn get_admin_blogs_list(
         .collect();
     let active_tags = convert_tags_string_to_vec(&sanitized_params.tags.clone().unwrap());
 
-    let blogs_res = AdminListBlogsTemplate { blogs, active_tags }.render();
-
-    if blogs_res.is_err() {
-        error!(
-            "Failed to render admin/blogs/list_blogs.html. {}",
-            blogs_res.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    let blogs_res = match (AdminListBlogsTemplate { blogs, active_tags }).render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/blogs/list_blogs.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("Admin Blogs askama template rendered.");
-    Html(blogs_res.unwrap())
+    Html(blogs_res)
 }
 
 /// get_admin_blog
@@ -181,20 +181,19 @@ pub async fn get_admin_blog(
     };
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let blog_res = AdminGetBlogTemplate {
+        let blog_tmpl = AdminGetBlogTemplate {
             blog: res.as_blog_metadata().as_template(),
-        }
-        .render();
-        if blog_res.is_err() {
-            error!(
-                "Failed to render admin/blogs/get_blog.html. {}",
-                blog_res.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        };
+        let blog_res = match blog_tmpl.render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/blogs/get_blog.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("Admin Blog askama template rendered.");
-        return Html(blog_res.unwrap());
+        return Html(blog_res);
     }
     // If not, get data from database
     let db_result = app_state
@@ -224,17 +223,18 @@ pub async fn get_admin_blog(
         drop(blog_cache_uc_opt);
     }
 
-    let blog = AdminGetBlogTemplate {
+    let blog_tmpl = AdminGetBlogTemplate {
         blog: db_result.clone().unwrap().as_blog_metadata().as_template(),
-    }
-    .render();
-
-    if blog.is_err() {
-        error!("Failed to render blog.html. {}", blog.unwrap_err());
-        return get_500_internal_server_error();
-    }
+    };
+    let blog = match blog_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render blog.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("Blog ID {} askama template rendered.", &path);
-    Html(blog.unwrap())
+    Html(blog)
 }
 
 /// get_add_admin_blog
@@ -292,20 +292,19 @@ pub async fn get_add_admin_blog(
     if let Some(res) = tags_cache_result {
         let avail_tags = res.tags.iter().map(|tag| tag.name.clone()).collect();
 
-        let add_blog = AdminGetAddBlogTemplate {
+        let add_blog_tmpl = AdminGetAddBlogTemplate {
             id: blog_id,
             avail_tags,
-        }
-        .render();
-        if add_blog.is_err() {
-            error!(
-                "Failed to render admin/blogs/get_add_blog.html. {}",
-                add_blog.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        };
+        let add_blog = match add_blog_tmpl.render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/blogs/get_add_blog.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
         info!("AdminGetAddBlog askama template rendered.");
-        return Html(add_blog.unwrap());
+        return Html(add_blog);
     }
 
     let tags_db_result = tag_db_uc
@@ -331,20 +330,19 @@ pub async fn get_add_admin_blog(
         .map(|tag| tag.name.clone())
         .collect();
 
-    let add_blog = AdminGetAddBlogTemplate {
+    let add_blog_tmpl = AdminGetAddBlogTemplate {
         id: blog_id,
         avail_tags,
-    }
-    .render();
-    if add_blog.is_err() {
-        error!(
-            "Failed to render admin/blogs/get_add_blog.html. {}",
-            add_blog.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    };
+    let add_blog = match add_blog_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/blogs/get_add_blog.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("AdminGetAddBlog askama template rendered.");
-    Html(add_blog.unwrap())
+    Html(add_blog)
 }
 
 /// get_edit_admin_blog
@@ -418,24 +416,23 @@ pub async fn get_edit_admin_blog(
             .map(|t| t.name.clone())
             .collect();
 
-        let edit_blog = AdminGetEditBlogTemplate {
+        let edit_blog_tmpl = AdminGetEditBlogTemplate {
             id,
             name: blog_cache_result.clone().unwrap().name.unwrap(),
             body: blog_cache_result.clone().unwrap().body.unwrap(),
             blog_tags: blog_cache_result.clone().unwrap().tags.unwrap(),
             avail_tags: unselected_tags,
-        }
-        .render();
-        if edit_blog.is_err() {
-            error!(
-                "Failed to render admin/blogs/get_edit_blog.html. {}",
-                edit_blog.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        };
+        let edit_blog = match edit_blog_tmpl.render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/blogs/get_edit_blog.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminGetEditBlog askama template rendered.");
-        return Html(edit_blog.unwrap());
+        return Html(edit_blog);
     }
 
     // If not, get data from database
@@ -479,25 +476,23 @@ pub async fn get_edit_admin_blog(
         &blog_data.id
     );
 
-    let edit_blog = AdminGetEditBlogTemplate {
+    let edit_blog_tmpl = AdminGetEditBlogTemplate {
         id,
         name: blog_data.name.unwrap(),
         body: blog_data.body.unwrap(),
         blog_tags: blog_data.tags.unwrap(),
         avail_tags: unselected_tags,
-    }
-    .render();
-    debug!("AdminGetEditBlogTemplate : {:?}", &edit_blog);
-    if edit_blog.is_err() {
-        error!(
-            "Failed to render admin/blogs/get_edit_blog.html. {}",
-            edit_blog.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    };
+    let edit_blog = match edit_blog_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/blogs/get_edit_blog.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
 
     info!("AdminGetEditBlog askama template rendered.");
-    Html(edit_blog.unwrap())
+    Html(edit_blog)
 }
 
 /// get_delete_admin_blog
@@ -537,17 +532,16 @@ pub async fn get_delete_admin_blog(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let delete_blog = AdminGetDeleteBlogTemplate { id: res.id }.render();
-        if delete_blog.is_err() {
-            error!(
-                "Failed to render admin/blogs/get_delete_blog.html. {}",
-                delete_blog.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        let delete_blog = match (AdminGetDeleteBlogTemplate { id: res.id }).render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/blogs/get_delete_blog.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminGetDeleteBlog askama template rendered.");
-        return Html(delete_blog.unwrap());
+        return Html(delete_blog);
     }
 
     // If not, get data from database
@@ -569,15 +563,14 @@ pub async fn get_delete_admin_blog(
             .await;
     }
 
-    let delete_blog = AdminGetDeleteBlogTemplate { id }.render();
-    if delete_blog.is_err() {
-        error!(
-            "Failed to render admin/blogs/get_delete_blog.html. {}",
-            delete_blog.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    let delete_blog = match (AdminGetDeleteBlogTemplate { id }).render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/blogs/get_delete_blog.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
 
     info!("AdminGetDeleteBlog askama template rendered.");
-    Html(delete_blog.unwrap())
+    Html(delete_blog)
 }

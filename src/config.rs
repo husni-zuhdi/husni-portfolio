@@ -243,7 +243,7 @@ impl Config {
             .expect("Failed to build GCS client");
         let mut reader = client
             .read_object(
-                format!("projects/_/buckets/{}", &secrets_bucket),
+                format!("projects/_/buckets/{}", secrets_bucket),
                 secrets_object,
             )
             .send()
@@ -274,7 +274,7 @@ impl Config {
                 "DATABASE_URL" => database_url = secret_v,
                 "TURSO_AUTH_TOKEN" => turso_auth_token = Some(secret_v),
                 _ => {
-                    println!("Unused secret {} is detected.", &key)
+                    println!("Unused secret {} is detected.", key)
                 }
             }
         }
@@ -291,7 +291,7 @@ impl Config {
             Err(e) => {
                 println!(
                     "Failed to load {} environment variable. Set default to None. Error {}",
-                    &envar, e
+                    envar, e
                 );
                 None
             }

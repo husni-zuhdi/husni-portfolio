@@ -100,7 +100,7 @@ impl AuthRepo for TursoDatabase {
         let mut affected_col = "".to_string();
         match &email {
             Some(val) => {
-                affected_col = format!("{} email = '{}' ,", &affected_col, val);
+                affected_col = format!("{} email = '{}' ,", affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -109,7 +109,7 @@ impl AuthRepo for TursoDatabase {
         }
         match &hpass {
             Some(val) => {
-                affected_col = format!("{} hashed_password = '{}' ,", &affected_col, val);
+                affected_col = format!("{} hashed_password = '{}' ,", affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -118,7 +118,7 @@ impl AuthRepo for TursoDatabase {
         }
 
         affected_col = trim_update_fields(&affected_col);
-        let prep_update_query = format!("UPDATE users SET{}WHERE id = ?1", &affected_col);
+        let prep_update_query = format!("UPDATE users SET{}WHERE id = ?1", affected_col);
         debug!("Executing query {} for id {}", &prep_update_query, &id);
 
         let stmt = self

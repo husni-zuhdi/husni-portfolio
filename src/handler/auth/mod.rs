@@ -8,14 +8,20 @@ use axum::http::{
     header::{COOKIE, USER_AGENT},
     HeaderMap,
 };
-use jsonwebtoken::{
-    decode as jwt_decode, encode as jwt_encode, DecodingKey, EncodingKey, Header, Validation,
-};
+use base64::engine::general_purpose::STANDARD_NO_PAD;
+use base64::engine::Engine;
+use hmac::{Hmac, Mac};
 use password_hash::{phc::PasswordHash, PasswordVerifier};
 use regex::Regex;
+use serde_json::json;
+use sha2::Sha256;
 use tracing::info;
 use tracing::{debug, error, warn};
 use urlencoding::decode as url_decode;
+
+/// Leeway in seconds applied when validating the `exp` claim.
+/// Matches jsonwebtoken's `Validation::default()`.
+const JWT_LEEWAY_SECS: usize = 60;
 
 /// Name of the JWT auth cookie as it appears in the `Cookie` header.
 const JWT_COOKIE_NAME: &str = "token=";
@@ -145,6 +151,36 @@ fn is_password_match(password: &str, hashed_passwrod: &str) -> bool {
     }
 }
 
+/// Encode bytes as unpadded base64url (JWT standard).
+fn b64url_encode(data: &[u8]) -> String {
+    STANDARD_NO_PAD.encode(data)
+}
+
+/// Decode unpadded base64url. Tolerates padding so tokens from other
+/// implementations still verify.
+fn b64url_decode(data: &str) -> Option<Vec<u8>> {
+    STANDARD_NO_PAD.decode(data.trim_end_matches('=')).ok()
+}
+
+/// Compute the HS256 signature over `signed_content` with `secret`.
+fn hs256_signature(signed_content: &str, secret: &str) -> Vec<u8> {
+    let mut mac =
+        Hmac::<Sha256>::new_from_slice(secret.as_bytes()).expect("HMAC accepts any key length");
+    mac.update(signed_content.as_bytes());
+    mac.finalize().into_bytes().to_vec()
+}
+
+/// Build a JWT for the given claims. Exposed for tests.
+fn build_token(claims: &Claims, secret: &str) -> String {
+    let header = json!({"alg": "HS256", "typ": "JWT"});
+    let encoded_header = b64url_encode(header.to_string().as_bytes());
+    let encoded_claims =
+        b64url_encode(&serde_json::to_vec(claims).expect("Claims must serialize into JSON"));
+    let signed_content = format!("{encoded_header}.{encoded_claims}");
+    let signature = b64url_encode(&hs256_signature(&signed_content, secret));
+    format!("{signed_content}.{signature}")
+}
+
 /// create_jwt
 /// Create JWT Claim and token
 fn create_jwt(secret: &str) -> Option<String> {
@@ -154,17 +190,7 @@ fn create_jwt(secret: &str) -> Option<String> {
         exp: now + three_hour_in_s,
         iat: now,
     };
-    match jwt_encode(
-        &Header::default(),
-        &my_claims,
-        &EncodingKey::from_secret(secret.as_ref()),
-    ) {
-        Ok(token) => Some(token),
-        Err(e) => {
-            error!("Failed to create JWT Token. {:?}", e);
-            None
-        }
-    }
+    Some(build_token(&my_claims, secret))
 }
 
 /// verify_jwt
@@ -175,18 +201,58 @@ pub fn verify_jwt(token: &str, secret: &str) -> bool {
         return false;
     }
 
-    let token = jwt_decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(secret.as_ref()),
-        &Validation::default(),
-    );
-    match token {
-        Ok(_) => true,
-        Err(e) => {
-            warn!("Failed to verify JWT Token. {:?}", e);
-            false
-        }
+    let segments: Vec<&str> = token.split('.').collect();
+    if segments.len() != 3 {
+        warn!("JWT does not have 3 dot-separated segments.");
+        return false;
     }
+    let (encoded_header, encoded_claims, encoded_signature) =
+        (segments[0], segments[1], segments[2]);
+
+    // Only HS256 is accepted, regardless of what the signature matches.
+    let header: serde_json::Value =
+        match b64url_decode(encoded_header).map(|bytes| serde_json::from_slice(&bytes)) {
+            Some(Ok(value)) => value,
+            _ => {
+                warn!("Failed to decode JWT header.");
+                return false;
+            }
+        };
+    if header.get("alg").and_then(|alg| alg.as_str()) != Some("HS256") {
+        warn!("JWT algorithm is not HS256.");
+        return false;
+    }
+
+    let claims: Claims =
+        match b64url_decode(encoded_claims).map(|bytes| serde_json::from_slice(&bytes)) {
+            Some(Ok(value)) => value,
+            _ => {
+                warn!("Failed to decode JWT claims.");
+                return false;
+            }
+        };
+
+    let signed_content = format!("{encoded_header}.{encoded_claims}");
+    let Some(signature) = b64url_decode(encoded_signature) else {
+        warn!("Failed to decode JWT signature.");
+        return false;
+    };
+    // Constant-time comparison
+    let mut mac =
+        Hmac::<Sha256>::new_from_slice(secret.as_bytes()).expect("HMAC accepts any key length");
+    mac.update(signed_content.as_bytes());
+    if mac.verify_slice(&signature).is_err() {
+        warn!("JWT signature is invalid.");
+        return false;
+    }
+
+    let now = chrono::Utc::now().timestamp() as usize;
+    if now.saturating_sub(JWT_LEEWAY_SECS) >= claims.exp {
+        warn!("JWT is expired.");
+        return false;
+    }
+
+    true
 }
 
 #[cfg(test)]
@@ -292,12 +358,7 @@ mod test {
             exp: now.saturating_sub(3600),
             iat: now.saturating_sub(7200),
         };
-        let token = jwt_encode(
-            &Header::default(),
-            &expired_claims,
-            &EncodingKey::from_secret(SECRET.as_ref()),
-        )
-        .unwrap();
+        let token = build_token(&expired_claims, SECRET);
         assert!(!verify_jwt(&token, SECRET));
     }
 
@@ -309,6 +370,31 @@ mod test {
         *last = if *last == b'X' { b'Y' } else { b'X' };
         let tampered = String::from_utf8(bytes).unwrap();
         assert!(!verify_jwt(&tampered, SECRET));
+    }
+
+    #[test]
+    fn test_verify_jwt_wrong_algorithm_header() {
+        // A token signed with HMAC but declaring another algorithm must be
+        // rejected to prevent algorithm-confusion attacks.
+        let now = chrono::Utc::now().timestamp() as usize;
+        let claims = Claims {
+            exp: now + 3600,
+            iat: now,
+        };
+        let encoded_header = b64url_encode(br#"{"alg":"HS512","typ":"JWT"}"#);
+        let encoded_claims =
+            b64url_encode(&serde_json::to_vec(&claims).expect("Claims must serialize into JSON"));
+        let signed_content = format!("{encoded_header}.{encoded_claims}");
+        let signature = b64url_encode(&hs256_signature(&signed_content, SECRET));
+        let token = format!("{signed_content}.{signature}");
+        assert!(!verify_jwt(&token, SECRET));
+    }
+
+    #[test]
+    fn test_verify_jwt_two_segments() {
+        let token = create_jwt(SECRET).unwrap();
+        let two_segments = token.split('.').take(2).collect::<Vec<_>>().join(".");
+        assert!(!verify_jwt(&two_segments, SECRET));
     }
 
     #[test]

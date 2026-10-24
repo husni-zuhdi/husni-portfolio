@@ -74,17 +74,16 @@ pub async fn get_admin_talks_list(
     };
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let talks_res = res.sanitize().to_admin_list_template().render();
-        if talks_res.is_err() {
-            error!(
-                "Failed to render get_talks.html. {}",
-                talks_res.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        let talks_res = match res.sanitize().to_admin_list_template().render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render get_talks.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("Talks askama template rendered.");
-        return Html(talks_res.unwrap());
+        return Html(talks_res);
     }
 
     // If not, get data from database
@@ -116,21 +115,21 @@ pub async fn get_admin_talks_list(
     }
 
     // Render Admin List Talks
-    let talks_res = db_result
+    let talks_res = match db_result
         .unwrap()
         .sanitize()
         .to_admin_list_template()
-        .render();
-    if talks_res.is_err() {
-        error!(
-            "Failed to render admin/talks/list_talks.html. {}",
-            talks_res.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+        .render()
+    {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/talks/list_talks.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
 
     info!("AdminListTalks askama template rendered.");
-    Html(talks_res.unwrap())
+    Html(talks_res)
 }
 
 /// get_admin_talk
@@ -175,20 +174,19 @@ pub async fn get_admin_talk(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let talk_res = AdminGetTalkTemplate {
+        let talk_tmpl = AdminGetTalkTemplate {
             talk: res.sanitize_talk_media_org().to_admin_template(),
-        }
-        .render();
-        if talk_res.is_err() {
-            error!(
-                "Failed to render admin/talks/get_talk.html. {}",
-                talk_res.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        };
+        let talk_res = match talk_tmpl.render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/talks/get_talk.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminGetTalk askama template rendered.");
-        return Html(talk_res.unwrap());
+        return Html(talk_res);
     }
 
     // If not, get data from database
@@ -216,23 +214,22 @@ pub async fn get_admin_talk(
     }
 
     // Render Talks
-    let talk = AdminGetTalkTemplate {
+    let talk_tmpl = AdminGetTalkTemplate {
         talk: db_result
             .clone()
             .unwrap()
             .sanitize_talk_media_org()
             .to_admin_template(),
-    }
-    .render();
-    if talk.is_err() {
-        error!(
-            "Failed to render admin/talks/get_talk.html. {}",
-            talk.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    };
+    let talk = match talk_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/talks/get_talk.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("AdminGetTalk askama template rendered.");
-    Html(talk.unwrap())
+    Html(talk)
 }
 
 /// get_add_admin_talk
@@ -257,22 +254,20 @@ pub async fn get_add_admin_talk(
 
     let talk_id = result.unwrap();
     debug!("Construct AdminGetAddTalkTemplate for Talk Id {}", &talk_id);
-    let add_talk = AdminGetAddTalkTemplate {
+    let add_talk_tmpl = AdminGetAddTalkTemplate {
         id: talk_id,
         date: chrono::Local::now().format("%Y-%m-%d").to_string(),
-    }
-    .render();
-
-    if add_talk.is_err() {
-        error!(
-            "Failed to render admin/talks/get_add_talk.html. {}",
-            add_talk.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    };
+    let add_talk = match add_talk_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/talks/get_add_talk.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
 
     info!("AdminGetAddTalk askama template rendered.");
-    Html(add_talk.unwrap())
+    Html(add_talk)
 }
 
 /// get_edit_admin_talk
@@ -316,20 +311,19 @@ pub async fn get_edit_admin_talk(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let edit_talk = AdminGetEditTalkTemplate {
+        let edit_talk_tmpl = AdminGetEditTalkTemplate {
             talk: res.sanitize_talk_media_org().to_admin_template(),
-        }
-        .render();
-        if edit_talk.is_err() {
-            error!(
-                "Failed to render admin/talks/get_edit_talk.html. {}",
-                edit_talk.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        };
+        let edit_talk = match edit_talk_tmpl.render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/talks/get_edit_talk.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("AdminGetEditTalk askama template rendered.");
-        return Html(edit_talk.unwrap());
+        return Html(edit_talk);
     }
 
     // If not, get data from database
@@ -356,23 +350,22 @@ pub async fn get_edit_admin_talk(
     }
 
     // Render Talks
-    let edit_talk = AdminGetEditTalkTemplate {
+    let edit_talk_tmpl = AdminGetEditTalkTemplate {
         talk: db_result
             .clone()
             .unwrap()
             .sanitize_talk_media_org()
             .to_admin_template(),
-    }
-    .render();
-    if edit_talk.is_err() {
-        error!(
-            "Failed to render admin/talks/get_edit_talk.html. {}",
-            edit_talk.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    };
+    let edit_talk = match edit_talk_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/talks/get_edit_talk.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("AdminGetEditTalk askama template rendered.");
-    Html(edit_talk.unwrap())
+    Html(edit_talk)
 }
 
 /// get_delete_admin_talk
@@ -416,19 +409,18 @@ pub async fn get_delete_admin_talk(
 
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let delete_talk = AdminGetDeleteTalkTemplate {
+        let delete_talk_tmpl = AdminGetDeleteTalkTemplate {
             id: res.sanitize_talk_media_org().id,
-        }
-        .render();
-        if delete_talk.is_err() {
-            error!(
-                "Failed to render admin/talks/get_delete_talk.html. {}",
-                delete_talk.unwrap_err()
-            );
-            return get_500_internal_server_error();
-        }
+        };
+        let delete_talk = match delete_talk_tmpl.render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render admin/talks/get_delete_talk.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
         info!("AdminGetDeleteTalk askama template rendered.");
-        return Html(delete_talk.unwrap());
+        return Html(delete_talk);
     }
 
     // If not, get data from database
@@ -456,17 +448,16 @@ pub async fn get_delete_admin_talk(
     }
 
     // Render Talks
-    let delete_talk = AdminGetDeleteTalkTemplate {
+    let delete_talk_tmpl = AdminGetDeleteTalkTemplate {
         id: db_result.clone().unwrap().id,
-    }
-    .render();
-    if delete_talk.is_err() {
-        error!(
-            "Failed to render admin/talks/get_delete_talk.html. {}",
-            delete_talk.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    };
+    let delete_talk = match delete_talk_tmpl.render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render admin/talks/get_delete_talk.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("AdminGetDeleteTalk askama template rendered.");
-    Html(delete_talk.unwrap())
+    Html(delete_talk)
 }

@@ -43,14 +43,16 @@ pub async fn get_blogs(
             .map(|b| b.as_blog_metadata().as_template())
             .collect();
         let active_tags = convert_tags_string_to_vec(&sanitized_params.tags.clone().unwrap());
-        let blogs_res = BlogsTemplate { blogs, active_tags }.render();
-        if blogs_res.is_err() {
-            error!("Failed to render blogs.html. {}", blogs_res.unwrap_err());
-            return get_500_internal_server_error();
-        }
+        let blogs_res = match (BlogsTemplate { blogs, active_tags }).render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render blogs.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("Blogs askama template rendered.");
-        return Html(blogs_res.unwrap());
+        return Html(blogs_res);
     }
 
     // If not, get data from database
@@ -93,17 +95,15 @@ pub async fn get_blogs(
         .collect();
     let active_tags = convert_tags_string_to_vec(&sanitized_params.tags.clone().unwrap());
 
-    let blogs_res = BlogsTemplate { blogs, active_tags }.render();
-
-    if blogs_res.is_err() {
-        error!(
-            "Failed to render get_blogs.html. {}",
-            blogs_res.unwrap_err()
-        );
-        return get_500_internal_server_error();
-    }
+    let blogs_res = match (BlogsTemplate { blogs, active_tags }).render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render get_blogs.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("Blogs askama template rendered.");
-    Html(blogs_res.unwrap())
+    Html(blogs_res)
 }
 
 /// get_blog
@@ -140,14 +140,16 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
     };
     // If cache hit, return early
     if let Some(res) = cache_result {
-        let blog_res = res.as_template().render();
-        if blog_res.is_err() {
-            error!("Failed to render blog.html. {}", blog_res.unwrap_err());
-            return get_500_internal_server_error();
-        }
+        let blog_res = match res.as_template().render() {
+            Ok(html) => html,
+            Err(err) => {
+                error!("Failed to render blog.html. {}", err);
+                return get_500_internal_server_error();
+            }
+        };
 
         info!("Blog askama template rendered.");
-        return Html(blog_res.unwrap());
+        return Html(blog_res);
     }
     // If not, get data from database
     let db_result = app_state
@@ -176,12 +178,13 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
         drop(blog_cache_uc_opt);
     }
 
-    let blog = db_result.unwrap().as_template().render();
-
-    if blog.is_err() {
-        error!("Failed to render blog.html. {}", blog.unwrap_err());
-        return get_500_internal_server_error();
-    }
+    let blog = match db_result.unwrap().as_template().render() {
+        Ok(html) => html,
+        Err(err) => {
+            error!("Failed to render blog.html. {}", err);
+            return get_500_internal_server_error();
+        }
+    };
     info!("Blog ID {} askama template rendered.", &path);
-    Html(blog.unwrap())
+    Html(blog)
 }

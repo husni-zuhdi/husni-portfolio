@@ -69,16 +69,25 @@ feature-depth = 1
 #db-urls = ["https://github.com/rustsec/advisory-db"]
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
+# Root causes and revisit triggers are recorded in
+# docs/adr/0011-dependency-advisory-risk-acceptance.md
 ignore = [
-    { id = "RUSTSEC-2023-0071", reason = "No plan so far. We need to find alternative crates"},
-    { id = "RUSTSEC-2025-0134", reason = "Wait until libsql and google libs change the deps"},
-    { id = "RUSTSEC-2025-0141", reason = "Wait until libsql to change dependencies"},
-    { id = "RUSTSEC-2026-0044", reason = "Wait until libsql, google, and hyper-rustls to upgrade rustls-webpki"},
-    { id = "RUSTSEC-2026-0048", reason = "Wait until libsql, google, and hyper-rustls to upgrade rustls-webpki"},
-    { id = "RUSTSEC-2026-0049", reason = "Wait until libsql and hyper-rustls to upgrade rustls-webpki"},
-    { id = "RUSTSEC-2026-0098", reason = "Wait until libsql and hyper-rustls to upgrade rustls-webpki"},
-    { id = "RUSTSEC-2026-0099", reason = "Wait until libsql and hyper-rustls to upgrade rustls-webpki"},
-    { id = "RUSTSEC-2026-0104", reason = "Wait until libsql and hyper-rustls to upgrade rustls-webpki"},
+    # Root cause: libsql 0.10.0 (latest) pulls an old TLS stack.
+    # Lift all of these together when a libsql release updates rustls/hyper.
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile unmaintained via libsql -> hyper-rustls 0.25; wait for libsql"},
+    { id = "RUSTSEC-2025-0141", reason = "bincode 1.x unmaintained via libsql; wait for libsql"},
+    { id = "RUSTSEC-2026-0049", reason = "rustls-webpki 0.102.8 via libsql -> rustls 0.22.4; wait for libsql"},
+    { id = "RUSTSEC-2026-0098", reason = "rustls-webpki 0.102.8 via libsql -> rustls 0.22.4; wait for libsql"},
+    { id = "RUSTSEC-2026-0099", reason = "rustls-webpki 0.102.8 via libsql -> rustls 0.22.4; wait for libsql"},
+    { id = "RUSTSEC-2026-0104", reason = "rustls-webpki 0.102.8 via libsql -> rustls 0.22.4; wait for libsql"},
+    { id = "RUSTSEC-2026-0258", reason = "h2 0.3.27 via libsql -> tonic 0.11 -> hyper 0.14; wait for libsql"},
+    { id = "RUSTSEC-2026-0346", reason = "rustls 0.22.4 via libsql -> hyper-rustls 0.25; wait for libsql"},
+    { id = "RUSTSEC-2026-0349", reason = "rustls 0.22.4 via libsql -> hyper-rustls 0.25; wait for libsql"},
+    { id = "RUSTSEC-2026-0382", reason = "rustls-webpki 0.102.8 via libsql -> rustls 0.22.4; wait for libsql"},
+    # Root cause: askama 0.16.1 (latest) proc-macro uses basic-toml.
+    { id = "RUSTSEC-2026-0374", reason = "basic-toml unmaintained via askama proc-macro; compile-time only"},
+    # { id = "RUSTSEC-2021-0158"},
+    # { id = "RUSTSEC-2021-0157"},
     #"RUSTSEC-0000-0000",
     #{ id = "RUSTSEC-0000-0000", reason = "you can specify a reason the advisory is ignored" },
     #"a-crate-that-is-yanked@0.1.1", # you can also ignore yanked crate versions if you wish

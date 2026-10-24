@@ -226,10 +226,10 @@ impl BlogOperationRepo for TursoDatabase {
         let blog_id = &blog.id;
         let blog_name = &blog.name.unwrap();
         let blog_filename = &blog.filename.unwrap_or_default();
-        let blog_source = if blog.source.is_none() {
-            "".to_string()
+        let blog_source = if let Some(source) = blog.source {
+            format!("{}", source)
         } else {
-            format!("{}", blog.source.unwrap())
+            "".to_string()
         };
         let blog_body_raw = &blog.body.unwrap();
         // Sanitize ' to ''. It's the escape char for '
@@ -286,7 +286,7 @@ impl BlogOperationRepo for TursoDatabase {
         let mut affected_col = "".to_string();
         match &blog.name {
             Some(val) => {
-                affected_col = format!("{} name = '{}' ,", &affected_col, val);
+                affected_col = format!("{} name = '{}' ,", affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -295,7 +295,7 @@ impl BlogOperationRepo for TursoDatabase {
         }
         match &blog.filename {
             Some(val) => {
-                affected_col = format!("{} filename = '{}' ,", &affected_col, val);
+                affected_col = format!("{} filename = '{}' ,", affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -304,7 +304,7 @@ impl BlogOperationRepo for TursoDatabase {
         }
         match &blog.source {
             Some(val) => {
-                affected_col = format!("{} source = '{}' ,", &affected_col, val);
+                affected_col = format!("{} source = '{}' ,", affected_col, val);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -316,7 +316,7 @@ impl BlogOperationRepo for TursoDatabase {
                 // Sanitize ' to ''. It's the escape char for '
                 // https://stackoverflow.com/questions/603572/escape-single-quote-character-for-use-in-an-sqlite-query
                 let body = val.replace("'", "''");
-                affected_col = format!("{} body = '{}' ,", &affected_col, body);
+                affected_col = format!("{} body = '{}' ,", affected_col, body);
                 debug!("Affected Column: '{}'", &affected_col)
             }
             None => {
@@ -326,7 +326,7 @@ impl BlogOperationRepo for TursoDatabase {
 
         // Trimming the last ','
         affected_col = affected_col.as_str()[0..affected_col.len() - 1].to_string();
-        let prep_update_query = format!("UPDATE blogs SET{}WHERE id = ?1", &affected_col);
+        let prep_update_query = format!("UPDATE blogs SET{}WHERE id = ?1", affected_col);
         debug!("Executing query {} for id {}", &prep_update_query, &blog_id);
 
         let stmt = self

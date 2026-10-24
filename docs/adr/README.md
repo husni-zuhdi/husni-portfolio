@@ -13,3 +13,4 @@ rationale, and scope. Read a relevant record before proposing to replace a choic
 8. [Use Axum for HTTP handling](./0008-axum-http-framework.md)
 9. [Use Askama for HTML templates](./0009-askama-templates.md)
 10. [Host the portfolio on Google Cloud Run](./0010-cloud-run-hosting.md)
+11. [Accept dependency advisories by root cause](./0011-dependency-advisory-risk-acceptance.md)
