@@ -1,26 +1,45 @@
-<button class="btn_text btn_blue"
-        hx-get="/admin/profile/{{ section.id }}/edit"
-        hx-target="#profile_section_{{ section.id }}_target"
-        hx-swap="innerHTML">*</button>
-<button class="btn_text btn_red"
-        hx-get="/admin/profile/{{ section.id }}/delete"
-        hx-target="#profile_section_{{ section.id }}_target"
-        hx-swap="innerHTML">x</button>
-<button class="btn_text btn_green"
-        hx-post="/admin/profile/{{ section.id }}/move?dir=up"
-        hx-target="#profile_target"
-        hx-swap="innerHTML">&#8593;</button>
-<button class="btn_text btn_green"
-        hx-post="/admin/profile/{{ section.id }}/move?dir=down"
-        hx-target="#profile_target"
-        hx-swap="innerHTML">&#8595;</button>
-{% if section.is_title %}
-    [Title]
-{% endif %}
-Position {{ section.position }} |
-{% if section.title != "" %}
-    {{ section.title }}
-{% else %}
-    (Page Title Section)
-{% endif %}
-| Layout: {{ section.layout }}
+<tr id="profile_section_{{ section.id }}_target">
+    <td>
+        {% if section.is_title %}
+            [Title] {{ section.position }}
+        {% else %}
+            {{ section.position }}
+        {% endif %}
+    </td>
+    <td>
+        {% if section.title != "" %}
+            {{ section.title }}
+        {% else %}
+            (Page Title Section)
+        {% endif %}
+    </td>
+    <td>{{ section.layout }}</td>
+    <td>
+        <div class="flex gap-1">
+            <button class="btn_text btn_blue admin_icon"
+                    aria-label="Edit section"
+                    title="Edit section"
+                    hx-get="/admin/profile/{{ section.id }}/edit"
+                    hx-target="#profile_section_{{ section.id }}_target"
+                    hx-swap="outerHTML">{% include "admin/partials/icons/pencil.html" %}</button>
+            <button class="btn_text btn_red admin_icon"
+                    aria-label="Delete section"
+                    title="Delete section"
+                    hx-get="/admin/profile/{{ section.id }}/delete"
+                    hx-target="#profile_section_{{ section.id }}_target"
+                    hx-swap="outerHTML">{% include "admin/partials/icons/trash-2.html" %}</button>
+            <button class="btn_text btn_green admin_icon"
+                    aria-label="Move section up"
+                    title="Move up"
+                    hx-post="/admin/profile/{{ section.id }}/move?dir=up"
+                    hx-target="#profile_target"
+                    hx-swap="innerHTML">{% include "admin/partials/icons/arrow-up.html" %}</button>
+            <button class="btn_text btn_green admin_icon"
+                    aria-label="Move section down"
+                    title="Move down"
+                    hx-post="/admin/profile/{{ section.id }}/move?dir=down"
+                    hx-target="#profile_target"
+                    hx-swap="innerHTML">{% include "admin/partials/icons/arrow-down.html" %}</button>
+        </div>
+    </td>
+</tr>

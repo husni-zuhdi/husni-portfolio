@@ -1,0 +1,32 @@
+<tr id="blog_{{ blog.id }}_target">
+    <td>{{ blog.id }}</td>
+    <td>{{ blog.name }}</td>
+    <td>
+        <div class="flex flex-wrap gap-1">
+            {% for tag in blog.tags %}
+                {% if tag == "" %}
+                    <!-- No tag to render  -->
+                    <!-- Skip this tag -->
+                {% else %}
+                    <span class="inactive_tag"><span aria-hidden="true">{% include "admin/partials/icons/tag.html" %}</span>{{ tag }}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </td>
+    <td>
+        <div class="flex gap-1">
+            <button class="btn_text btn_blue admin_icon"
+                    aria-label="Edit blog"
+                    title="Edit blog"
+                    hx-get="/admin/blogs/{{ blog.id }}/edit"
+                    hx-target="#blogs_target"
+                    hx-swap="innerHTML">{% include "admin/partials/icons/pencil.html" %}</button>
+            <button class="btn_text btn_red admin_icon"
+                    aria-label="Delete blog"
+                    title="Delete blog"
+                    hx-get="/admin/blogs/{{ blog.id }}/delete"
+                    hx-target="#blog_{{ blog.id }}_target"
+                    hx-swap="outerHTML">{% include "admin/partials/icons/trash-2.html" %}</button>
+        </div>
+    </td>
+</tr>

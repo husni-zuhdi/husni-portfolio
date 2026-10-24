@@ -1,6 +1,8 @@
-<form hx-post="/admin/profile/add"
+<form class="admin_panel"
+      hx-post="/admin/profile/add"
       hx-target="#profile_target"
       hx-swap="innerHTML">
+    <h3>Add Section #{{ id }}</h3>
     <div>
         <label for=section_id>Section ID :</label>
         <input type="text"
@@ -29,17 +31,24 @@
         <textarea id="section_body" name="section_body" rows="10" cols="80"></textarea>
     </div>
     <div id="profile_preview_target"></div>
-    <div>
-        <button class="btn_text btn_green" type="submit">o</button>
-        <button class="btn_text btn_blue"
+    <div class="admin_input flex gap-1">
+        <button class="btn_text btn_green admin_icon"
+                type="submit"
+                aria-label="Save new section"
+                title="Save section">{% include "admin/partials/icons/check.html" %}</button>
+        <button class="btn_text btn_blue admin_icon"
                 type="button"
+                aria-label="Preview section"
+                title="Preview"
                 hx-post="/admin/profile/preview"
                 hx-include="closest form"
                 hx-target="#profile_preview_target"
-                hx-swap="innerHTML">Preview</button>
-        <button class="btn_text btn_red"
+                hx-swap="innerHTML">{% include "admin/partials/icons/eye.html" %}</button>
+        <button class="btn_text btn_red admin_icon"
+                aria-label="Cancel adding section"
+                title="Cancel"
                 hx-get="/admin/profile/list"
                 hx-target="#profile_target"
-                hx-swap="innerHTML">x</button>
+                hx-swap="innerHTML">{% include "admin/partials/icons/x.html" %}</button>
     </div>
 </form>

@@ -1,11 +1,21 @@
 {% if error_message != "" %}
     <p class="font-bold text-red-600">{{ error_message }}</p>
 {% endif %}
-{% for section in sections %}
-    <h2 class="hover:font-bold">
-        <div id="profile_section_{{ section.id }}_target">{% include "admin/profile/partials/section_row.html" %}</div>
-    </h2>
-{% endfor %}
+<table class="admin_table">
+    <thead>
+        <tr>
+            <th>Position</th>
+            <th>Title</th>
+            <th>Layout</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for section in sections %}
+            {% include "admin/profile/partials/section_row.html" %}
+        {% endfor %}
+    </tbody>
+</table>
 {% if sections.is_empty() %}
     <p>No profile sections yet. Click + to add one.</p>
 {% endif %}

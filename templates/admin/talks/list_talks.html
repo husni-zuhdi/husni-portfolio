@@ -1,26 +1,18 @@
-{% for talk in talks %}
-    <h2 class="hover:font-bold">
-        <div id="talk_{{ talk.id }}_target">
-            <button class="btn_text btn_blue"
-                    hx-get="/admin/talks/{{ talk.id }}/edit"
-                    hx-target="#talk_{{ talk.id }}_target"
-                    hx-swap="innerHTML">*</button>
-            <button class="btn_text btn_red"
-                    hx-get="/admin/talks/{{ talk.id }}/delete"
-                    hx-target="#talk_{{ talk.id }}_target"
-                    hx-swap="innerHTML">x</button>
-            {{ talk.date }}
-            {% if talk.media_link != "" %}
-                | <a href="{{ talk.media_link }}">{{ talk.name }}</a>
-            {% else %}
-                | {{ talk.name }}
-            {% endif %}
-            {% if talk.org_link != "" && talk.org_name != "" %}
-                at <a href="{{ talk.org_link }}">{{ talk.org_name }}</a>
-            {% else if talk.org_name != "" %}
-                at {{ talk.org_name }}
-            {% else %}
-            {% endif %}
-        </div>
-    </h2>
-{% endfor %}
+<table class="admin_table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Organization</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for talk in talks %}
+            {% include "admin/talks/partials/talk_row.html" %}
+        {% endfor %}
+    </tbody>
+</table>
+{% if talks.is_empty() %}
+    <p>No talks yet. Click + to add one.</p>
+{% endif %}

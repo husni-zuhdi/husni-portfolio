@@ -19,10 +19,7 @@ impl Tag {
             "Tag: Constructing AdminGetTagTemplate for Tag Id {}",
             self.id
         );
-        AdminGetTagTemplate {
-            id: self.id,
-            name: self.name.clone(),
-        }
+        AdminGetTagTemplate { tag: self.clone() }
     }
     /// Calculate size of Tag in u32
     /// Useful for weighing data size
@@ -170,8 +167,8 @@ mod test {
     #[test]
     fn test_tag_to_admin_template() {
         let template = sample_tag().to_admin_template();
-        assert_eq!(template.id, 1);
-        assert_eq!(template.name, "kubernetes");
+        assert_eq!(template.tag.id, 1);
+        assert_eq!(template.tag.name, "kubernetes");
     }
 
     #[test]

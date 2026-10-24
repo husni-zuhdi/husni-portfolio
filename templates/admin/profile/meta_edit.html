@@ -1,6 +1,8 @@
-<form hx-put="/admin/profile/meta/edit"
+<form class="admin_panel"
+      hx-put="/admin/profile/meta/edit"
       hx-target="#profile_target"
       hx-swap="innerHTML">
+    <h3>Edit Profile Meta</h3>
     <div>
         <label for=meta_id>Meta ID :</label>
         <input type="text"
@@ -18,11 +20,16 @@
                value="{{ description }}">
         <br>
     </div>
-    <div>
-        <button class="btn_text btn_green" type="submit">o</button>
-        <button class="btn_text btn_red"
+    <div class="admin_input flex gap-1">
+        <button class="btn_text btn_green admin_icon"
+                type="submit"
+                aria-label="Save profile meta"
+                title="Save meta">{% include "admin/partials/icons/check.html" %}</button>
+        <button class="btn_text btn_red admin_icon"
+                aria-label="Cancel editing profile meta"
+                title="Cancel"
                 hx-get="/admin/profile/list"
                 hx-target="#profile_target"
-                hx-swap="innerHTML">x</button>
+                hx-swap="innerHTML">{% include "admin/partials/icons/x.html" %}</button>
     </div>
 </form>

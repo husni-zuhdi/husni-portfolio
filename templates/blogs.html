@@ -20,13 +20,13 @@
                                     hx-get="/blogs"
                                     hx-target="#body_target"
                                     hx-swap="innerHTML"
-                                    hx-replace-url="true">{{ tag }}</button>
+                                    hx-replace-url="true"><span aria-hidden="true">{% include "admin/partials/icons/tag.html" %}</span>{{ tag }}</button>
                         {% else %}
                             <button class="inactive_tag"
                                     hx-get="/blogs?tags={{ tag }}"
                                     hx-target="#body_target"
                                     hx-swap="innerHTML"
-                                    hx-replace-url="true">{{ tag }}</button>
+                                    hx-replace-url="true"><span aria-hidden="true">{% include "admin/partials/icons/tag.html" %}</span>{{ tag }}</button>
                         {% endif %}
                     {% endfor %}
                 </div>

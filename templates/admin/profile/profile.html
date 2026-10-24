@@ -7,14 +7,16 @@
         <p>Manage your Profile page sections.</p>
         <div class="flex flex-col justify-between lg:flex-row">
             <div class="top_section">
-                <button class="btn_text btn_green"
+                <button class="btn_text btn_green admin_icon"
+                        aria-label="Add profile section"
+                        title="Add section"
                         hx-get="/admin/profile/add"
                         hx-target="#profile_target"
-                        hx-swap="innerHTML">+</button>
+                        hx-swap="innerHTML">{% include "admin/partials/icons/plus.html" %}</button>
                 <button class="btn_text btn_blue"
                         hx-get="/admin/profile/meta/edit"
                         hx-target="#profile_target"
-                        hx-swap="innerHTML">Meta</button>
+                        hx-swap="innerHTML">Edit Meta</button>
             </div>
         </div>
     </div>

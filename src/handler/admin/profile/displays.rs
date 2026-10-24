@@ -612,16 +612,23 @@ mod test {
         .render()
         .unwrap();
 
-        // Both must carry the same row content and controls
+        // Both must carry the same table row content and controls
         for html in [&row, &list] {
-            assert!(html.contains("[Title]"));
-            assert!(html.contains("Position 1"));
+            assert!(html.contains("<tr id=\"profile_section_1_target\">"));
+            assert!(html.contains("[Title] 1"));
             assert!(html.contains("(Page Title Section)"));
-            assert!(html.contains("| Layout: stacked"));
+            assert!(html.contains("<td>stacked</td>"));
             assert!(html.contains("hx-get=\"/admin/profile/1/edit\""));
+            assert!(html.contains("hx-swap=\"outerHTML\""));
             assert!(html.contains("hx-get=\"/admin/profile/1/delete\""));
             assert!(html.contains("hx-post=\"/admin/profile/1/move?dir=up\""));
             assert!(html.contains("hx-post=\"/admin/profile/1/move?dir=down\""));
         }
+
+        // The list renders a table with headers; the row view must not
+        // duplicate the table element itself
+        assert!(list.contains("<table"));
+        assert!(list.contains("<th>Position</th>"));
+        assert!(!row.contains("<table"));
     }
 }

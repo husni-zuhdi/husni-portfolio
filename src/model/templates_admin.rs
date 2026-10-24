@@ -168,8 +168,7 @@ pub struct AdminGetAddTagTemplate {
 #[derive(Template, Debug)]
 #[template(path = "admin/blogs/tags/get_tag.html")]
 pub struct AdminGetTagTemplate {
-    pub id: i64,
-    pub name: String,
+    pub tag: Tag,
 }
 
 #[derive(Template, Debug)]
