@@ -1,25 +1,32 @@
-<h3 class="mb-2 hover:font-bold md:justify-start">
-    <form hx-post="/admin/blogs/tags/add"
-          hx-target="#tags_target"
-          hx-swap="innerHTML">
-        <div>
-            <label for=tag_id>Tag ID :</label>
-            <input type="text"
-                   id="tag_id"
-                   name="tag_id"
-                   value="{{ id }}"
-                   class="readonly"
-                   readonly>
-        </div>
-        <div class="admin_input">
-            <label for=tag_name>Name :</label>
-            <input type="text" id="tag_name" name="tag_name" value="">
-            <br>
-        </div>
-        <button class="btn_text btn_green" type="submit">Submit</button>
-        <button class="btn_text btn_red"
+<form class="admin_panel"
+      hx-post="/admin/blogs/tags/add"
+      hx-target="#tags_target"
+      hx-swap="innerHTML">
+    <h3>Add Tag #{{ id }}</h3>
+    <div>
+        <label for=tag_id>Tag ID :</label>
+        <input type="text"
+               id="tag_id"
+               name="tag_id"
+               value="{{ id }}"
+               class="readonly"
+               readonly>
+    </div>
+    <div class="admin_input">
+        <label for=tag_name>Name :</label>
+        <input type="text" id="tag_name" name="tag_name" value="">
+        <br>
+    </div>
+    <div class="admin_input flex gap-1">
+        <button class="btn_text btn_green admin_icon"
+                type="submit"
+                aria-label="Save new tag"
+                title="Save tag">{% include "admin/partials/icons/check.html" %}</button>
+        <button class="btn_text btn_red admin_icon"
+                aria-label="Cancel adding tag"
+                title="Cancel"
                 hx-get="/admin/blogs/tags/list"
                 hx-target="#tags_target"
-                hx-swap="innerHTML">Cancel</button>
-    </form>
-</h3>
+                hx-swap="innerHTML">{% include "admin/partials/icons/x.html" %}</button>
+    </div>
+</form>

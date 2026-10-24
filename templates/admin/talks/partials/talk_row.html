@@ -1,0 +1,35 @@
+<tr id="talk_{{ talk.id }}_target">
+    <td>{{ talk.date }}</td>
+    <td>
+        {% if talk.media_link != "" %}
+            <a href="{{ talk.media_link }}">{{ talk.name }}</a>
+        {% else %}
+            {{ talk.name }}
+        {% endif %}
+    </td>
+    <td>
+        {% if talk.org_link != "" && talk.org_name != "" %}
+            <a href="{{ talk.org_link }}">{{ talk.org_name }}</a>
+        {% else if talk.org_name != "" %}
+            {{ talk.org_name }}
+        {% else %}
+            -
+        {% endif %}
+    </td>
+    <td>
+        <div class="flex gap-1">
+            <button class="btn_text btn_blue admin_icon"
+                    aria-label="Edit talk"
+                    title="Edit talk"
+                    hx-get="/admin/talks/{{ talk.id }}/edit"
+                    hx-target="#talk_{{ talk.id }}_target"
+                    hx-swap="outerHTML">{% include "admin/partials/icons/pencil.html" %}</button>
+            <button class="btn_text btn_red admin_icon"
+                    aria-label="Delete talk"
+                    title="Delete talk"
+                    hx-get="/admin/talks/{{ talk.id }}/delete"
+                    hx-target="#talk_{{ talk.id }}_target"
+                    hx-swap="outerHTML">{% include "admin/partials/icons/trash-2.html" %}</button>
+        </div>
+    </td>
+</tr>

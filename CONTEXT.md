@@ -22,6 +22,16 @@ _Avoid_: Blog-tag mapping
 **Talk**:
 A presentation given by the Portfolio owner at an event.
 
+**Profile section**:
+An editable block of the Profile page with a position, a heading, a markdown
+body, and a Layout. The first section by position is the page title section
+and cannot be deleted.
+_Avoid_: profile item
+
+**Layout**:
+How a Profile section body is rendered: `stacked` (normal document flow) or
+`cards` (flex-container grid). Unknown values fall back to `stacked`.
+
 **Administrator**:
 A person responsible for maintaining the Portfolio's content.
 _Avoid_: Admin, when referring to a person

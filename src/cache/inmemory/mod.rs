@@ -1,5 +1,6 @@
 pub mod blog_tag_mappings;
 pub mod blogs;
+pub mod profile;
 pub mod tags;
 pub mod talks;
 
@@ -8,6 +9,7 @@ use std::time::Duration;
 
 use crate::model::blog_tag_mappings::BlogTagMapping;
 use crate::model::blogs::Blog;
+use crate::model::profile::ProfilePage;
 use crate::model::tags::Tag;
 use crate::model::talks::Talk;
 
@@ -17,6 +19,7 @@ pub struct InMemoryCache {
     talks_cache: Cache<String, Talk>,
     tags_cache: Cache<String, Tag>,
     btms_cache: Cache<String, BlogTagMapping>,
+    profile_cache: Cache<String, ProfilePage>,
 }
 
 impl InMemoryCache {
@@ -54,11 +57,20 @@ impl InMemoryCache {
             // Set max cache capacity to 32MiB
             .max_capacity(32 * 1024 * 1024)
             .build();
+        let profile_cache = Cache::builder()
+            // Set time to live from the CACHE_TTL envar
+            .time_to_live(Duration::from_secs(ttl as u64))
+            // Weigher to set K and V varaibles type
+            .weigher(|_key: &String, value: &ProfilePage| -> u32 { value.data_size() })
+            // Set max cache capacity to 32MiB
+            .max_capacity(32 * 1024 * 1024)
+            .build();
         Self {
             blogs_cache,
             talks_cache,
             tags_cache,
             btms_cache,
+            profile_cache,
         }
     }
 }

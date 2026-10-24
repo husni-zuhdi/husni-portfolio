@@ -1,4 +1,5 @@
 use markdown::{to_html_with_options, CompileOptions, Options, ParseOptions};
+use std::collections::HashSet;
 
 /// Capitalize the first character in s.
 /// Take borrowed str of s
@@ -49,6 +50,7 @@ pub fn convert_markdown_to_html(body_md: &str) -> String {
         .link_rel(None)
         .url_relative(ammonia::UrlRelative::PassThrough)
         .add_clean_content_tags(&["script", "style"])
+        .add_tag_attributes("a", HashSet::from(["target"]))
         .clean(&html)
         .to_string()
 }
@@ -72,6 +74,16 @@ mod test {
         let expected = "kubernetes,jenkins,grafana,ec2".to_string();
         let result = remove_whitespace(test);
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_convert_markdown_to_html_link_with_target() {
+        let text = r#"<a href="https://example.com" target="_blank">Example</a>"#.to_string();
+        let result = convert_markdown_to_html(&text);
+        assert_eq!(
+            result,
+            r#"<p><a href="https://example.com" target="_blank">Example</a></p>"#
+        );
     }
 
     #[test]

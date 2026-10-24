@@ -6,6 +6,65 @@ use askama::Template;
 pub struct AdminTemplate {}
 
 #[derive(Template, Debug)]
+#[template(path = "admin/profile/profile.html")]
+pub struct AdminProfileTemplate {}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/profile/list_sections.html")]
+pub struct AdminListProfileSectionsTemplate {
+    pub sections: Vec<AdminProfileSectionTemplate>,
+    pub error_message: String,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/profile/get_section.html")]
+pub struct AdminGetProfileSectionTemplate {
+    pub section: AdminProfileSectionTemplate,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/profile/get_add_section.html")]
+pub struct AdminGetAddProfileSectionTemplate {
+    pub id: i64,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/profile/get_edit_section.html")]
+pub struct AdminGetEditProfileSectionTemplate {
+    pub section: AdminProfileSectionTemplate,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/profile/get_delete_section.html")]
+pub struct AdminGetDeleteProfileSectionTemplate {
+    pub id: i64,
+    pub protected: bool,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/profile/meta_edit.html")]
+pub struct AdminProfileMetaEditTemplate {
+    pub description: String,
+}
+
+#[derive(Template, Debug)]
+#[template(path = "admin/profile/preview.html")]
+pub struct AdminProfilePreviewTemplate {
+    pub html: String,
+    pub css_class: String,
+}
+
+#[derive(Debug)]
+pub struct AdminProfileSectionTemplate {
+    pub id: i64,
+    pub position: i64,
+    pub title: String,
+    pub body: String,
+    pub layout: String,
+    pub is_title: bool,
+}
+
+#[derive(Template, Debug)]
 #[template(path = "admin/talks/talks.html")]
 pub struct AdminTalksTemplate {}
 
@@ -109,8 +168,7 @@ pub struct AdminGetAddTagTemplate {
 #[derive(Template, Debug)]
 #[template(path = "admin/blogs/tags/get_tag.html")]
 pub struct AdminGetTagTemplate {
-    pub id: i64,
-    pub name: String,
+    pub tag: Tag,
 }
 
 #[derive(Template, Debug)]

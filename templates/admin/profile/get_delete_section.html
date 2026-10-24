@@ -1,0 +1,36 @@
+<tr id="profile_section_{{ id }}_target">
+    <td colspan="4">
+        {% if protected %}
+            <div class="admin_panel">
+                <p class="font-bold text-red-600">Section with ID {{ id }} is the page title section. It cannot be deleted.</p>
+                <div class="admin_input">
+                    <button class="btn_text btn_blue admin_icon"
+                            aria-label="Back to section"
+                            title="Back"
+                            hx-get="/admin/profile/{{ id }}"
+                            hx-target="#profile_section_{{ id }}_target"
+                            hx-swap="outerHTML">{% include "admin/partials/icons/x.html" %}</button>
+                </div>
+            </div>
+        {% else %}
+            <form class="admin_panel"
+                  hx-delete="/admin/profile/{{ id }}/delete"
+                  hx-target="#profile_target"
+                  hx-swap="innerHTML">
+                <p>Are you sure you want to delete Profile Section with ID {{ id }}?</p>
+                <div class="admin_input flex gap-1">
+                    <button class="btn_text btn_red admin_icon"
+                            type="submit"
+                            aria-label="Confirm delete section"
+                            title="Delete section">{% include "admin/partials/icons/trash-2.html" %}</button>
+                    <button class="btn_text btn_blue admin_icon"
+                            aria-label="Cancel deleting section"
+                            title="Cancel"
+                            hx-get="/admin/profile/{{ id }}"
+                            hx-target="#profile_section_{{ id }}_target"
+                            hx-swap="outerHTML">{% include "admin/partials/icons/x.html" %}</button>
+                </div>
+            </form>
+        {% endif %}
+    </td>
+</tr>

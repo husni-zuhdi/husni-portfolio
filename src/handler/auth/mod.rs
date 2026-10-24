@@ -183,7 +183,7 @@ fn build_token(claims: &Claims, secret: &str) -> String {
 
 /// create_jwt
 /// Create JWT Claim and token
-fn create_jwt(secret: &str) -> Option<String> {
+pub(crate) fn create_jwt(secret: &str) -> Option<String> {
     let now = chrono::Utc::now().timestamp() as usize;
     let three_hour_in_s = 10800_usize;
     let my_claims = Claims {

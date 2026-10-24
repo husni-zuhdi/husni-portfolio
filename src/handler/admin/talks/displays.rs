@@ -461,3 +461,57 @@ pub async fn get_delete_admin_talk(
     info!("AdminGetDeleteTalk askama template rendered.");
     Html(delete_talk)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::model::talks::Talks;
+    use crate::model::templates_admin::AdminListTalksTemplate;
+
+    fn sample_talk() -> crate::model::talks::Talk {
+        crate::model::talks::Talk {
+            id: 1,
+            name: "Talk 1".to_string(),
+            date: "2024-01-01".to_string(),
+            media_link: Some("https://example.com/talk-1".to_string()),
+            org_name: Some("Org 1".to_string()),
+            org_link: Some("https://example.com/org-1".to_string()),
+        }
+    }
+
+    /// Regression test: the standalone talk view (returned after an edit is
+    /// accepted or canceled) must render the same table row markup as the
+    /// talks list so the swapped-in fragment looks identical to the
+    /// original list row.
+    #[test]
+    fn test_get_talk_row_matches_list_row_markup() {
+        let talk = sample_talk();
+
+        // Standalone row fragment (get_talk.html)
+        let row = AdminGetTalkTemplate {
+            talk: talk.clone().sanitize_talk_media_org().to_admin_template(),
+        }
+        .render()
+        .unwrap();
+
+        // The list renders the same talk via the shared partial
+        let list = AdminListTalksTemplate {
+            talks: Talks { talks: vec![talk] }.to_admin_list_template().talks,
+        }
+        .render()
+        .unwrap();
+
+        for html in [&row, &list] {
+            assert!(html.contains("<tr id=\"talk_1_target\">"));
+            assert!(html.contains("hx-get=\"/admin/talks/1/edit\""));
+            assert!(html.contains("hx-swap=\"outerHTML\""));
+            assert!(html.contains("hx-get=\"/admin/talks/1/delete\""));
+        }
+
+        // The list renders a table with headers; the row view must not
+        // duplicate the table element itself
+        assert!(list.contains("<table"));
+        assert!(list.contains("<th>Date</th>"));
+        assert!(!row.contains("<table"));
+    }
+}

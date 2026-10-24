@@ -12,10 +12,12 @@
                         hx-target="#body_target"
                         hx-swap="outerHTML"
                         hx-replace-url="true">Manage Blogs</button>
-                <button class="btn_text btn_green"
+                <button class="btn_text btn_green admin_icon"
+                        aria-label="Add tag"
+                        title="Add tag"
                         hx-get="/admin/blogs/tags/add"
                         hx-target="#tags_target"
-                        hx-swap="innerHTML">+</button>
+                        hx-swap="innerHTML">{% include "admin/partials/icons/plus.html" %}</button>
             </div>
             <div class="top_section">
                 <input type="search"
