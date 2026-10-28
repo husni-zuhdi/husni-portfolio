@@ -51,7 +51,6 @@
         var selectedList = widget.querySelector(".tag-selected-list");
 
         if (!searchInput || !dropdown || !selectedList) return;
-
         function syncHiddenInputs() {
             widget.querySelectorAll('input[name="blog_tag"]').forEach(function (el) {
                 el.remove();
