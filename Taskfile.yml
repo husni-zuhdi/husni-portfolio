@@ -15,7 +15,7 @@ tasks:
     cmds:
       - |
         RUST_LOG=debug cargo test --all-features --locked -- --test-threads=1
-        cd /test/js && npm test
+        cd ./tests/js && npm test
   coverage:
     summary: Run tarpaulin for code coverage and produce html output
     cmds:
