@@ -5,6 +5,8 @@ pub mod tags;
 pub mod talks;
 
 use moka::future::Cache;
+use std::collections::HashSet;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use crate::model::blog_tag_mappings::BlogTagMapping;
@@ -16,8 +18,26 @@ use crate::model::talks::Talk;
 #[derive(Clone)]
 pub struct InMemoryCache {
     blogs_cache: Cache<String, Blog>,
+    /// Known Blog database ids. Kept in sync by the Blog cache adapter's
+    /// insert and invalidate operations, and used to implement all-or-nothing
+    /// Blog list reads: an id that is indexed must be present in the cache,
+    /// while an unindexed id is treated as a gap (a Blog that does not exist
+    /// in the database) rather than as a miss.
+    blogs_index: Arc<RwLock<HashSet<i64>>>,
     talks_cache: Cache<String, Talk>,
+    /// Known Talk database ids. Kept in sync by the Talk cache adapter's
+    /// insert and invalidate operations, and used to implement all-or-nothing
+    /// Talk list reads: an id that is indexed must be present in the cache,
+    /// while an unindexed id is treated as a gap (a Talk that does not exist
+    /// in the database) rather than as a miss.
+    talks_index: Arc<RwLock<HashSet<i64>>>,
     tags_cache: Cache<String, Tag>,
+    /// Known Tag database ids. Kept in sync by the Tag cache adapter's
+    /// insert and invalidate operations, and used to implement all-or-nothing
+    /// Tag list reads: an id that is indexed must be present in the cache,
+    /// while an unindexed id is treated as a gap (a Tag that does not exist
+    /// in the database) rather than as a miss.
+    tags_index: Arc<RwLock<HashSet<i64>>>,
     btms_cache: Cache<String, BlogTagMapping>,
     profile_cache: Cache<String, ProfilePage>,
 }
@@ -33,6 +53,7 @@ impl InMemoryCache {
             // Set max cache capacity to 32MiB
             .max_capacity(32 * 1024 * 1024)
             .build();
+        let blogs_index = Arc::new(RwLock::new(HashSet::new()));
         let talks_cache = Cache::builder()
             // Set time to live from the CACHE_TTL envar
             .time_to_live(Duration::from_secs(ttl as u64))
@@ -41,6 +62,7 @@ impl InMemoryCache {
             // Set max cache capacity to 32MiB
             .max_capacity(32 * 1024 * 1024)
             .build();
+        let talks_index = Arc::new(RwLock::new(HashSet::new()));
         let tags_cache = Cache::builder()
             // Set time to live from the CACHE_TTL envar
             .time_to_live(Duration::from_secs(ttl as u64))
@@ -49,6 +71,7 @@ impl InMemoryCache {
             // Set max cache capacity to 32MiB
             .max_capacity(32 * 1024 * 1024)
             .build();
+        let tags_index = Arc::new(RwLock::new(HashSet::new()));
         let btms_cache = Cache::builder()
             // Set time to live from the CACHE_TTL envar
             .time_to_live(Duration::from_secs(ttl as u64))
@@ -67,8 +90,11 @@ impl InMemoryCache {
             .build();
         Self {
             blogs_cache,
+            blogs_index,
             talks_cache,
+            talks_index,
             tags_cache,
+            tags_index,
             btms_cache,
             profile_cache,
         }

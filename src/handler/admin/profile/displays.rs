@@ -8,7 +8,6 @@ use crate::model::templates_admin::{
     AdminGetEditProfileSectionTemplate, AdminGetProfileSectionTemplate,
     AdminListProfileSectionsTemplate, AdminProfileMetaEditTemplate, AdminProfileTemplate,
 };
-use crate::repo::profile::ProfileDisplayRepo;
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, State};
@@ -54,73 +53,24 @@ pub async fn get_admin_profile_list(
         return get_401_unauthorized().await;
     }
 
-    get_admin_profile_list_with_error(app_state, String::new()).await
+    render_profile_list(app_state, String::new()).await
 }
 
-/// get_admin_profile_list_with_error
+/// render_profile_list
 /// Render the profile section list with an optional error message.
 /// Used by mutation endpoints to surface failures (e.g. protected deletion)
-pub async fn get_admin_profile_list_with_error(
-    app_state: AppState,
-    error_message: String,
-) -> Html<String> {
-    let profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
+pub async fn render_profile_list(app_state: AppState, error_message: String) -> Html<String> {
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
 
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        profile_cache_uc_opt.clone().unwrap().find_sections().await
-    } else {
-        None
-    };
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let list_res = AdminListProfileSectionsTemplate {
-            sections: res.to_admin_template(),
-            error_message,
-        }
-        .render();
-        match list_res {
-            Ok(html) => {
-                info!("AdminListProfileSections askama template rendered.");
-                return Html(html);
-            }
-            Err(err) => {
-                error!("Failed to render admin/profile/list_sections.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        }
-    }
-
-    // If not, get data from database
-    let db_result = profile_db_uc.find_sections().await;
-    if db_result.is_none() {
+    // The sections read rebuilds the page cache when the cache is cold.
+    let sections = profile_uc.find_sections().await;
+    let Some(sections_data) = sections else {
         error!("Failed to find profile sections.");
         return get_500_internal_server_error();
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        let meta = profile_db_uc.find_meta().await;
-        debug!("Caching profile page");
-        let _ = profile_cache_uc_opt
-            .clone()
-            .unwrap()
-            .profile_operation_repo
-            .insert_page(crate::model::profile::ProfilePage {
-                sections: db_result.clone().unwrap(),
-                meta: meta.unwrap_or(crate::model::profile::ProfileMeta {
-                    id: 0,
-                    description: String::new(),
-                }),
-            })
-            .await;
-    }
-
-    // Render Admin List Profile Sections
     let list_res = AdminListProfileSectionsTemplate {
-        sections: db_result.unwrap().to_admin_template(),
+        sections: sections_data.to_admin_template(),
         error_message,
     }
     .render();
@@ -149,79 +99,22 @@ pub async fn get_admin_profile_section(
         return get_401_unauthorized().await;
     }
 
-    let profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
-    };
-
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        profile_cache_uc_opt
-            .clone()
-            .unwrap()
-            .find_section(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        // Flag the page title section so the row renders the [Title] badge
-        let is_title = is_protected_section(&app_state, &res).await;
-        let section_res = AdminGetProfileSectionTemplate {
-            section: res.to_admin_template(is_title),
-        }
-        .render();
-        match section_res {
-            Ok(html) => {
-                info!("AdminGetProfileSection askama template rendered.");
-                return Html(html);
-            }
-            Err(err) => {
-                error!("Failed to render admin/profile/get_section.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        }
-    }
-
-    // If not, get data from database
-    let db_result = profile_db_uc.find_section(id.clone().unwrap()).await;
-    if db_result.is_none() {
-        info!(
-            "Failed to find Profile Section with Id {}.",
-            &id.clone().unwrap()
-        );
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
         return get_404_not_found().await;
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        let sections = profile_db_uc.find_sections().await;
-        let meta = profile_db_uc.find_meta().await;
-        if let (Some(sections), Some(meta)) = (sections, meta) {
-            debug!("Caching profile page");
-            let _ = profile_cache_uc_opt
-                .clone()
-                .unwrap()
-                .profile_operation_repo
-                .insert_page(crate::model::profile::ProfilePage { sections, meta })
-                .await;
-        }
-    }
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
+    let section_result = profile_uc.find_section(id).await;
 
-    // Render Profile Section
-    let section = db_result.unwrap();
+    // Early check result. If empty, return 404 error
+    let Some(section) = section_result else {
+        info!("Failed to find Profile Section with Id {}.", &id);
+        return get_404_not_found().await;
+    };
+
+    // Flag the page title section so the row renders the [Title] badge
     let is_title = is_protected_section(&app_state, &section).await;
     let section_res = AdminGetProfileSectionTemplate {
         section: section.to_admin_template(is_title),
@@ -250,9 +143,11 @@ pub async fn get_add_admin_profile_section(
         return get_401_unauthorized().await;
     }
 
-    let profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
     // Calculate new Profile Section Id
-    let result = profile_db_uc.profile_operation_repo.get_new_id().await;
+    let result = {
+        let mut profile_uc = app_state.profile_usecase.lock().await.clone();
+        profile_uc.get_new_id().await
+    };
     if result.is_none() {
         info!("Failed to get new Profile Section Id.");
         return get_404_not_found().await;
@@ -291,81 +186,23 @@ pub async fn get_edit_admin_profile_section(
         return get_401_unauthorized().await;
     }
 
-    let profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
-    };
-
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        profile_cache_uc_opt
-            .clone()
-            .unwrap()
-            .find_section(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let edit_section_res = AdminGetEditProfileSectionTemplate {
-            section: res.to_admin_template(false),
-        }
-        .render();
-        match edit_section_res {
-            Ok(html) => {
-                info!("AdminGetEditProfileSection askama template rendered.");
-                return Html(html);
-            }
-            Err(err) => {
-                error!(
-                    "Failed to render admin/profile/get_edit_section.html. {}",
-                    err
-                );
-                return get_500_internal_server_error();
-            }
-        }
-    }
-
-    // If not, get data from database
-    let db_result = profile_db_uc.find_section(id.clone().unwrap()).await;
-    if db_result.is_none() {
-        info!(
-            "Failed to find Profile Section with Id {}.",
-            &id.clone().unwrap()
-        );
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
         return get_404_not_found().await;
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        let sections = profile_db_uc.find_sections().await;
-        let meta = profile_db_uc.find_meta().await;
-        if let (Some(sections), Some(meta)) = (sections, meta) {
-            debug!("Caching profile page");
-            let _ = profile_cache_uc_opt
-                .clone()
-                .unwrap()
-                .profile_operation_repo
-                .insert_page(crate::model::profile::ProfilePage { sections, meta })
-                .await;
-        }
-    }
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
+    let section_result = profile_uc.find_section(id).await;
 
-    // Render Edit Profile Section
+    // Early check result. If empty, return 404 error
+    let Some(section) = section_result else {
+        info!("Failed to find Profile Section with Id {}.", &id);
+        return get_404_not_found().await;
+    };
+
     let edit_section_res = AdminGetEditProfileSectionTemplate {
-        section: db_result.unwrap().to_admin_template(false),
+        section: section.to_admin_template(false),
     }
     .render();
     match edit_section_res {
@@ -396,82 +233,21 @@ pub async fn get_delete_admin_profile_section(
         return get_401_unauthorized().await;
     }
 
-    let profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
-    };
-
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        profile_cache_uc_opt
-            .clone()
-            .unwrap()
-            .find_section(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
-    // If cache hit, check protection and render
-    if let Some(res) = cache_result {
-        let protected = is_protected_section(&app_state, &res).await;
-        let delete_section_res = AdminGetDeleteProfileSectionTemplate {
-            id: res.id,
-            protected,
-        }
-        .render();
-        match delete_section_res {
-            Ok(html) => {
-                info!("AdminGetDeleteProfileSection askama template rendered.");
-                return Html(html);
-            }
-            Err(err) => {
-                error!(
-                    "Failed to render admin/profile/get_delete_section.html. {}",
-                    err
-                );
-                return get_500_internal_server_error();
-            }
-        }
-    }
-
-    // If not, get data from database
-    let db_result = profile_db_uc.find_section(id.clone().unwrap()).await;
-    if db_result.is_none() {
-        info!(
-            "Failed to find Profile Section with Id {}.",
-            &id.clone().unwrap()
-        );
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
         return get_404_not_found().await;
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        let sections = profile_db_uc.find_sections().await;
-        let meta = profile_db_uc.find_meta().await;
-        if let (Some(sections), Some(meta)) = (sections, meta) {
-            debug!("Caching profile page");
-            let _ = profile_cache_uc_opt
-                .clone()
-                .unwrap()
-                .profile_operation_repo
-                .insert_page(crate::model::profile::ProfilePage { sections, meta })
-                .await;
-        }
-    }
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
+    let section_result = profile_uc.find_section(id).await;
 
-    // Check protection and render
-    let section = db_result.unwrap();
+    // Early check result. If empty, return 404 error
+    let Some(section) = section_result else {
+        info!("Failed to find Profile Section with Id {}.", &id);
+        return get_404_not_found().await;
+    };
+
     let protected = is_protected_section(&app_state, &section).await;
     let delete_section_res = AdminGetDeleteProfileSectionTemplate {
         id: section.id,
@@ -504,23 +280,8 @@ pub async fn get_admin_profile_meta_edit(
         return get_401_unauthorized().await;
     }
 
-    let profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
-
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        profile_cache_uc_opt.clone().unwrap().find_meta().await
-    } else {
-        None
-    };
-    if let Some(meta) = cache_result {
-        return render_meta_edit(meta.description).await;
-    }
-
-    // If not, get data from database
-    let db_result = profile_db_uc.find_meta().await;
-    match db_result {
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
+    match profile_uc.find_meta().await {
         Some(meta) => render_meta_edit(meta.description).await,
         None => {
             info!("Profile Meta is not found. Render an empty description.");
@@ -551,22 +312,13 @@ async fn is_protected_section(
     app_state: &AppState,
     section: &crate::model::profile::ProfileSection,
 ) -> bool {
-    let profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
 
-    let sections = if is_cache_enabled {
-        let cache_result = profile_cache_uc_opt.clone().unwrap().find_sections().await;
-        match cache_result {
-            Some(res) => Some(res),
-            None => profile_db_uc.find_sections().await,
-        }
-    } else {
-        profile_db_uc.find_sections().await
-    };
-
-    match sections.and_then(|sections| sections.first().cloned()) {
-        Some(first) => first.id == section.id,
+    match profile_uc.find_sections().await {
+        Some(sections) => sections
+            .first()
+            .map(|first| first.id == section.id)
+            .unwrap_or(false),
         None => false,
     }
 }

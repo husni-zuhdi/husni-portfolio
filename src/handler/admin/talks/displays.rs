@@ -10,7 +10,6 @@ use crate::model::{
         AdminGetTalkTemplate, AdminTalksTemplate,
     },
 };
-use crate::repo::talks::TalkDisplayRepo;
 use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
@@ -56,71 +55,20 @@ pub async fn get_admin_talks_list(
         return get_401_unauthorized().await;
     }
 
-    let talks_db_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
-    let talks_cache_uc_opt = app_state.talk_cache_usecase.lock().await.clone();
-    let is_cache_enabled = talks_cache_uc_opt.is_some();
-
+    let mut talk_uc = app_state.talk_usecase.lock().await.clone();
     let sanitized_params = params.sanitize();
+    let talks_result = talk_uc.find_talks(sanitized_params.clone()).await;
 
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .find_talks(sanitized_params.clone())
-            .await
-    } else {
-        None
-    };
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let talks_res = match res.sanitize().to_admin_list_template().render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render get_talks.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("Talks askama template rendered.");
-        return Html(talks_res);
-    }
-
-    // If not, get data from database
-    let db_result = talks_db_uc
-        .talk_display_repo
-        .find_talks(sanitized_params.clone())
-        .await;
-
-    if db_result.is_none() {
+    let Some(talks_data) = talks_result else {
         error!(
             "Failed to find talks with Talk Id started at {} and ended at {}.",
             &sanitized_params.start.unwrap(),
             &sanitized_params.end.unwrap()
         );
         return get_500_internal_server_error();
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        for talk in db_result.clone().unwrap().talks {
-            debug!("Caching talk {}", &talk.id);
-            let _ = talks_cache_uc_opt
-                .clone()
-                .unwrap()
-                .talk_operation_repo
-                .insert(talk)
-                .await;
-        }
-    }
-
-    // Render Admin List Talks
-    let talks_res = match db_result
-        .unwrap()
-        .sanitize()
-        .to_admin_list_template()
-        .render()
-    {
+    let talks_res = match talks_data.sanitize().to_admin_list_template().render() {
         Ok(html) => html,
         Err(err) => {
             error!("Failed to render admin/talks/list_talks.html. {}", err);
@@ -145,81 +93,23 @@ pub async fn get_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let talks_db_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
-    let talks_cache_uc_opt = app_state.talk_cache_usecase.lock().await;
-    let is_cache_enabled = talks_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
-    };
-
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .find(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
-
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let talk_tmpl = AdminGetTalkTemplate {
-            talk: res.sanitize_talk_media_org().to_admin_template(),
-        };
-        let talk_res = match talk_tmpl.render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render admin/talks/get_talk.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("AdminGetTalk askama template rendered.");
-        return Html(talk_res);
-    }
-
-    // If not, get data from database
-    let db_result = talks_db_uc
-        .talk_display_repo
-        .find(id.clone().unwrap())
-        .await;
-
-    // Early check db result. If empty, return 404 error
-    if db_result.is_none() {
-        info!("Failed to find Talk with Id {}.", &id.unwrap());
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
         return get_404_not_found().await;
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        debug!("Caching talk {}", &id.unwrap());
-        let _ = talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .talk_operation_repo
-            .insert(db_result.clone().unwrap().sanitize_talk_media_org())
-            .await;
-        drop(talks_cache_uc_opt);
-    }
+    let mut talk_uc = app_state.talk_usecase.lock().await.clone();
+    let talk_result = talk_uc.find(id).await;
 
-    // Render Talks
+    // Early check result. If empty, return 404 error
+    let Some(talk_data) = talk_result else {
+        info!("Failed to find Talk with Id {}.", &id);
+        return get_404_not_found().await;
+    };
+
     let talk_tmpl = AdminGetTalkTemplate {
-        talk: db_result
-            .clone()
-            .unwrap()
-            .sanitize_talk_media_org()
-            .to_admin_template(),
+        talk: talk_data.sanitize_talk_media_org().to_admin_template(),
     };
     let talk = match talk_tmpl.render() {
         Ok(html) => html,
@@ -243,9 +133,11 @@ pub async fn get_add_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let talks_db_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
     // Calculate new Talk Id
-    let result = talks_db_uc.talk_operation_repo.get_new_id().await;
+    let result = {
+        let mut talk_uc = app_state.talk_usecase.lock().await.clone();
+        talk_uc.get_new_id().await
+    };
 
     if result.is_none() {
         info!("Failed to add Talk.");
@@ -282,80 +174,23 @@ pub async fn get_edit_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let talks_db_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
-    let talks_cache_uc_opt = app_state.talk_cache_usecase.lock().await.clone();
-    let is_cache_enabled = talks_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
-    };
-
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .find(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
-
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let edit_talk_tmpl = AdminGetEditTalkTemplate {
-            talk: res.sanitize_talk_media_org().to_admin_template(),
-        };
-        let edit_talk = match edit_talk_tmpl.render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render admin/talks/get_edit_talk.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("AdminGetEditTalk askama template rendered.");
-        return Html(edit_talk);
-    }
-
-    // If not, get data from database
-    let db_result = talks_db_uc
-        .talk_display_repo
-        .find(id.clone().unwrap())
-        .await;
-
-    // Early check db result. If empty, return 404 error
-    if db_result.is_none() {
-        info!("Failed to find Talk with Id {}.", &id.unwrap());
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
         return get_404_not_found().await;
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        debug!("Caching talk {}", &id.unwrap());
-        let _ = talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .talk_operation_repo
-            .insert(db_result.clone().unwrap().sanitize_talk_media_org())
-            .await;
-    }
+    let mut talk_uc = app_state.talk_usecase.lock().await.clone();
+    let talk_result = talk_uc.find(id).await;
 
-    // Render Talks
+    // Early check result. If empty, return 404 error
+    let Some(talk_data) = talk_result else {
+        info!("Failed to find Talk with Id {}.", &id);
+        return get_404_not_found().await;
+    };
+
     let edit_talk_tmpl = AdminGetEditTalkTemplate {
-        talk: db_result
-            .clone()
-            .unwrap()
-            .sanitize_talk_media_org()
-            .to_admin_template(),
+        talk: talk_data.sanitize_talk_media_org().to_admin_template(),
     };
     let edit_talk = match edit_talk_tmpl.render() {
         Ok(html) => html,
@@ -380,77 +215,22 @@ pub async fn get_delete_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let talks_db_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
-    let talks_cache_uc_opt = app_state.talk_cache_usecase.lock().await;
-    let is_cache_enabled = talks_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
-    };
-
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .find(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
-
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let delete_talk_tmpl = AdminGetDeleteTalkTemplate {
-            id: res.sanitize_talk_media_org().id,
-        };
-        let delete_talk = match delete_talk_tmpl.render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render admin/talks/get_delete_talk.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-        info!("AdminGetDeleteTalk askama template rendered.");
-        return Html(delete_talk);
-    }
-
-    // If not, get data from database
-    let db_result = talks_db_uc
-        .talk_display_repo
-        .find(id.clone().unwrap())
-        .await;
-
-    // Early check db result. If empty, return 404 error
-    if db_result.is_none() {
-        info!("Failed to find Talk with Id {}.", &id.unwrap());
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
         return get_404_not_found().await;
-    }
-
-    // Insert cache
-    if is_cache_enabled {
-        debug!("Caching talk {}", &id.unwrap());
-        let _ = talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .talk_operation_repo
-            .insert(db_result.clone().unwrap().sanitize_talk_media_org())
-            .await;
-        drop(talks_cache_uc_opt);
-    }
-
-    // Render Talks
-    let delete_talk_tmpl = AdminGetDeleteTalkTemplate {
-        id: db_result.clone().unwrap().id,
     };
+
+    let mut talk_uc = app_state.talk_usecase.lock().await.clone();
+    let talk_result = talk_uc.find(id).await;
+
+    // Early check result. If empty, return 404 error
+    let Some(talk_data) = talk_result else {
+        info!("Failed to find Talk with Id {}.", &id);
+        return get_404_not_found().await;
+    };
+
+    let delete_talk_tmpl = AdminGetDeleteTalkTemplate { id: talk_data.id };
     let delete_talk = match delete_talk_tmpl.render() {
         Ok(html) => html,
         Err(err) => {

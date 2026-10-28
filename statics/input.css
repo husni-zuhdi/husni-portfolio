@@ -286,7 +286,8 @@
         @apply block w-full md:w-1/2;
     }
 
-    .blog-editor-form textarea {
+    .blog-editor-form textarea,
+    .section-editor-form textarea {
         @apply w-full font-mono;
     }
 

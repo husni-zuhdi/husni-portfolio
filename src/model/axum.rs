@@ -1,29 +1,27 @@
 use crate::config::Config;
 use crate::usecase::auth::AuthDBUseCase;
-use crate::usecase::blog_tag_mappings::{BlogTagMappingCacheUseCase, BlogTagMappingDBUseCase};
-use crate::usecase::blogs::{BlogCacheUseCase, BlogDBUseCase};
-use crate::usecase::profile::{ProfileCacheUseCase, ProfileDBUseCase};
-use crate::usecase::tags::{TagCacheUseCase, TagDBUseCase};
-use crate::usecase::talks::{TalkCacheUseCase, TalkDBUseCase};
+use crate::usecase::blogs::BlogUseCase;
+use crate::usecase::profile::ProfileUseCase;
+use crate::usecase::tags::TagUseCase;
+use crate::usecase::talks::TalkUseCase;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// Axum state
-/// Consist of Config and UseCases to be used in handlers
-/// Other than Blog usecase, all usecases Arc Mutex are wrapped with Option
-/// since they can be deactivated based on Database used.
+/// Consists of Config and the per-entity deep usecases used in handlers.
+///
+/// Blog, Tag, Talk, and Profile usecases own their database repos and the
+/// optional in-process cache behind their verbs. Blog tag mappings live
+/// inside the Blog usecase and are not exposed.
+///
+/// `AuthDBUseCase` is wrapped with Option since the auth feature can be
+/// deactivated based on Database used.
 #[derive(Clone, Debug)]
 pub struct AppState {
     pub config: Config,
-    pub blog_db_usecase: Arc<Mutex<BlogDBUseCase>>,
-    pub talk_db_usecase: Arc<Mutex<Option<TalkDBUseCase>>>,
-    pub tag_db_usecase: Arc<Mutex<Option<TagDBUseCase>>>,
-    pub blog_tag_mapping_db_usecase: Arc<Mutex<Option<BlogTagMappingDBUseCase>>>,
-    pub profile_db_usecase: Arc<Mutex<ProfileDBUseCase>>,
+    pub blog_usecase: Arc<Mutex<BlogUseCase>>,
+    pub tag_usecase: Arc<Mutex<TagUseCase>>,
+    pub talk_usecase: Arc<Mutex<TalkUseCase>>,
+    pub profile_usecase: Arc<Mutex<ProfileUseCase>>,
     pub auth_db_usecase: Arc<Mutex<Option<AuthDBUseCase>>>,
-    pub talk_cache_usecase: Arc<Mutex<Option<TalkCacheUseCase>>>,
-    pub tag_cache_usecase: Arc<Mutex<Option<TagCacheUseCase>>>,
-    pub blog_cache_usecase: Arc<Mutex<Option<BlogCacheUseCase>>>,
-    pub blog_tag_mapping_cache_usecase: Arc<Mutex<Option<BlogTagMappingCacheUseCase>>>,
-    pub profile_cache_usecase: Arc<Mutex<Option<ProfileCacheUseCase>>>,
 }

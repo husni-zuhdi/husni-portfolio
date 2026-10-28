@@ -48,15 +48,15 @@
                 }
             });
         </script>
-        <!-- Initialize blog editors as HTMX swaps them in -->
+        <!-- Initialize blog and profile section editors as HTMX swaps them in -->
         <script>
             document.addEventListener('htmx:load', function(evt) {
                 var elt = evt.detail && evt.detail.elt;
                 if (!elt || !elt.matches) return;
                 if (typeof initBlogEditor !== 'function') return;
-                var form = elt.matches('.blog-editor-form')
+                var form = elt.matches('.blog-editor-form, .section-editor-form')
                     ? elt
-                    : elt.closest('.blog-editor-form');
+                    : elt.closest('.blog-editor-form, .section-editor-form');
                 if (form) initBlogEditor(form);
             });
         </script>
@@ -65,7 +65,7 @@
             document.addEventListener('htmx:afterSwap', function(evt) {
                 if (!evt.detail || !evt.detail.target) return;
                 var target = evt.detail.target;
-                if (target.id !== 'blog_preview') return;
+                if (!target.classList || !target.classList.contains('blog-preview')) return;
                 if (typeof renderBlogPreviewContent === 'function') {
                     renderBlogPreviewContent(target);
                 }

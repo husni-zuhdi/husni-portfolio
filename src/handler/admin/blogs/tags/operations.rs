@@ -5,11 +5,11 @@ use crate::handler::status::{
     get_401_unauthorized, get_404_not_found, get_500_internal_server_error,
 };
 use crate::model::axum::AppState;
-use crate::model::tags::{TagCommandStatus, TagsListParams};
+use crate::model::tags::{Tag, TagCommandStatus, TagsListParams};
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
 use axum::response::Html;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 
 use crate::handler::auth::is_auth_verified;
 use axum::http::HeaderMap;
@@ -28,38 +28,20 @@ pub async fn post_add_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    // Locking Mutex
-    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
-    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
-    let is_cache_enabled = tags_cache_uc_opt.is_some();
-
+    let mut tag_uc = app_state.tag_usecase.lock().await.clone();
     let tag = process_tag_body(body);
-    let add_result = tag_uc
-        .unwrap()
-        .tag_operation_repo
-        .add(tag.id, tag.clone().name)
-        .await;
 
+    let add_result = tag_uc.add(tag.clone()).await;
     if add_result.is_none() {
         info!("Failed to add Tag with Id {}.", &tag.id);
         return get_404_not_found().await;
     }
-
     if add_result.unwrap() != TagCommandStatus::Stored {
         error!("Failed to add Tag with Id {}", &tag.id);
         return get_500_internal_server_error();
     }
 
-    // Insert cache
-    if is_cache_enabled {
-        debug!("Caching tag {}", &tag.id);
-        let _ = tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_operation_repo
-            .insert(tag.clone())
-            .await;
-    }
+    info!("Added Tag with Id {}.", &tag.id);
 
     let params = TagsListParams {
         start: None,
@@ -84,58 +66,26 @@ pub async fn put_edit_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
-    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
-    let is_cache_enabled = tags_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
+    let mut tag_uc = app_state.tag_usecase.lock().await.clone();
     let tag = process_tag_body(body);
 
-    let edit_result = tag_uc
-        .unwrap()
-        .tag_operation_repo
-        .update(id.unwrap(), Some(tag.clone().name))
-        .await;
-
+    let edit_result = tag_uc.update(Tag { id, name: tag.name }).await;
     if edit_result.is_none() {
-        info!("Failed to edit Tag with Id {}.", &tag.id);
+        info!("Failed to edit Tag with Id {}.", &id);
         return get_404_not_found().await;
     }
-
     if edit_result.unwrap() != TagCommandStatus::Updated {
-        error!("Failed to edit Tag with Id {}", &tag.id);
+        error!("Failed to edit Tag with Id {}", &id);
         return get_500_internal_server_error();
     }
 
-    // Re-insert cache
-    if is_cache_enabled {
-        debug!("Invalidating tag {} cache", &tag.id);
-        let _ = tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_operation_repo
-            .invalidate(tag.id)
-            .await;
-        debug!("Re-caching tag {}", &tag.id);
-        let _ = tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_operation_repo
-            .insert(tag.clone())
-            .await;
-    }
-
+    info!("Edited Tag with Id {}.", &id);
     get_admin_tag(Path(path), State(app_state), headers).await
 }
 
@@ -153,43 +103,21 @@ pub async fn delete_delete_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    let tag_uc = app_state.tag_db_usecase.lock().await.clone();
-    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
-    let is_cache_enabled = tags_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
-    let delete_result = tag_uc
-        .unwrap()
-        .tag_operation_repo
-        .delete(id.clone().unwrap())
-        .await;
+    let mut tag_uc = app_state.tag_usecase.lock().await.clone();
 
-    if delete_result.is_none() || (delete_result.unwrap() != TagCommandStatus::Updated) {
-        error!("Failed to edit Tag with Id {}", &id.clone().unwrap());
+    let delete_result = tag_uc.delete(id).await;
+    if delete_result.is_none() || (delete_result.unwrap() != TagCommandStatus::Deleted) {
+        error!("Failed to delete Tag with Id {}", &id);
         return get_500_internal_server_error();
     }
 
-    // Invalidate cache
-    if is_cache_enabled {
-        debug!("Invalidating tag {} cache", &id.clone().unwrap());
-        let _ = tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_operation_repo
-            .invalidate(id.unwrap())
-            .await;
-    }
+    info!("Deleted Tag with Id {}.", &id);
 
     let params = TagsListParams {
         start: None,

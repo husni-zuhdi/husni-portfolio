@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Swap the forwarding usecase layer for deep per-entity usecases (`BlogUseCase`, `TagUseCase`, `TalkUseCase`, `ProfileUseCase`, and an internal `BlogTagMappingUseCase`): handlers call verb methods only, and each usecase owns its database repos, the optional cache, and the read-write choreography.
+- Make Blog, Tag, and Talk list reads all-or-nothing through per-entity cache id indexes: a partially expired cache falls through to the database and refills instead of returning a stale short list.
+- Move the startup cache prefill onto the per-entity usecases' `prefill` verbs.
+
 - Add double-submit-cookie CSRF checks to authenticated state-changing Admin area requests.
 - Redesign the mobile navigation: sticky compact header with a hamburger slide-down drawer containing all navigation links; the drawer closes on link click, Escape, or backdrop and locks body scroll while open.
 - Highlight the navbar link matching the current page path.
@@ -24,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix Administrator authentication when the JWT and CSRF cookies are sent together.
+- Make the profile section add/edit forms mobile-flexible by reusing the blog body-editor: mobile Editor/Preview tabs, desktop split panes, dirty-preview re-fetch on tab switch, and profile previews that get the same highlight.js / Temml / Pele rendering as blog previews.
+- Harden the profile form parsers to skip undecodable UTF-8 payloads instead of panicking, matching the hardened blog parser.
 - Fix the active navbar link lighting the wrong pages: only the exact page path highlights (parent routes stay dark on child pages), and the Login link highlights correctly on `/login` via a `data-nav-path` hint.
 - Fix the Administrator area having no path back to the public homepage; the admin navbar and drawer now include a `Home` link.
 - Expand unit coverage for domain models and static handlers.

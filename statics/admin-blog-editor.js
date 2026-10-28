@@ -150,17 +150,30 @@
         renderSelected();
     }
 
-    function initBlogEditor(form) {
+    function initBodyEditor(form) {
         if (!form) return;
         if (form.dataset.blogEditorInitialized) return;
         form.dataset.blogEditorInitialized = "true";
 
+        // The form is the source of truth: the body editor lives inside the
+        // shared .body-editor block, and the eye button carries the preview
+        // endpoint and the target pane in its htmx attributes. Both the
+        // blog and profile section forms are wired the same way.
         var tagWidget = form.querySelector(".tag-widget");
-        var textarea = form.querySelector("#blog_body");
-        var previewBtn = form.querySelector('[hx-post="/admin/blogs/preview"]');
-        var previewTarget = form.querySelector("#blog_preview");
+        var textarea = form.querySelector(
+            ".body-editor-pane[data-pane='editor'] textarea"
+        );
+        var previewBtn = form.querySelector('[hx-post$="/preview"]');
         var tabBtns = form.querySelectorAll(".tab-btn");
         var panes = form.querySelectorAll(".body-editor-pane");
+
+        var previewTarget = null;
+        if (previewBtn) {
+            var previewSelector = previewBtn.getAttribute("hx-target");
+            if (previewSelector && document.querySelector(previewSelector)) {
+                previewTarget = document.querySelector(previewSelector);
+            }
+        }
 
         // autoRefresh marks programmatic eye-button clicks issued by the
         // debounced body-input refresh so they do not also switch tabs.
@@ -231,6 +244,6 @@
         if (tagWidget) initTagWidget(tagWidget);
     }
 
-    window.initBlogEditor = initBlogEditor;
+    window.initBlogEditor = initBodyEditor;
     window.renderBlogPreviewContent = renderBlogPreviewContent;
 })();

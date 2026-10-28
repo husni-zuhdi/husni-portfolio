@@ -10,7 +10,7 @@ use axum::debug_handler;
 use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::response::Html;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 
 /// post_add_admin_talk
 /// Serve POST add talk endpoint
@@ -26,9 +26,7 @@ pub async fn post_add_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let mut talks_db_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
-    let talks_cache_uc_opt = app_state.talk_cache_usecase.lock().await.clone();
-    let is_cache_enabled = talks_cache_uc_opt.is_some();
+    let mut talk_uc = app_state.talk_usecase.lock().await.clone();
 
     let talk_res = process_talk_body(body);
     if talk_res.is_none() {
@@ -37,37 +35,17 @@ pub async fn post_add_admin_talk(
     }
     let talk = talk_res.unwrap().sanitize_talk_media_org();
 
-    let add_result = talks_db_uc
-        .talk_operation_repo
-        .add(
-            talk.id,
-            talk.name.clone(),
-            talk.date.clone(),
-            talk.media_link.clone(),
-            talk.org_name.clone(),
-            talk.org_link.clone(),
-        )
-        .await;
-
+    let add_result = talk_uc.add(talk.clone()).await;
     if add_result.is_none() {
         info!("Failed to add Talk with Id {}.", &talk.id);
         return get_404_not_found().await;
     }
-
     if add_result.unwrap() != TalkCommandStatus::Stored {
         error!("Failed to add Talk with Id {}", &talk.id);
         return get_500_internal_server_error();
     }
 
-    if is_cache_enabled {
-        debug!("Caching talk {}", talk.id);
-        let _ = talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .talk_operation_repo
-            .insert(talk.clone())
-            .await;
-    }
+    info!("Added Talk with Id {}.", &talk.id);
 
     let params = TalksParams {
         start: None,
@@ -91,21 +69,14 @@ pub async fn put_edit_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let mut talks_db_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
-    let talks_cache_uc_opt = app_state.talk_cache_usecase.lock().await.clone();
-    let is_cache_enabled = talks_cache_uc_opt.is_some();
-
-    // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    // Sanitize `path` as a sanity gate; the edit target id comes from the
+    // talk body, matching the previous edit flow.
+    let Ok(_id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
+
+    let mut talk_uc = app_state.talk_usecase.lock().await.clone();
 
     let talk_res = process_talk_body(body);
     if talk_res.is_none() {
@@ -114,45 +85,17 @@ pub async fn put_edit_admin_talk(
     }
     let talk = talk_res.unwrap().sanitize_talk_media_org();
 
-    let edit_result = talks_db_uc
-        .talk_operation_repo
-        .update(
-            talk.id,
-            Some(talk.name.clone()),
-            Some(talk.date.clone()),
-            talk.media_link.clone(),
-            talk.org_name.clone(),
-            talk.org_link.clone(),
-        )
-        .await;
-
+    let edit_result = talk_uc.update(talk).await;
     if edit_result.is_none() {
         info!("Failed to edit Talk with Id {}.", &path);
         return get_404_not_found().await;
     }
-
     if edit_result.unwrap() != TalkCommandStatus::Updated {
         error!("Failed to edit Talk with Id {}", &path);
         return get_500_internal_server_error();
     }
 
-    if is_cache_enabled {
-        debug!("Invalidating talk {} cache", talk.id);
-        let _ = talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .talk_operation_repo
-            .invalidate(talk.id)
-            .await;
-        debug!("Re-caching talk {}", talk.id);
-        let _ = talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .talk_operation_repo
-            .insert(talk.clone())
-            .await;
-    }
-
+    info!("Edited Talk with Id {}.", &path);
     get_admin_talk(Path(path), State(app_state), headers).await
 }
 
@@ -170,46 +113,21 @@ pub async fn delete_delete_admin_talk(
         return get_401_unauthorized().await;
     }
 
-    let mut talks_db_uc = app_state.talk_db_usecase.lock().await.clone().unwrap();
-    let talks_cache_uc_opt = app_state.talk_cache_usecase.lock().await.clone();
-    let is_cache_enabled = talks_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
-    let delete_result = talks_db_uc
-        .talk_operation_repo
-        .delete(id.clone().unwrap())
-        .await;
+    let mut talk_uc = app_state.talk_usecase.lock().await.clone();
 
-    if delete_result.is_none() {
-        info!("Failed to delete Talk with Id {}.", &path);
-        return get_500_internal_server_error();
-    }
-
-    if delete_result.unwrap() != TalkCommandStatus::Deleted {
+    let delete_result = talk_uc.delete(id).await;
+    if delete_result.is_none() || delete_result.unwrap() != TalkCommandStatus::Deleted {
         error!("Failed to delete Talk with Id {}", &path);
         return get_500_internal_server_error();
     }
 
-    if is_cache_enabled {
-        debug!("Invalidating talk {} cache", id.clone().unwrap());
-        let _ = talks_cache_uc_opt
-            .clone()
-            .unwrap()
-            .talk_operation_repo
-            .invalidate(id.unwrap())
-            .await;
-    }
+    info!("Deleted Talk with Id {}.", &path);
 
     let params = TalksParams {
         start: None,

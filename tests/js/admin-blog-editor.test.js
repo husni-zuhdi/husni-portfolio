@@ -28,13 +28,14 @@ function buildDom(availableTags, selectedTags) {
         <button type="button" class="tab-btn" data-tab="preview">Preview</button>
       </div>
       <div class="body-editor-panes">
-        <div class="body-editor-pane active" data-pane="editor"></div>
+        <div class="body-editor-pane active" data-pane="editor">
+          <textarea id="blog_body"></textarea>
+        </div>
         <div class="body-editor-pane" data-pane="preview">
           <div id="blog_preview"></div>
         </div>
       </div>
-      <textarea id="blog_body"></textarea>
-      <button type="button" hx-post="/admin/blogs/preview">Preview</button>
+      <button type="button" hx-post="/admin/blogs/preview" hx-target="#blog_preview">Preview</button>
     </form>
   `;
   const dom = new JSDOM(html, { url: 'http://localhost', runScripts: 'dangerously' });
@@ -300,5 +301,98 @@ describe('preview rendering', () => {
     }
     assert.strictEqual(highlighted.length, 1, 'hljs.highlightElement should run for the code block');
     assert.strictEqual(highlighted[0].tagName, 'CODE');
+  });
+});
+
+function buildSectionDom() {
+  const html = `
+    <form class="section-editor-form">
+      <div class="body-editor-tabs">
+        <button type="button" class="tab-btn active" data-tab="editor">Editor</button>
+        <button type="button" class="tab-btn" data-tab="preview">Preview</button>
+      </div>
+      <div class="body-editor-panes">
+        <div class="body-editor-pane active" data-pane="editor">
+          <textarea id="section_body"></textarea>
+        </div>
+        <div class="body-editor-pane" data-pane="preview">
+          <div id="section_preview" class="blog-preview"></div>
+        </div>
+      </div>
+      <button type="button" hx-post="/admin/profile/preview" hx-target="#section_preview">Preview</button>
+    </form>
+  `;
+  const dom = new JSDOM(html, { url: 'http://localhost', runScripts: 'dangerously' });
+  const document = dom.window.document;
+  const form = document.querySelector('.section-editor-form');
+  const script = document.createElement('script');
+  script.textContent = EDITOR_SCRIPT;
+  form.appendChild(script);
+  if (typeof dom.window.initBlogEditor === 'function') {
+    dom.window.initBlogEditor(form);
+  }
+  return { dom, document, form };
+}
+
+describe('profile section body editor (same initializer as blogs)', () => {
+  test('switches active tab and pane on click', () => {
+    const { document } = buildSectionDom();
+    const previewTabBtn = document.querySelector('[data-tab="preview"]');
+    previewTabBtn.click();
+
+    assert.ok(previewTabBtn.classList.contains('active'));
+    assert.ok(document.querySelector('[data-pane="preview"]').classList.contains('active'));
+    assert.ok(!document.querySelector('[data-tab="editor"]').classList.contains('active'));
+  });
+
+  test('preview tab triggers a profile preview request when the pane is empty', () => {
+    const { document } = buildSectionDom();
+    let eyeClicks = 0;
+    const eyeBtn = document.querySelector('[hx-post="/admin/profile/preview"]');
+    assert.ok(eyeBtn, 'the initializer must find the section preview button by its endpoint');
+    eyeBtn.addEventListener('click', () => {
+      eyeClicks += 1;
+    });
+
+    document.querySelector('[data-tab="preview"]').click();
+    assert.strictEqual(eyeClicks, 1, 'empty preview should trigger a single preview request');
+  });
+
+  test('preview tab re-fetches after section body edits (dirty tracking)', async () => {
+    const { document, dom } = buildSectionDom();
+    dom.window.matchMedia = () => ({ matches: true, addListener: () => {}, removeListener: () => {} });
+    let eyeClicks = 0;
+    const eyeBtn = document.querySelector('[hx-post="/admin/profile/preview"]');
+    eyeBtn.addEventListener('click', () => {
+      eyeClicks += 1;
+    });
+    document.querySelector('#section_preview').textContent = 'stale render';
+
+    document.querySelector('[data-tab="preview"]').click();
+    assert.strictEqual(eyeClicks, 0, 'non-dirty non-empty preview is fine');
+
+    const textarea = document.querySelector('#section_body');
+    textarea.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    document.querySelector('[data-tab="editor"]').click();
+    document.querySelector('[data-tab="preview"]').click();
+    assert.strictEqual(eyeClicks, 1, 'dirty preview should re-request on tab switch');
+  });
+
+  test('debounced section body input skips preview fetch on mobile', async () => {
+    const { document, dom } = buildSectionDom();
+    dom.window.matchMedia = () => ({ matches: false, addListener: () => {}, removeListener: () => {} });
+    let eyeClicks = 0;
+    const eyeBtn = document.querySelector('[hx-post="/admin/profile/preview"]');
+    eyeBtn.addEventListener('click', () => {
+      eyeClicks += 1;
+    });
+
+    const textarea = document.querySelector('#section_body');
+    textarea.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 750));
+
+    assert.strictEqual(eyeClicks, 0, 'mobile must not auto-fetch the preview');
   });
 });
