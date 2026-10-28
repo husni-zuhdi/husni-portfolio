@@ -46,7 +46,7 @@ creation page.
 ### Common tasks
 
 ```sh
-task test       # all-feature tests, run serially
+task test       # all-feature Rust tests, run serially
 task lint       # Clippy, warnings denied
 task fmt        # format Rust files
 task audit      # cargo-deny checks
@@ -60,6 +60,14 @@ cargo test --all-features --locked -- --test-threads=1
 cargo fmt --check
 cargo clippy --locked -- -D warnings
 cargo deny check all
+```
+
+JavaScript unit tests for the admin blog editor live in `tests/js/`:
+
+```sh
+cd tests/js
+npm install
+npm test
 ```
 
 Most tests are inline in the Rust modules. Tests that mutate process environment
