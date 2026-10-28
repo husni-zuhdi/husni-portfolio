@@ -192,6 +192,113 @@
     .admin_icon_lg {
         @apply inline-flex items-center [&>svg]:h-10 [&>svg]:w-10 [&>svg]:fill-none;
     }
+
+    .table-wrapper {
+        @apply overflow-x-auto;
+    }
+
+    .tag-widget {
+        @apply relative;
+    }
+
+    .tag-search-row {
+        @apply relative;
+    }
+
+    .tag-search-input {
+        @apply w-full;
+    }
+
+    .tag-dropdown {
+        @apply absolute z-10 w-full mt-1 max-h-60 overflow-y-auto rounded-md border-2 border-gray-500 bg-gray-100 dark:bg-slate-800 shadow-lg;
+    }
+
+    .tag-dropdown.hidden {
+        @apply hidden;
+    }
+
+    .tag-dropdown-item {
+        @apply px-3 py-2 cursor-pointer hover:bg-gray-300 dark:hover:bg-slate-700;
+    }
+
+    .tag-create-item {
+        @apply italic text-blue-600 dark:text-blue-400;
+    }
+
+    .tag-selected-list {
+        @apply flex flex-wrap gap-2 mt-2;
+    }
+
+    .tag-chip {
+        @apply inline-flex items-center gap-1 rounded-full border-2 border-gray-300 bg-gray-200 px-2 py-0.5 text-sm text-black dark:border-slate-600 dark:bg-slate-700 dark:text-white;
+    }
+
+    .tag-chip button {
+        @apply p-0 px-1 leading-none bg-transparent border-none hover:bg-transparent hover:text-red-600;
+    }
+
+    .body-editor {
+        @apply flex flex-col gap-2;
+    }
+
+    .body-editor-tabs {
+        @apply flex gap-2 border-b-2 border-gray-300 dark:border-slate-600;
+    }
+
+    .tab-btn {
+        @apply rounded-b-none border-b-0 bg-gray-200 dark:bg-slate-700;
+    }
+
+    .tab-btn.active {
+        @apply bg-gray-100 dark:bg-slate-800 font-bold;
+    }
+
+    .body-editor-panes {
+        @apply flex flex-col md:flex-row gap-2;
+    }
+
+    .body-editor-pane {
+        @apply hidden md:block md:w-1/2;
+    }
+
+    .body-editor-pane.active {
+        @apply block w-full md:w-1/2;
+    }
+
+    .blog-editor-form textarea {
+        @apply w-full font-mono;
+    }
+
+    .blog-preview {
+        @apply rounded-md border-2 border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 p-3 min-h-[20rem];
+    }
+
+    /* Pele diagram theming */
+    .pele {
+        --pele-bg: #ffffff;
+        --pele-fg: #1f1f1f;
+        --pele-muted: #6e6e6e;
+        --pele-line: #1f1f1f;
+        --pele-surface: #f3f3f3;
+        --pele-surface-alt: #e6e6e6;
+        --pele-border: #8a8a8a;
+        --pele-accent: #5b7bd5;
+        --pele-critical: #e45756;
+        --pele-error: #e45756;
+    }
+
+    .dark .pele {
+        --pele-bg: #1e293b;
+        --pele-fg: #e2e8f0;
+        --pele-muted: #94a3b8;
+        --pele-line: #e2e8f0;
+        --pele-surface: #334155;
+        --pele-surface-alt: #475569;
+        --pele-border: #64748b;
+        --pele-accent: #93c5fd;
+        --pele-critical: #f87171;
+        --pele-error: #f87171;
+    }
 }
 
 @layer utilities {

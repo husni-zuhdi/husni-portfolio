@@ -57,6 +57,18 @@ pub fn main_route(app_state: AppState) -> Router {
         .nest("/blogs", blogs_route())
         .nest("/talks", talks_route())
         .nest("/admin", admin_route())
+        .nest_service(
+            "/statics/temml",
+            get_service(ServeDir::new("./statics/temml/")),
+        )
+        .nest_service(
+            "/statics/pele",
+            get_service(ServeDir::new("./statics/pele/")),
+        )
+        .nest_service(
+            "/statics/admin-blog-editor.js",
+            get_service(ServeFile::new("./statics/admin-blog-editor.js")),
+        )
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service(
             "/theme.js",
@@ -138,6 +150,7 @@ fn admin_blogs_route() -> Router<AppState> {
     Router::new()
         .route("/", get(bd::get_base_admin_blogs))
         .route("/list", get(bd::get_admin_blogs_list))
+        .route("/preview", post(bo::post_admin_blog_preview))
         .route("/add", get(bd::get_add_admin_blog))
         .route("/add", post(bo::post_add_admin_blog))
         .route("/{blog_id}", get(bd::get_admin_blog))
