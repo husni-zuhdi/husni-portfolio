@@ -22,8 +22,11 @@ impl TalkDisplayRepo for TursoDatabase {
             .expect("Failed to query talk.")
             .next()
             .await
-            .expect("Failed to access query talk.")
-            .expect("Failed to access row talk.");
+            .expect("Failed to access query talk.");
+        let Some(row) = row else {
+            debug!("No Talk with Id {} is available.", &id);
+            return None;
+        };
 
         debug!("Find {:?}", &row);
 

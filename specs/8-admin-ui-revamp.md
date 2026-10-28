@@ -140,6 +140,36 @@ A follow-up pass fixed two interaction bugs introduced by the revamp:
   the public blog page and the Admin area both load them locally instead of
   from unpkg.
 
+## Profile section editor parity
+
+The Profile add/edit section forms received the blog body-editor UX so the
+mobile view behaves the same way (previously the preview rendered below the
+textarea and the preview button looked inert on a narrow viewport):
+
+- **Shared initializer:** `admin-blog-editor.js` is marker-driven now. It
+  discovers the body textarea inside the editor pane, the preview button by
+  its `hx-post="/...preview"` endpoint, and the preview pane from that
+  button's `hx-target`, so one implementation drives both `.blog-editor-form`
+  and `.section-editor-form` (the `htmx:load` hook initializes either).
+  Preview content enhancement (hljs/Temml/Pele) runs on any swapped
+  `.blog-preview` target, not only `#blog_preview`.
+- **Same behaviors on both forms:** mobile Editor/Preview tabs, desktop
+  split panes, debounce-free mobile (no auto-fetch while typing), 700 ms
+  desktop auto-refresh, and a dirty-preview re-fetch when the tab opens.
+- **Layout-aware preview kept:** the profile eye button posts the whole form
+  (`hx-include="closest form"`) so `POST /admin/profile/preview` can wrap
+  the markdown in the section's layout class (`cards` → `flex-container`),
+  unlike the blog preview which posts the body only.
+- **Parsing hardening:** the profile form parsers
+  (`process_profile_section_body`, `process_profile_meta_body`) use
+  `unwrap_or_default()` when decoding values, matching the hardened blog
+  parser (the urlencoding crate decodes invalid escapes leniently; the
+  hardening covers invalid UTF-8 payloads).
+- Covered by colocated Rust tests (profile preview rendering: headings,
+  code fences, layout class, lenient escapes, empty body) and
+  `tests/js/admin-blog-editor.test.js` (section-form tab/dirty/mobile
+  cases against the same initializer).
+
 ## Known limitations
 
 - The profile page-title section row shows `[Title]` next to its position and

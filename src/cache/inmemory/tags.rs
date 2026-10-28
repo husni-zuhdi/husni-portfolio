@@ -17,74 +17,44 @@ impl TagDisplayRepo for InMemoryCache {
     }
     /// Find a Tag Caches
     /// Take `TagListParams` that contain `start` and `end` then
-    /// return Option of `Tags`. `tags` filed is always reversed.
-    /// if `None`, no tags within `TagParams` was cached
+    /// return Option of `Tags`. `tags` field is reversed (descending ids).
+    ///
+    /// The read is all-or-nothing: only indexed Tag ids inside the range are
+    /// expected. If any indexed id is missing from the cache, the read is a
+    /// miss (`None`) so the caller falls through to the database. Ids outside
+    /// the index are gaps (Tags that do not exist in the database).
+    /// `None` is also returned when no indexed Tag falls inside the range.
     async fn find_tags(&self, params: TagsListParams) -> Option<Tags> {
-        let start_seq = params.start.unwrap() + 1;
-        let end_seq = params.end.unwrap();
+        let (start_seq, end_seq) = self.sanitized_range(params.start, params.end);
         debug!("Finding InMemoryCache {TAG_KEY_PREFIX}-{start_seq} - {TAG_KEY_PREFIX}-{end_seq}");
 
-        let mut tags = Vec::new();
-        // rev() method to reverse Tag order
-        // TODO: Observe the effect of Tag order reversal
-        // I forgot why I need to reverse the order in Talk cache
-        for id in (start_seq..=end_seq).rev() {
-            let value = self.find(id).await;
-            if value.is_none() {
-                debug!("{TAG_KEY_PREFIX}-{id} cache miss");
-                continue;
-            }
-
-            debug!("{TAG_KEY_PREFIX}-{id} cache hit");
-            tags.push(value.unwrap());
-        }
-
-        // If Cache is still fresh, return None
+        let tags = self.complete_tags_in_range(start_seq, end_seq).await?;
         if tags.is_empty() {
+            // Cache is still fresh: nothing indexed inside the range.
             return None;
         }
         Some(Tags { tags })
     }
     /// Search Tag Caches
-    /// Take `TagSearchParams` that contain `start` and `end` then
-    /// return Option of `Tags`. `tags` filed is always reversed.
-    /// if `None`, no tags within `TagParams` was cached
+    /// Take `TagSearchParams` that contain `start` and `end` and a `query`
+    /// then return Option of `Tags`. `tags` field is reversed (descending
+    /// ids).
+    ///
+    /// The read is all-or-nothing like `find_tags`: the cached answer is
+    /// trusted only when every indexed Tag inside the range is present. The
+    /// query filter is applied after; an empty match is a valid `Some`
+    /// answer, mirroring the database read contract.
     async fn search_tags(&self, params: TagsSearchParams) -> Option<Tags> {
-        let start_seq = params.start.unwrap() + 1;
-        let end_seq = params.end.unwrap();
+        let (start_seq, end_seq) = self.sanitized_range(params.start, params.end);
         let query = params.query;
         debug!("Finding InMemoryCache {TAG_KEY_PREFIX}-{start_seq} - {TAG_KEY_PREFIX}-{end_seq} containing {query}");
 
-        let mut tags = Vec::new();
-        // rev() method to reverse Tag order
-        // TODO: Observe the effect of Tag order reversal
-        // I forgot why I need to reverse the order in Talk cache
-        for id in (start_seq..=end_seq).rev() {
-            let value = self.find(id).await;
-            if value.is_none() {
-                debug!("{TAG_KEY_PREFIX}-{id} cache miss");
-                continue;
-            }
-
-            if !value.clone().unwrap().name.contains(&query)
-            //|| (value.clone().unwrap().name.as_str() != &query)
-            {
-                debug!("{TAG_KEY_PREFIX}-{id} ignored");
-                continue;
-            }
-
-            debug!("{TAG_KEY_PREFIX}-{id} cache hit");
-            tags.push(value.clone().unwrap());
-        }
-
-        // If Cache is still fresh, return None
-        if tags.is_empty() {
-            return None;
-        }
-
-        // Filter tags to contain the query
-        let _ = tags.iter().filter(|tag| tag.name.contains(&query));
-
+        let tags = self
+            .complete_tags_in_range(start_seq, end_seq)
+            .await?
+            .into_iter()
+            .filter(|tag| tag.name.contains(&query))
+            .collect::<Vec<Tag>>();
         Some(Tags { tags })
     }
 }
@@ -97,7 +67,8 @@ impl TagOperationRepo for InMemoryCache {
     async fn insert(&mut self, tag: Tag) -> Option<TagCommandStatus> {
         let key = format!("{TAG_KEY_PREFIX}-{}", tag.id);
         info!("Inserting {} into InMemoryCache", &key);
-        self.tags_cache.insert(key, tag).await;
+        self.tags_cache.insert(key, tag.clone()).await;
+        self.tags_index.write().unwrap().insert(tag.id);
         Some(TagCommandStatus::CacheInserted)
     }
     /// Invalidate Tag Cache
@@ -107,7 +78,46 @@ impl TagOperationRepo for InMemoryCache {
         let key = format!("{TAG_KEY_PREFIX}-{id}");
         info!("Invalidating {} from InMemoryCache", &key);
         self.tags_cache.invalidate(&key).await;
+        self.tags_index.write().unwrap().remove(&id);
         Some(TagCommandStatus::CacheInvalidated)
+    }
+}
+
+impl InMemoryCache {
+    /// Sanity-check a tags pagination range into inclusive id bounds.
+    fn sanitized_range(&self, start: Option<i64>, end: Option<i64>) -> (i64, i64) {
+        let sanitized = TagsListParams { start, end }.sanitize();
+        (sanitized.start.unwrap() + 1, sanitized.end.unwrap())
+    }
+
+    /// Collect the Tags inside `[start, end]` in descending id order, but
+    /// only when the cache can answer completely: any indexed id that is
+    /// missing from the cache makes the whole read a miss. Overlapping with
+    /// the index bounds the scan to known ids only.
+    async fn complete_tags_in_range(&self, start: i64, end: i64) -> Option<Vec<Tag>> {
+        let mut expected_ids: Vec<i64> = self
+            .tags_index
+            .read()
+            .unwrap()
+            .iter()
+            .filter(|id| (start..=end).contains(id))
+            .copied()
+            // Descending id order keeps the historical rendering order of
+            // the tags list.
+            .collect();
+        expected_ids.sort_unstable_by(|a, b| b.cmp(a));
+
+        let mut tags = Vec::with_capacity(expected_ids.len());
+        for id in expected_ids {
+            match self.tags_cache.get(&format!("{TAG_KEY_PREFIX}-{id}")).await {
+                Some(tag) => tags.push(tag),
+                None => {
+                    debug!("{TAG_KEY_PREFIX}-{id} cache miss: all-or-nothing read fails");
+                    return None;
+                }
+            }
+        }
+        Some(tags)
     }
 }
 

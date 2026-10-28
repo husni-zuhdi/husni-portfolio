@@ -48,15 +48,15 @@
                 }
             });
         </script>
-        <!-- Initialize blog editors as HTMX swaps them in -->
+        <!-- Initialize blog and profile section editors as HTMX swaps them in -->
         <script>
             document.addEventListener('htmx:load', function(evt) {
                 var elt = evt.detail && evt.detail.elt;
                 if (!elt || !elt.matches) return;
                 if (typeof initBlogEditor !== 'function') return;
-                var form = elt.matches('.blog-editor-form')
+                var form = elt.matches('.blog-editor-form, .section-editor-form')
                     ? elt
-                    : elt.closest('.blog-editor-form');
+                    : elt.closest('.blog-editor-form, .section-editor-form');
                 if (form) initBlogEditor(form);
             });
         </script>
@@ -65,7 +65,7 @@
             document.addEventListener('htmx:afterSwap', function(evt) {
                 if (!evt.detail || !evt.detail.target) return;
                 var target = evt.detail.target;
-                if (target.id !== 'blog_preview') return;
+                if (!target.classList || !target.classList.contains('blog-preview')) return;
                 if (typeof renderBlogPreviewContent === 'function') {
                     renderBlogPreviewContent(target);
                 }
@@ -85,10 +85,32 @@
                 <!-- Web Menu (desktop) -->
                 <div class="hidden md:flex md:flex-row md:mx-3 md:space-x-4 items-center">
                     <a href="/" class="navbar_link">Home</a>
-                    <a href="/admin" class="navbar_link">Admin</a>
-                    <a href="/admin/profile" class="navbar_link">Admin Profile</a>
-                    <a href="/admin/blogs" class="navbar_link">Admin Blogs</a>
-                    <a href="/admin/talks" class="navbar_link">Admin Talks</a>
+                    <div class="admin_dropdown relative" data-admin-dropdown>
+                        <a href="/admin"
+                           class="navbar_link admin_dropdown_trigger"
+                           data-nav-prefix="/admin"
+                           aria-haspopup="menu"
+                           aria-expanded="false"
+                           aria-controls="admin_dropdown_menu_target">
+                            Admin
+                            <svg class="admin_dropdown_chevron w-4 h-4 fill-none"
+                                 stroke="currentColor"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                                 viewBox="0 0 24 24">
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        </a>
+                        <div id="admin_dropdown_menu_target"
+                             role="menu"
+                             class="admin_dropdown_menu hidden">
+                            <a href="/admin/profile" class="navbar_link" data-admin-dropdown-item>Profile</a>
+                            <a href="/admin/blogs" class="navbar_link" data-admin-dropdown-item>Blogs</a>
+                            <a href="/admin/blogs/tags" class="navbar_link" data-admin-dropdown-item>Blog Tags</a>
+                            <a href="/admin/talks" class="navbar_link" data-admin-dropdown-item>Talks</a>
+                        </div>
+                    </div>
                 </div>
                 <!-- User Management (desktop) -->
                 <div class="hidden md:flex md:flex-row md:mx-3 md:space-x-4 items-center">
@@ -126,10 +148,30 @@
                  class="nav_drawer md:hidden"
                  aria-hidden="true">
                 <a href="/" class="navbar_link">Home</a>
-                <a href="/admin" class="navbar_link">Admin</a>
-                <a href="/admin/profile" class="navbar_link">Admin Profile</a>
-                <a href="/admin/blogs" class="navbar_link">Admin Blogs</a>
-                <a href="/admin/talks" class="navbar_link">Admin Talks</a>
+                <div class="admin_drawer_group" data-admin-drawer-group>
+                    <a href="/admin"
+                       class="navbar_link admin_dropdown_trigger"
+                       aria-expanded="false"
+                       aria-controls="admin_drawer_group_menu_target">
+                        Admin
+                        <svg class="admin_dropdown_chevron w-4 h-4 fill-none"
+                             stroke="currentColor"
+                             stroke-width="2"
+                             stroke-linecap="round"
+                             stroke-linejoin="round"
+                             viewBox="0 0 24 24">
+                            <path d="m6 9 6 6 6-6"></path>
+                        </svg>
+                    </a>
+                    <div id="admin_drawer_group_menu_target"
+                         role="menu"
+                         class="admin_drawer_group_menu hidden">
+                        <a href="/admin/profile" class="navbar_link">Profile</a>
+                        <a href="/admin/blogs" class="navbar_link">Blogs</a>
+                        <a href="/admin/blogs/tags" class="navbar_link">Blog Tags</a>
+                        <a href="/admin/talks" class="navbar_link">Talks</a>
+                    </div>
+                </div>
                 <!-- Logout -->
                 <form hx-delete="/logout"
                       hx-target="#main_body_target"

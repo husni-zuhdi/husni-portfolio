@@ -1,4 +1,4 @@
-<form class="admin_panel"
+<form class="admin_panel section-editor-form"
       hx-post="/admin/profile/add"
       hx-target="#profile_target"
       hx-swap="innerHTML">
@@ -25,12 +25,21 @@
         </select>
         <br>
     </div>
-    <div class="admin_input">
+    <div class="admin_input body-editor">
         <label for=section_body>Body (Markdown) :</label>
-        <br>
-        <textarea id="section_body" name="section_body" rows="10" cols="80"></textarea>
+        <div class="body-editor-tabs md:hidden">
+            <button type="button" class="tab-btn active" data-tab="editor">Editor</button>
+            <button type="button" class="tab-btn" data-tab="preview">Preview</button>
+        </div>
+        <div class="body-editor-panes">
+            <div class="body-editor-pane active" data-pane="editor">
+                <textarea id="section_body" name="section_body" rows="20"></textarea>
+            </div>
+            <div class="body-editor-pane" data-pane="preview">
+                <div id="section_preview" class="blog-preview"></div>
+            </div>
+        </div>
     </div>
-    <div id="profile_preview_target"></div>
     <div class="admin_input flex gap-1">
         <button class="btn_text btn_green admin_icon"
                 type="submit"
@@ -42,7 +51,7 @@
                 title="Preview"
                 hx-post="/admin/profile/preview"
                 hx-include="closest form"
-                hx-target="#profile_preview_target"
+                hx-target="#section_preview"
                 hx-swap="innerHTML">{% include "admin/partials/icons/eye.html" %}</button>
         <button class="btn_text btn_red admin_icon"
                 aria-label="Cancel adding section"

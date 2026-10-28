@@ -1,45 +1,10 @@
 pub mod displays;
 pub mod operations;
 
-use crate::model::axum::AppState;
-use crate::model::profile::{Layout, ProfileMeta, ProfilePage, ProfileSection};
-use crate::repo::profile::ProfileDisplayRepo;
+use crate::model::profile::{Layout, ProfileMeta, ProfileSection};
 use std::str::FromStr;
 use tracing::{debug, warn};
 use urlencoding::decode;
-
-/// Rebuild the profile page cache from the database after a mutation:
-/// invalidate the cached page, fetch sections and meta from the database,
-/// then insert the fresh page.
-pub async fn rebuild_profile_page_cache(app_state: &AppState) {
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
-    if !is_cache_enabled {
-        return;
-    }
-
-    let profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let _ = profile_cache_uc_opt
-        .clone()
-        .unwrap()
-        .profile_operation_repo
-        .invalidate_page()
-        .await;
-
-    let sections = profile_db_uc.find_sections().await;
-    let meta = profile_db_uc.find_meta().await;
-    if let (Some(sections), Some(meta)) = (sections, meta) {
-        debug!("Re-caching profile page");
-        let _ = profile_cache_uc_opt
-            .clone()
-            .unwrap()
-            .profile_operation_repo
-            .insert_page(ProfilePage { sections, meta })
-            .await;
-    } else {
-        warn!("Failed to rebuild profile page cache. Database data are empty.");
-    }
-}
 
 /// Take request body String from PUT and POST operations to create
 /// a Profile Section
@@ -56,7 +21,9 @@ pub fn process_profile_section_body(body: String) -> Option<ProfileSection> {
             warn!("Malformed request field {}", req_field);
             return None;
         };
-        let value_decoded = decode(value).unwrap();
+        // Tolerate malformed percent-encoding like the blog form parser:
+        // a bad escape must not crash the request.
+        let value_decoded = decode(value).unwrap_or_default();
         debug!("Request field key/value {:?}/{:?}", key, value_decoded);
         match key {
             "section_id" => {
@@ -111,7 +78,9 @@ pub fn process_profile_meta_body(body: String) -> Option<ProfileMeta> {
             warn!("Malformed request field {}", req_field);
             return None;
         };
-        let value_decoded = decode(value).unwrap();
+        // Tolerate malformed percent-encoding like the blog form parser:
+        // a bad escape must not crash the request.
+        let value_decoded = decode(value).unwrap_or_default();
         debug!("Request field key/value {:?}/{:?}", key, value_decoded);
         match key {
             "meta_id" => {
@@ -176,6 +145,24 @@ mod test {
     fn test_process_profile_section_body_malformed_field() {
         let body = "section_id".to_string();
         assert!(process_profile_section_body(body).is_none());
+    }
+
+    #[test]
+    fn test_process_profile_section_body_tolerates_malformed_encoding() {
+        let body =
+            "section_id=1&section_title=A%zzT&section_layout=stacked&section_body=B".to_string();
+        let section = process_profile_section_body(body).unwrap();
+        // urlencoding decodes invalid escapes leniently: the bad escape
+        // passes through instead of crashing the request.
+        assert_eq!(section.title, "A%zzT");
+        assert_eq!(section.body, "B", "later fields must still decode");
+    }
+
+    #[test]
+    fn test_process_profile_meta_body_tolerates_malformed_encoding() {
+        let body = "meta_id=1&meta_description=%zzD".to_string();
+        let meta = process_profile_meta_body(body).unwrap();
+        assert_eq!(meta.description, "%zzD");
     }
 
     #[test]

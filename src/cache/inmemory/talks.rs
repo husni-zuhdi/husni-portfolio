@@ -17,28 +17,20 @@ impl TalkDisplayRepo for InMemoryCache {
     }
     /// Find a Talk Caches
     /// Take `TalkParams` that contain `start` and `end` then
-    /// return Option of `Talks`. `talks` filed is always reversed.
-    /// if `None`, no talks within `TalkParams` was cached
+    /// return Option of `Talks`. `talks` field is reversed (descending ids).
+    ///
+    /// The read is all-or-nothing: only indexed Talk ids inside the range are
+    /// expected. If any indexed id is missing from the cache, the read is a
+    /// miss (`None`) so the caller falls through to the database. Ids outside
+    /// the index are gaps (Talks that do not exist in the database).
+    /// `None` is also returned when no indexed Talk falls inside the range.
     async fn find_talks(&self, params: TalksParams) -> Option<Talks> {
-        let start_seq = params.start.unwrap() + 1;
-        let end_seq = params.end.unwrap();
+        let (start_seq, end_seq) = Self::sanitized_talks_range(params.start, params.end);
         debug!("Finding InMemoryCache {TALK_KEY_PREFIX}-{start_seq} - {TALK_KEY_PREFIX}-{end_seq}");
 
-        let mut talks = Vec::new();
-        // rev() method to reverse Talk order
-        for id in (start_seq..=end_seq).rev() {
-            let value = self.find(id).await;
-            if value.is_none() {
-                debug!("{TALK_KEY_PREFIX}-{id} cache miss");
-                continue;
-            }
-
-            debug!("{TALK_KEY_PREFIX}-{id} cache hit");
-            talks.push(value.unwrap());
-        }
-
-        // If Cache is still fresh, return None
+        let talks = self.complete_talks_in_range(start_seq, end_seq).await?;
         if talks.is_empty() {
+            // Cache is still fresh: nothing indexed inside the range.
             return None;
         }
         Some(Talks { talks })
@@ -53,7 +45,8 @@ impl TalkOperationRepo for InMemoryCache {
     async fn insert(&mut self, talk: Talk) -> Option<TalkCommandStatus> {
         let key = format!("{TALK_KEY_PREFIX}-{}", talk.id);
         info!("Inserting {} into InMemoryCache", &key);
-        self.talks_cache.insert(key, talk).await;
+        self.talks_cache.insert(key, talk.clone()).await;
+        self.talks_index.write().unwrap().insert(talk.id);
         Some(TalkCommandStatus::CacheInserted)
     }
     /// Invalidate Talk Cache
@@ -63,7 +56,50 @@ impl TalkOperationRepo for InMemoryCache {
         let key = format!("{TALK_KEY_PREFIX}-{id}");
         info!("Invalidating {} from InMemoryCache", &key);
         self.talks_cache.invalidate(&key).await;
+        self.talks_index.write().unwrap().remove(&id);
         Some(TalkCommandStatus::CacheInvalidated)
+    }
+}
+
+impl InMemoryCache {
+    /// Sanity-check a talks pagination range into inclusive id bounds.
+    fn sanitized_talks_range(start: Option<i64>, end: Option<i64>) -> (i64, i64) {
+        let sanitized = TalksParams { start, end }.sanitize();
+        (sanitized.start.unwrap() + 1, sanitized.end.unwrap())
+    }
+
+    /// Collect the Talks inside `[start, end]` in descending id order, but
+    /// only when the cache can answer completely: any indexed id that is
+    /// missing from the cache makes the whole read a miss. Overlapping with
+    /// the index bounds the scan to known ids only.
+    async fn complete_talks_in_range(&self, start: i64, end: i64) -> Option<Vec<Talk>> {
+        let mut expected_ids: Vec<i64> = self
+            .talks_index
+            .read()
+            .unwrap()
+            .iter()
+            .filter(|id| (start..=end).contains(id))
+            .copied()
+            // Descending id order keeps the historical rendering order of
+            // the talks list.
+            .collect();
+        expected_ids.sort_unstable_by(|a, b| b.cmp(a));
+
+        let mut talks = Vec::with_capacity(expected_ids.len());
+        for id in expected_ids {
+            match self
+                .talks_cache
+                .get(&format!("{TALK_KEY_PREFIX}-{id}"))
+                .await
+            {
+                Some(talk) => talks.push(talk),
+                None => {
+                    debug!("{TALK_KEY_PREFIX}-{id} cache miss: all-or-nothing read fails");
+                    return None;
+                }
+            }
+        }
+        Some(talks)
     }
 }
 

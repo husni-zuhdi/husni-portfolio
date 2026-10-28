@@ -56,76 +56,28 @@ pub async fn get_admin_tags_list(
         return get_401_unauthorized().await;
     }
 
-    // Locking Mutex
-    let tags_db_uc = app_state.tag_db_usecase.lock().await.clone().unwrap();
-    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
-    let is_cache_enabled = tags_cache_uc_opt.is_some();
-
+    let mut tag_uc = app_state.tag_usecase.lock().await.clone();
     let sanitized_params = params.sanitize();
+    let tags_result = tag_uc.find_tags(sanitized_params.clone()).await;
 
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_display_repo
-            .find_tags(sanitized_params.clone())
-            .await
-    } else {
-        None
-    };
-
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let tags_res = match res.to_admin_list_template().render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render admin/blogs/tags/list_tags.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("AdminBlogTagsList askama template rendered.");
-        return Html(tags_res);
-    }
-
-    // If not, get data from database
-    let db_result = tags_db_uc
-        .tag_display_repo
-        .find_tags(sanitized_params.clone())
-        .await;
-
-    if db_result.is_none() {
+    let Some(tags_data) = tags_result else {
         error!(
             "Failed to find admin blog tags with Tag Id started at {} and ended at {}.",
             sanitized_params.start.unwrap(),
             sanitized_params.end.unwrap()
         );
         return get_500_internal_server_error();
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        for tag in db_result.clone().unwrap().tags {
-            debug!("Caching tag {}", &tag.id);
-            let _ = tags_cache_uc_opt
-                .clone()
-                .unwrap()
-                .tag_operation_repo
-                .insert(tag)
-                .await;
-        }
-    }
-
-    // Render Admin Blog Tags List
-    let tags_res = match db_result.unwrap().to_admin_list_template().render() {
+    let tags_res = match tags_data.to_admin_list_template().render() {
         Ok(html) => html,
         Err(err) => {
             error!("Failed to render admin/blogs/tags/list_tags.html. {}", err);
             return get_500_internal_server_error();
         }
     };
-    info!("Admin Blogs askama template rendered.");
+
+    info!("AdminBlogTagsList askama template rendered.");
     Html(tags_res)
 }
 
@@ -146,46 +98,11 @@ pub async fn get_admin_tags_search(
         return get_401_unauthorized().await;
     }
 
-    // Locking Mutex
-    let tags_db_uc = app_state.tag_db_usecase.lock().await.clone().unwrap();
-    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
-    let is_cache_enabled = tags_cache_uc_opt.is_some();
-
+    let mut tag_uc = app_state.tag_usecase.lock().await.clone();
     let sanitized_params = params.sanitize();
+    let tags_result = tag_uc.search_tags(sanitized_params.clone()).await;
 
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_display_repo
-            .search_tags(sanitized_params.clone())
-            .await
-    } else {
-        None
-    };
-
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let tags_res = match res.to_admin_list_template().render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render admin/blogs/tags/list_tags.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("AdminBlogTagsLists askama template rendered.");
-        return Html(tags_res);
-    }
-
-    // If not, get data from database
-    let db_result = tags_db_uc
-        .tag_display_repo
-        .search_tags(sanitized_params.clone())
-        .await;
-
-    if db_result.is_none() {
+    let Some(tags_data) = tags_result else {
         error!(
             "Failed to find admin blog tags with Tag Id started at {}, ended at {}, and query {}.",
             sanitized_params.start.unwrap(),
@@ -193,29 +110,16 @@ pub async fn get_admin_tags_search(
             sanitized_params.query
         );
         return get_500_internal_server_error();
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        for tag in db_result.clone().unwrap().tags {
-            debug!("Caching tag {}", &tag.id);
-            let _ = tags_cache_uc_opt
-                .clone()
-                .unwrap()
-                .tag_operation_repo
-                .insert(tag)
-                .await;
-        }
-    }
-
-    // Render Admin Blog Tags List
-    let tags_res = match db_result.unwrap().to_admin_list_template().render() {
+    let tags_res = match tags_data.to_admin_list_template().render() {
         Ok(html) => html,
         Err(err) => {
             error!("Failed to render admin/blogs/tags/list_tags.html. {}", err);
             return get_500_internal_server_error();
         }
     };
+
     info!("AdminBlogTagsList askama template rendered.");
     Html(tags_res)
 }
@@ -233,70 +137,22 @@ pub async fn get_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    let tags_db_uc = app_state.tag_db_usecase.lock().await.clone().unwrap();
-    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
-    let is_cache_enabled = tags_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
-    };
-
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_display_repo
-            .find(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
-
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let tag_res = match res.to_admin_template().render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render admin/blogs/tags/get_tag.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("AdminGetTag askama template rendered.");
-        return Html(tag_res);
-    }
-
-    // If not, get data from database
-    let db_result = tags_db_uc.tag_display_repo.find(id.clone().unwrap()).await;
-
-    // Early check db result. If empty, return 404 error
-    if db_result.is_none() {
-        info!("Failed to find Tag with Id {}.", &id.unwrap());
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
         return get_404_not_found().await;
-    }
+    };
 
-    // Insert cache
-    if is_cache_enabled {
-        debug!("Caching tag {}", &id.clone().unwrap());
-        let _ = tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_operation_repo
-            .insert(db_result.clone().unwrap())
-            .await;
-    }
+    let mut tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_result = tag_uc.find(id).await;
 
-    // Render Tag
-    let tag = match db_result.unwrap().to_admin_template().render() {
+    // Early check result. If empty, return 404 error
+    let Some(tag_data) = tag_result else {
+        info!("Failed to find Tag with Id {}.", &id);
+        return get_404_not_found().await;
+    };
+
+    let tag_res = match tag_data.to_admin_template().render() {
         Ok(html) => html,
         Err(err) => {
             error!("Failed to render admin/blogs/tags/get_tag.html. {}", err);
@@ -304,11 +160,11 @@ pub async fn get_admin_tag(
         }
     };
     info!("AdminGetTag askama template rendered.");
-    Html(tag)
+    Html(tag_res)
 }
 
 /// get_add_admin_tag
-/// /// Serve GET add tag HTML file in a form format.
+/// Serve GET add tag HTML file in a form format.
 #[debug_handler]
 pub async fn get_add_admin_tag(
     State(app_state): State<AppState>,
@@ -318,10 +174,11 @@ pub async fn get_add_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    // Locking Mutex
-    let tag_uc = app_state.tag_db_usecase.lock().await.clone().unwrap();
-    // Calculate new Blog Id
-    let db_result = tag_uc.tag_operation_repo.get_new_id().await;
+    // Calculate new Tag Id
+    let db_result = {
+        let mut tag_uc = app_state.tag_usecase.lock().await.clone();
+        tag_uc.get_new_id().await
+    };
 
     let Some(id) = db_result else {
         error!("Failed to get new Tag ID.");
@@ -353,77 +210,24 @@ pub async fn get_edit_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    let tag_uc = app_state.tag_db_usecase.lock().await.clone().unwrap();
-    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
-    let is_cache_enabled = tags_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_display_repo
-            .find(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
+    let mut tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_result = tag_uc.find(id).await;
 
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let edit_tag_tmpl = AdminGetEditTagTemplate {
-            id: res.id,
-            name: res.name,
-        };
-        let edit_tag = match edit_tag_tmpl.render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!(
-                    "Failed to render admin/blogs/tags/get_edit_tag.html. {}",
-                    err
-                );
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("AdminGetEditTag askama template rendered.");
-        return Html(edit_tag);
-    }
-
-    // If not, get data from database
-    let db_result = tag_uc.tag_display_repo.find(id.clone().unwrap()).await;
-
-    if db_result.is_none() {
+    // Early check result. If empty, return 404 error
+    let Some(tag_data) = tag_result else {
         info!("Failed to find Tag with Id {}.", &path);
         return get_404_not_found().await;
     };
 
-    // Insert cache
-    if is_cache_enabled {
-        debug!("Caching tag {}", &id.clone().unwrap());
-        let _ = tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_operation_repo
-            .insert(db_result.clone().unwrap())
-            .await;
-    }
-
     let edit_tag_tmpl = AdminGetEditTagTemplate {
-        id: id.clone().unwrap(),
-        name: db_result.clone().unwrap().name,
+        id: tag_data.id,
+        name: tag_data.name,
     };
     let edit_tag = match edit_tag_tmpl.render() {
         Ok(html) => html,
@@ -452,75 +256,22 @@ pub async fn get_delete_admin_tag(
         return get_401_unauthorized().await;
     }
 
-    // Locking Mutex
-    let tags_db_uc = app_state.tag_db_usecase.lock().await.clone().unwrap();
-    let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
-    let is_cache_enabled = tags_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
-    // Get Data from Cache
-    let cache_result = if is_cache_enabled {
-        tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_display_repo
-            .find(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
+    let mut tag_uc = app_state.tag_usecase.lock().await.clone();
+    let tag_result = tag_uc.find(id).await;
 
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let delete_tag = match (AdminGetDeleteTagTemplate { id: res.id }).render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!(
-                    "Failed to render admin/blogs/tags/get_delete_tag.html. {}",
-                    err
-                );
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("AdminGetDeleteTag askama template rendered.");
-        return Html(delete_tag);
-    }
-
-    // If not, get data from database
-    let db_result = tags_db_uc.tag_display_repo.find(id.clone().unwrap()).await;
-
-    if db_result.is_none() {
+    // Early check result. If empty, return 404 error
+    let Some(tag_data) = tag_result else {
         info!("Failed to find Tag with Id {}.", &path);
         return get_404_not_found().await;
     };
 
-    // Insert cache
-    if is_cache_enabled {
-        debug!("Caching tag {}", &id.clone().unwrap());
-        let _ = tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_operation_repo
-            .insert(db_result.clone().unwrap())
-            .await;
-    }
-
-    let delete_tag_tmpl = AdminGetDeleteTagTemplate {
-        id: id.clone().unwrap(),
-    };
-    let delete_tag = match delete_tag_tmpl.render() {
+    let delete_tag = match (AdminGetDeleteTagTemplate { id: tag_data.id }).render() {
         Ok(html) => html,
         Err(err) => {
             error!(

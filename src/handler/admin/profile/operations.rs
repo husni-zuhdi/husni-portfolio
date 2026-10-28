@@ -1,6 +1,6 @@
-use super::{process_profile_meta_body, process_profile_section_body, rebuild_profile_page_cache};
+use super::{process_profile_meta_body, process_profile_section_body};
 use crate::handler::admin::profile::displays::{
-    get_admin_profile_list, get_admin_profile_list_with_error, get_admin_profile_section,
+    get_admin_profile_list, get_admin_profile_section, render_profile_list,
 };
 use crate::handler::auth::csrf::verify_csrf_token;
 use crate::handler::auth::is_auth_verified;
@@ -15,7 +15,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::response::Html;
 use std::str::FromStr;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 use urlencoding::decode;
 
 /// post_add_admin_profile_section
@@ -32,32 +32,25 @@ pub async fn post_add_admin_profile_section(
         return get_401_unauthorized().await;
     }
 
-    let mut profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
 
     let section_res = process_profile_section_body(body);
     if section_res.is_none() {
         warn!("Failed to process a new Profile Section body.");
         return get_500_internal_server_error();
     }
-    let section = section_res.unwrap();
 
-    let add_result = profile_db_uc.profile_operation_repo.add(section).await;
+    let add_result = profile_uc.add(section_res.unwrap()).await;
     if add_result.is_none() {
         info!("Failed to add Profile Section.");
         return get_404_not_found().await;
     }
-
     if add_result.unwrap() != ProfileCommandStatus::Stored {
         error!("Failed to add Profile Section.");
         return get_500_internal_server_error();
     }
 
-    if is_cache_enabled {
-        rebuild_profile_page_cache(&app_state).await;
-    }
-
+    info!("Added Profile Section.");
     get_admin_profile_list(State(app_state), headers).await
 }
 
@@ -76,21 +69,13 @@ pub async fn put_edit_admin_profile_section(
         return get_401_unauthorized().await;
     }
 
-    let mut profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
+
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
 
     let section_res = process_profile_section_body(body);
     if section_res.is_none() {
@@ -98,23 +83,19 @@ pub async fn put_edit_admin_profile_section(
         return get_500_internal_server_error();
     }
     let mut section = section_res.unwrap();
-    section.id = id.unwrap();
+    section.id = id;
 
-    let edit_result = profile_db_uc.profile_operation_repo.update(section).await;
+    let edit_result = profile_uc.update(section).await;
     if edit_result.is_none() {
         info!("Failed to edit Profile Section with Id {}.", path);
         return get_404_not_found().await;
     }
-
     if edit_result.unwrap() != ProfileCommandStatus::Updated {
         error!("Failed to edit Profile Section with Id {}", path);
         return get_500_internal_server_error();
     }
 
-    if is_cache_enabled {
-        rebuild_profile_page_cache(&app_state).await;
-    }
-
+    info!("Edited Profile Section with Id {}.", path);
     get_admin_profile_section(Path(path), State(app_state), headers).await
 }
 
@@ -133,36 +114,22 @@ pub async fn post_move_admin_profile_section(
         return get_401_unauthorized().await;
     }
 
-    let mut profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
+
     let direction = params.sanitize();
-    let move_result = profile_db_uc
-        .profile_operation_repo
-        .move_section(id.unwrap(), direction)
-        .await;
+    let move_result = profile_uc.move_section(id, direction).await;
     if move_result.is_none() {
         info!("Failed to move Profile Section with Id {}.", path);
         return get_500_internal_server_error();
     }
 
-    if is_cache_enabled {
-        rebuild_profile_page_cache(&app_state).await;
-    }
-
+    info!("Moved Profile Section with Id {}.", path);
     get_admin_profile_list(State(app_state), headers).await
 }
 
@@ -182,33 +149,21 @@ pub async fn delete_delete_admin_profile_section(
         return get_401_unauthorized().await;
     }
 
-    let mut profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
-
     // Sanitize `path`
-    let id = path.parse::<i64>();
-    match &id {
-        Ok(val) => {
-            debug!("Successfully parse path {} into {} i64", &path, &val);
-        }
-        Err(err) => {
-            warn!("Failed to parse path {} to i64. Err: {}", &path, err);
-            return get_404_not_found().await;
-        }
+    let Ok(id) = path.parse::<i64>() else {
+        warn!("Failed to parse path {} to i64", &path);
+        return get_404_not_found().await;
     };
 
-    let delete_result = profile_db_uc
-        .profile_operation_repo
-        .delete(id.unwrap())
-        .await;
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
 
+    let delete_result = profile_uc.delete(id).await;
     if delete_result.is_none() {
         info!(
             "Failed to delete Profile Section with Id {}. It may be the protected title section.",
             path
         );
-        return get_admin_profile_list_with_error(
+        return render_profile_list(
             app_state,
             format!(
                 "Section with ID {} is the page title section. It cannot be deleted.",
@@ -217,16 +172,12 @@ pub async fn delete_delete_admin_profile_section(
         )
         .await;
     }
-
     if delete_result.unwrap() != ProfileCommandStatus::Deleted {
         error!("Failed to delete Profile Section with Id {}", path);
         return get_500_internal_server_error();
     }
 
-    if is_cache_enabled {
-        rebuild_profile_page_cache(&app_state).await;
-    }
-
+    info!("Deleted Profile Section with Id {}.", path);
     get_admin_profile_list(State(app_state), headers).await
 }
 
@@ -244,32 +195,25 @@ pub async fn put_admin_profile_meta_edit(
         return get_401_unauthorized().await;
     }
 
-    let mut profile_db_uc = app_state.profile_db_usecase.lock().await.clone();
-    let profile_cache_uc_opt = app_state.profile_cache_usecase.lock().await.clone();
-    let is_cache_enabled = profile_cache_uc_opt.is_some();
+    let mut profile_uc = app_state.profile_usecase.lock().await.clone();
 
     let meta_res = process_profile_meta_body(body);
     if meta_res.is_none() {
         warn!("Failed to process Profile Meta body.");
         return get_500_internal_server_error();
     }
-    let meta = meta_res.unwrap();
 
-    let edit_result = profile_db_uc.profile_operation_repo.update_meta(meta).await;
+    let edit_result = profile_uc.update_meta(meta_res.unwrap()).await;
     if edit_result.is_none() {
         info!("Failed to edit Profile Meta.");
         return get_404_not_found().await;
     }
-
     if edit_result.unwrap() != ProfileCommandStatus::Updated {
         error!("Failed to edit Profile Meta.");
         return get_500_internal_server_error();
     }
 
-    if is_cache_enabled {
-        rebuild_profile_page_cache(&app_state).await;
-    }
-
+    info!("Edited Profile Meta.");
     get_admin_profile_list(State(app_state), headers).await
 }
 
@@ -332,6 +276,23 @@ mod test {
 
     fn unauthorized_html(html: &Html<String>) -> bool {
         html.0.contains("401 Unauthorized")
+    }
+
+    /// Authorized headers with a valid JWT cookie and a matching CSRF pair.
+    fn authorized_headers(state: &AppState) -> HeaderMap {
+        let secret = &state.config.secrets.jwt_secret.clone();
+        let token = crate::handler::auth::create_jwt(secret).unwrap();
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            axum::http::HeaderValue::from_str(&format!("token={token}; _csrf_token=abc123"))
+                .unwrap(),
+        );
+        headers.insert(
+            crate::handler::auth::csrf::CSRF_HEADER_NAME.clone(),
+            axum::http::HeaderValue::from_str("abc123").unwrap(),
+        );
+        headers
     }
 
     #[tokio::test]
@@ -399,23 +360,76 @@ mod test {
     async fn test_post_admin_profile_preview_renders_sanitized_html() {
         let state = state_factory(Config::default()).await;
 
-        // Authorized request with valid JWT and CSRF token
-        let secret = &state.config.secrets.jwt_secret.clone();
-        let token = crate::handler::auth::create_jwt(secret).unwrap();
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            axum::http::header::COOKIE,
-            axum::http::HeaderValue::from_str(&format!("token={token}; _csrf_token=abc123"))
-                .unwrap(),
-        );
-        headers.insert(
-            crate::handler::auth::csrf::CSRF_HEADER_NAME.clone(),
-            axum::http::HeaderValue::from_str("abc123").unwrap(),
-        );
-
         let body = "section_body=%23%20Hello&section_layout=stacked&section_id=1&section_title=T"
             .to_string();
-        let html = post_admin_profile_preview(State(state), headers, body).await;
+        let html =
+            post_admin_profile_preview(State(state.clone()), authorized_headers(&state), body)
+                .await;
         assert!(html.0.contains("<h1>Hello</h1>"));
+    }
+
+    #[tokio::test]
+    async fn test_post_admin_profile_preview_renders_code_block() {
+        let state = state_factory(Config::default()).await;
+
+        // A fenced code block must reach the preview as highlighted-ready
+        // `<pre><code>` markup, matching what the public page renders.
+        let body = "section_body=%60%60%60yaml%0Akey%3A%20value%0A%60%60%60&section_layout=stacked"
+            .to_string();
+        let html =
+            post_admin_profile_preview(State(state.clone()), authorized_headers(&state), body)
+                .await;
+        assert!(html.0.contains("<pre"), "code fence must render as <pre>");
+        assert!(html.0.contains("<code"), "code fence must render as <code>");
+    }
+
+    #[tokio::test]
+    async fn test_post_admin_profile_preview_carries_cards_layout_class() {
+        let state = state_factory(Config::default()).await;
+
+        let body =
+            "section_body=Hello&section_layout=cards&section_id=1&section_title=T".to_string();
+        let html =
+            post_admin_profile_preview(State(state.clone()), authorized_headers(&state), body)
+                .await;
+        assert!(
+            html.0.contains("flex-container"),
+            "cards layout must set the flex-container preview class"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_post_admin_profile_preview_tolerates_malformed_encoding() {
+        let state = state_factory(Config::default()).await;
+
+        // A bad percent escape must not crash the preview request;
+        // urlencoding decodes invalid escapes leniently, so the bad escape
+        // passes through into the rendered markdown.
+        let body = "section_body=%zzBroken&section_layout=stacked".to_string();
+        let html =
+            post_admin_profile_preview(State(state.clone()), authorized_headers(&state), body)
+                .await;
+        assert!(
+            html.0.contains("Preview"),
+            "the preview template must render"
+        );
+        assert!(
+            html.0.contains("%zzBroken"),
+            "the bad escape passes through"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_post_admin_profile_preview_renders_empty_body() {
+        let state = state_factory(Config::default()).await;
+
+        let body = "section_body=&section_layout=stacked".to_string();
+        let html =
+            post_admin_profile_preview(State(state.clone()), authorized_headers(&state), body)
+                .await;
+        assert!(
+            html.0.contains("Preview"),
+            "the preview template must render"
+        );
     }
 }

@@ -15,6 +15,7 @@ as proposals rather than describing them as current behavior.
 | [Profile sections](./7-profile-sections.md) | Implemented; shared page shell remains hardcoded (TODO) | `src/handler/profile.rs`, `src/handler/admin/profile/`, `src/database/turso/profile.rs` | — |
 | [Admin UI revamp](./8-admin-ui-revamp.md) | Implemented; shared page shell remains hardcoded (TODO) | `templates/admin/`, `statics/input.css` | — |
 | [Database concurrency](./9-database-concurrency.md) | Proposed; fixes nextest `database is locked` failures (or serializing nextest as fallback) | `src/database/turso/mod.rs`, `src/config.rs`, tests | — |
+| [Deep per-entity usecases](./10-deep-usecases.md) | Implemented; Tag search is database-truth, tag delete leaves orphan mapping rows (legacy) | `src/usecase/`, `src/state.rs`, `src/cache/inmemory/` | — |
 
 `0-template.md` is a template for future feature notes. `references.md` is a
 collection of implementation references.

@@ -1,14 +1,16 @@
 use crate::handler::status::{get_404_not_found, get_500_internal_server_error};
-use crate::model::blogs::BlogsParams;
+use crate::model::blogs::{Blog, BlogsParams};
 use crate::model::{
     axum::AppState,
     templates::{BlogMetadataTemplate, BlogsTemplate},
 };
 use crate::utils::convert_tags_string_to_vec;
 use askama::Template;
-use axum::debug_handler;
-use axum::extract::{Path, Query, State};
-use axum::response::Html;
+use axum::{
+    debug_handler,
+    extract::{Path, Query, State},
+    response::Html,
+};
 use tracing::{debug, error, info, warn};
 
 /// get_blogs
@@ -19,81 +21,30 @@ pub async fn get_blogs(
     State(app_state): State<AppState>,
     params: Query<BlogsParams>,
 ) -> Html<String> {
-    // Locking Mutex
-    let blog_cache_uc_opt = app_state.blog_cache_usecase.lock().await;
-    let cache_is_enabled = blog_cache_uc_opt.is_some();
+    let mut blog_uc = app_state.blog_usecase.lock().await.clone();
 
     let sanitized_params = params.sanitize();
-
-    // Get Data from Cache
-    let cache_result = if cache_is_enabled {
-        blog_cache_uc_opt
-            .clone()
-            .unwrap()
-            .blog_display_repo
-            .find_blogs(sanitized_params.clone())
-            .await
-    } else {
-        None
-    };
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let blogs: Vec<BlogMetadataTemplate> = res
-            .iter()
-            .map(|b| b.as_blog_metadata().as_template())
-            .collect();
-        let active_tags = convert_tags_string_to_vec(&sanitized_params.tags.clone().unwrap());
-        let blogs_res = match (BlogsTemplate { blogs, active_tags }).render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render blogs.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("Blogs askama template rendered.");
-        return Html(blogs_res);
-    }
-
-    // If not, get data from database
-    let db_result = app_state
-        .blog_db_usecase
-        .lock()
-        .await
-        .blog_display_repo
-        .find_blogs(sanitized_params.clone())
-        .await;
+    let blogs_result = blog_uc.find_blogs(sanitized_params.clone()).await;
 
     // Early check db result. If empty, return 500 error
-    if db_result.is_none() {
+    let Some(blogs_data) = blogs_result else {
         error!(
             "Failed to find blogs with Blog Id started at {} and ended at {}.",
             sanitized_params.start.unwrap(),
             sanitized_params.end.unwrap()
         );
         return get_500_internal_server_error();
-    }
+    };
 
-    // Insert cache
-    if cache_is_enabled {
-        for blog in db_result.clone().unwrap() {
-            debug!("Caching blog {}", &blog.id);
-            let _ = blog_cache_uc_opt
-                .clone()
-                .unwrap()
-                .blog_operation_repo
-                .insert(blog)
-                .await;
-        }
-        drop(blog_cache_uc_opt);
-    }
+    render_blogs_list_html(blogs_data, sanitized_params.tags.clone().unwrap())
+}
 
-    let blogs: Vec<BlogMetadataTemplate> = db_result
-        .unwrap()
+fn render_blogs_list_html(blogs_data: Vec<Blog>, tags: String) -> Html<String> {
+    let blogs: Vec<BlogMetadataTemplate> = blogs_data
         .iter()
         .map(|b| b.as_blog_metadata().as_template())
         .collect();
-    let active_tags = convert_tags_string_to_vec(&sanitized_params.tags.clone().unwrap());
+    let active_tags = convert_tags_string_to_vec(&tags);
 
     let blogs_res = match (BlogsTemplate { blogs, active_tags }).render() {
         Ok(html) => html,
@@ -123,62 +74,18 @@ pub async fn get_blog(Path(path): Path<String>, State(app_state): State<AppState
         }
     }
 
-    // Locking Mutex
-    let blog_cache_uc_opt = app_state.blog_cache_usecase.lock().await;
-    let cache_is_enabled = blog_cache_uc_opt.is_some();
+    let mut blog_uc = app_state.blog_usecase.lock().await.clone();
+    // The usecase resolves the Blog through the cache or the database; a `None`
+    // here means the Blog does not exist.
+    let blog_result = blog_uc.find(id.clone().unwrap()).await;
 
-    // Get Data from Cache
-    let cache_result = if cache_is_enabled {
-        blog_cache_uc_opt
-            .clone()
-            .unwrap()
-            .blog_display_repo
-            .find(id.clone().unwrap())
-            .await
-    } else {
-        None
-    };
-    // If cache hit, return early
-    if let Some(res) = cache_result {
-        let blog_res = match res.as_template().render() {
-            Ok(html) => html,
-            Err(err) => {
-                error!("Failed to render blog.html. {}", err);
-                return get_500_internal_server_error();
-            }
-        };
-
-        info!("Blog askama template rendered.");
-        return Html(blog_res);
-    }
-    // If not, get data from database
-    let db_result = app_state
-        .blog_db_usecase
-        .lock()
-        .await
-        .blog_display_repo
-        .find(id.clone().unwrap())
-        .await;
-
-    // Early check db result. If empty, return 404 error
-    if db_result.is_none() {
+    // Early check result. If empty, return 404 error
+    let Some(blog_data) = blog_result else {
         info!("Failed to find Blog with Id {}.", &id.unwrap());
         return get_404_not_found().await;
-    }
+    };
 
-    // Insert cache
-    if cache_is_enabled {
-        debug!("Caching blog {}", &id.clone().unwrap());
-        let _ = blog_cache_uc_opt
-            .clone()
-            .unwrap()
-            .blog_operation_repo
-            .insert(db_result.clone().unwrap())
-            .await;
-        drop(blog_cache_uc_opt);
-    }
-
-    let blog = match db_result.unwrap().as_template().render() {
+    let blog = match blog_data.as_template().render() {
         Ok(html) => html,
         Err(err) => {
             error!("Failed to render blog.html. {}", err);

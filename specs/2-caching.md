@@ -34,11 +34,12 @@ CACHE_TTL=3600
 
 ## Main paths
 
-- Cache construction and startup prefill: `src/state.rs`
-- Cache adapter: `src/cache/inmemory/`
+- Cache construction: `src/state.rs`
+- Startup prefill: per-entity `prefill` verbs (`src/usecase/{blogs,tags,talks,profile}.rs`)
+- Cache reads and updates/invalidation: inside the per-entity usecase verbs (`src/usecase/`); the usecases call the adapters in `src/cache/inmemory/`
 - Cache data-access interfaces: `src/repo/`
-- Admin area cache updates/invalidation: `src/handler/admin/`
 - Configuration parsing: `src/config.rs`
+- Read-through rules and all-or-nothing list reads: `specs/10-deep-usecases.md`
 
 ## Known limitation
 
