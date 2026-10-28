@@ -32,6 +32,11 @@
         <script src="/statics/temml/temml.min.js"></script>
         <!-- Pele -->
         <script src="/statics/pele/pele.global.js"></script>
+        <!-- Syntax Highlighting (parity with the public blog page) -->
+        <link href="/statics/hljs/nord.css" rel="stylesheet" type="text/css" />
+        <script src="/statics/hljs/highlight.min.js"></script>
+        <!-- Admin blog editor helpers -->
+        <script src="/statics/admin-blog-editor.js"></script>
         <!-- CSRF Check -->
         <script>
             document.addEventListener('htmx:configRequest', function(evt) {
@@ -43,25 +48,50 @@
                 }
             });
         </script>
+        <!-- Initialize blog editors as HTMX swaps them in -->
+        <script>
+            document.addEventListener('htmx:load', function(evt) {
+                var elt = evt.detail && evt.detail.elt;
+                if (!elt || !elt.matches) return;
+                if (typeof initBlogEditor !== 'function') return;
+                var form = elt.matches('.blog-editor-form')
+                    ? elt
+                    : elt.closest('.blog-editor-form');
+                if (form) initBlogEditor(form);
+            });
+        </script>
+        <!-- Render math and diagrams in HTMX-swapped preview panes -->
+        <script>
+            document.addEventListener('htmx:afterSwap', function(evt) {
+                if (!evt.detail || !evt.detail.target) return;
+                var target = evt.detail.target;
+                if (target.id !== 'blog_preview') return;
+                if (typeof renderBlogPreviewContent === 'function') {
+                    renderBlogPreviewContent(target);
+                }
+            });
+        </script>
         {% include "partials/theme_fouc_prevention.html" %}
+        <script src="/statics/nav.js" defer></script>
     </head>
     <body id="body_target">
         <!-- Navbar Section -->
-        <nav id="navbar_target">
+        <nav id="navbar_target" class="sticky top-0 z-40">
             <div class="main_navbar">
                 <!-- Logo -->
-                <div class="py-3 md:py-0 flex items-center md:items-stretch md:justify-start">
+                <div class="flex items-center justify-start">
                     <img class="w-auto" src="/statics/favicon-32x32.png" alt="Husni Zuhdi">
                 </div>
-                <!-- Web Menu -->
-                <div class="flex flex-col md:flex-row md:mx-3 md:space-x-4 items-center">
-                    <a href="/admin" class="navbar_link" aria-current="page">Admin</a>
+                <!-- Web Menu (desktop) -->
+                <div class="hidden md:flex md:flex-row md:mx-3 md:space-x-4 items-center">
+                    <a href="/" class="navbar_link">Home</a>
+                    <a href="/admin" class="navbar_link">Admin</a>
                     <a href="/admin/profile" class="navbar_link">Admin Profile</a>
                     <a href="/admin/blogs" class="navbar_link">Admin Blogs</a>
                     <a href="/admin/talks" class="navbar_link">Admin Talks</a>
                 </div>
-                <!-- User Management -->
-                <div class="flex flex-col md:flex-row md:mx-3 md:space-x-4">
+                <!-- User Management (desktop) -->
+                <div class="hidden md:flex md:flex-row md:mx-3 md:space-x-4 items-center">
                     {% include "partials/theme_button.html" %}
                     <!-- Logout -->
                     <form hx-delete="/logout" hx-target="#main_body_target" hx-swap="innerHTML">
@@ -70,6 +100,45 @@
                         </div>
                     </form>
                 </div>
+                <!-- Mobile controls -->
+                <div class="md:hidden flex items-center">
+                    {% include "partials/theme_button.html" %}
+                    <button id="nav_drawer_toggle_target"
+                            type="button"
+                            class="btn_theme p-1"
+                            aria-controls="nav_drawer_target"
+                            aria-expanded="false">
+                        <svg class="w-5 h-5 fill-none"
+                             stroke="currentColor"
+                             stroke-width="2"
+                             stroke-linecap="round"
+                             stroke-linejoin="round"
+                             viewBox="0 0 24 24">
+                            <path d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Mobile backdrop -->
+                <div id="nav_backdrop_target" class="nav_backdrop" aria-hidden="true"></div>
+            </div>
+            <!-- Mobile drawer -->
+            <div id="nav_drawer_target"
+                 class="nav_drawer md:hidden"
+                 aria-hidden="true">
+                <a href="/" class="navbar_link">Home</a>
+                <a href="/admin" class="navbar_link">Admin</a>
+                <a href="/admin/profile" class="navbar_link">Admin Profile</a>
+                <a href="/admin/blogs" class="navbar_link">Admin Blogs</a>
+                <a href="/admin/talks" class="navbar_link">Admin Talks</a>
+                <!-- Logout -->
+                <form hx-delete="/logout"
+                      hx-target="#main_body_target"
+                      hx-swap="innerHTML"
+                      class="py-1">
+                    <div id="logout_button_notif_target" class="flex-row">
+                        <button class="btn_text btn_red" type="submit">Logout</button>
+                    </div>
+                </form>
             </div>
         </nav>
         <!-- Main Section -->
@@ -108,13 +177,13 @@
                 </div>
                 <!-- Navigator -->
                 <div id="footer_nav_target" class="footer_nav">
-                    <div class="grid gap-8 lg:grid-cols-2">
+                    <div class="grid gap-4 lg:grid-cols-2 lg:gap-8">
                         <div id="footer_quote_target">
                             <h2>Husni Zuhdi</h2>
                             <p>Character is Destiny</p>
                             <p><i>~ Heraclitus</i></p>
                         </div>
-                        <div id="footer_navigator_target">
+                        <div id="footer_navigator_target" class="hidden lg:block">
                             <h2>Navigator</h2>
                             <p><a href="/">Home</a></p>
                             <p><a href="/blogs">Blogs</a></p>

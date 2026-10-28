@@ -43,6 +43,9 @@ function buildDom(availableTags, selectedTags) {
   const script = document.createElement('script');
   script.textContent = EDITOR_SCRIPT;
   form.appendChild(script);
+  if (typeof dom.window.initBlogEditor === 'function') {
+    dom.window.initBlogEditor(form);
+  }
   return { dom, document, form };
 }
 
@@ -69,6 +72,37 @@ describe('tag widget', () => {
     assert.ok(names.includes('rust'), 'dropdown should include rust');
     assert.ok(names.includes('ruby'), 'dropdown should include ruby');
     assert.ok(!names.includes('go'), 'dropdown should not include go');
+  });
+
+  test('dropdown item mousedown prevents default to keep input focus', () => {
+    const { document } = buildDom(['rust'], []);
+    const input = document.querySelector('.tag-search-input');
+    input.dispatchEvent(new document.defaultView.Event('focus', { bubbles: true }));
+    const item = document.querySelector('.tag-dropdown-item');
+    assert.ok(item, 'dropdown should render at least one item');
+
+    const mousedownEvent = new document.defaultView.MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+    });
+    item.dispatchEvent(mousedownEvent);
+    assert.strictEqual(mousedownEvent.defaultPrevented, true);
+  });
+
+  test('create-item mousedown prevents default to keep input focus', () => {
+    const { document } = buildDom(['rust'], []);
+    const input = document.querySelector('.tag-search-input');
+    input.value = 'kubernetes';
+    input.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    const createItem = document.querySelector('.tag-create-item');
+    assert.ok(createItem, 'create item should render for unknown tags');
+
+    const mousedownEvent = new document.defaultView.MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+    });
+    createItem.dispatchEvent(mousedownEvent);
+    assert.strictEqual(mousedownEvent.defaultPrevented, true);
   });
 
   test('offers to create a new tag when no exact match exists', () => {
@@ -122,33 +156,149 @@ describe('tag widget', () => {
 describe('body editor tabs', () => {
   test('switches active tab and pane on click', () => {
     const { document } = buildDom([], []);
-    const previewBtn = document.querySelector('[data-tab="preview"]');
-    previewBtn.click();
+    const previewTabBtn = document.querySelector('[data-tab="preview"]');
+    previewTabBtn.click();
 
-    assert.ok(previewBtn.classList.contains('active'));
+    assert.ok(previewTabBtn.classList.contains('active'));
     assert.ok(document.querySelector('[data-pane="preview"]').classList.contains('active'));
     assert.ok(!document.querySelector('[data-tab="editor"]').classList.contains('active'));
+  });
+
+  test('preview tab triggers preview request when preview is empty', () => {
+    const { document } = buildDom([], []);
+    let eyeClicks = 0;
+    const eyeBtn = document.querySelector('[hx-post="/admin/blogs/preview"]');
+    eyeBtn.addEventListener('click', () => {
+      eyeClicks += 1;
+    });
+
+    document.querySelector('[data-tab="preview"]').click();
+    assert.strictEqual(eyeClicks, 1, 'empty preview should trigger a single preview request');
+
+    document.querySelector('.tag-search-input').dispatchEvent(
+      new document.defaultView.Event('focus', { bubbles: true })
+    );
+    assert.strictEqual(eyeClicks, 1, 'unrelated events should not re-trigger the preview');
+
+    eyeBtn.click();
+    assert.strictEqual(eyeClicks, 2, 'eye button still requestable');
+  });
+
+  test('preview tab does not trigger duplicate requests when preview has content', () => {
+    const { document } = buildDom([], []);
+    let eyeClicks = 0;
+    const eyeBtn = document.querySelector('[hx-post="/admin/blogs/preview"]');
+    eyeBtn.addEventListener('click', () => {
+      eyeClicks += 1;
+    });
+    document.querySelector('#blog_preview').textContent = 'rendered';
+
+    document.querySelector('[data-tab="preview"]').click();
+    assert.strictEqual(eyeClicks, 0, 'non-empty preview should not re-request');
+  });
+
+  test('preview tab re-fetches after body edits (dirty tracking)', async () => {
+    const { document, dom } = buildDom([], []);
+    dom.window.matchMedia = () => ({ matches: true, addListener: () => {}, removeListener: () => {} });
+    let eyeClicks = 0;
+    const eyeBtn = document.querySelector('[hx-post="/admin/blogs/preview"]');
+    eyeBtn.addEventListener('click', () => {
+      eyeClicks += 1;
+    });
+    document.querySelector('#blog_preview').textContent = 'stale render';
+
+    document.querySelector('[data-tab="preview"]').click();
+    assert.strictEqual(eyeClicks, 0, 'non-dirty non-empty preview is fine');
+
+    const textarea = document.querySelector('#blog_body');
+    textarea.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    document.querySelector('[data-tab="editor"]').click();
+    document.querySelector('[data-tab="preview"]').click();
+    assert.strictEqual(eyeClicks, 1, 'dirty preview should re-request on tab switch');
+  });
+
+  test('debounced body input refreshes preview without switching tabs (desktop)', async () => {
+    const { document, dom } = buildDom([], []);
+    dom.window.matchMedia = () => ({ matches: true, addListener: () => {}, removeListener: () => {} });
+    let eyeClicks = 0;
+    const eyeBtn = document.querySelector('[hx-post="/admin/blogs/preview"]');
+    eyeBtn.addEventListener('click', () => {
+      eyeClicks += 1;
+    });
+
+    const textarea = document.querySelector('#blog_body');
+    textarea.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 750));
+
+    assert.strictEqual(eyeClicks, 1, 'desktop debounce should trigger the preview request');
+    assert.ok(
+      document.querySelector('[data-pane="editor"]').classList.contains('active'),
+      'background refresh must not switch the active pane'
+    );
+    assert.ok(
+      !document.querySelector('[data-pane="preview"]').classList.contains('active')
+    );
+  });
+
+  test('debounced body input skips preview fetch on mobile', async () => {
+    const { document, dom } = buildDom([], []);
+    dom.window.matchMedia = () => ({ matches: false, addListener: () => {}, removeListener: () => {} });
+    let eyeClicks = 0;
+    const eyeBtn = document.querySelector('[hx-post="/admin/blogs/preview"]');
+    eyeBtn.addEventListener('click', () => {
+      eyeClicks += 1;
+    });
+
+    const textarea = document.querySelector('#blog_body');
+    textarea.dispatchEvent(new document.defaultView.Event('input', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 750));
+
+    assert.strictEqual(eyeClicks, 0, 'mobile must not auto-fetch the preview');
   });
 });
 
 describe('preview rendering', () => {
-  before(() => {
-    global.temml = {
-      renderMathInElement: () => {},
+  test('renders math and mermaid content via temml and pele', () => {
+    const { document, dom } = buildDom([], []);
+    const calls = { temml: 0, pele: [] };
+    dom.window.temml = {
+      renderMathInElement: () => {
+        calls.temml += 1;
+      },
     };
-    global.pele = {
-      mount: () => {},
+    dom.window.pele = {
+      mount: (el, source) => {
+        calls.pele.push([el.textContent, source]);
+      },
     };
-  });
-
-  test('renders math and mermaid in preview after swap', () => {
-    const { document } = buildDom([], []);
     const preview = document.querySelector('#blog_preview');
     preview.innerHTML = '<pre class="mermaid">graph TD; A --> B</pre>';
-    preview.dispatchEvent(new document.defaultView.Event('htmx:afterSwap', { bubbles: true }));
 
-    // If temml/pele were called without throwing, the listeners are wired.
-    // We mainly assert the preview container received the expected content.
-    assert.ok(preview.querySelector('pre.mermaid'));
+    if (typeof dom.window.renderBlogPreviewContent === 'function') {
+      dom.window.renderBlogPreviewContent(preview);
+    }
+    assert.strictEqual(calls.temml, 1, 'temml.renderMathInElement should be called on the preview pane');
+    assert.strictEqual(calls.pele.length, 1, 'pele.mount should be called for the mermaid block');
+    assert.ok(calls.pele[0][1].includes('graph TD'), 'pele.mount should receive the mermaid source');
+  });
+
+  test('highlights code blocks when hljs is available', () => {
+    const { document, dom } = buildDom([], []);
+    const highlighted = [];
+    dom.window.hljs = {
+      highlightElement: (el) => {
+        highlighted.push(el);
+      },
+    };
+    const preview = document.querySelector('#blog_preview');
+    preview.innerHTML = '<pre><code class="language-rust">fn main() {}</code></pre>';
+
+    if (typeof dom.window.renderBlogPreviewContent === 'function') {
+      dom.window.renderBlogPreviewContent(preview);
+    }
+    assert.strictEqual(highlighted.length, 1, 'hljs.highlightElement should run for the code block');
+    assert.strictEqual(highlighted[0].tagName, 'CODE');
   });
 });

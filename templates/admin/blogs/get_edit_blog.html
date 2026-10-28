@@ -1,4 +1,5 @@
-<form class="admin_panel blog-editor-form"
+<form id="blog-editor-form-{{ id }}"
+      class="admin_panel blog-editor-form"
       hx-put="/admin/blogs/{{ id }}/edit"
       hx-target="#blogs_target"
       hx-swap="innerHTML">
@@ -77,4 +78,3 @@
                 hx-swap="innerHTML">{% include "admin/partials/icons/x.html" %}</button>
     </div>
 </form>
-<script src="/statics/admin-blog-editor.js"></script>

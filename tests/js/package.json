@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test": "node --test admin-blog-editor.test.js"
+    "test": "node --test admin-blog-editor.test.js nav.test.js"
   },
   "devDependencies": {
     "jsdom": "^25.0.0"

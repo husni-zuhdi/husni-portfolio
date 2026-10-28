@@ -90,10 +90,6 @@
         @apply bg-gray-50 dark:bg-slate-900;
     }
 
-    footer {
-        @apply bottom-0;
-    }
-
     svg {
         @apply fill-black dark:fill-white;
     }
@@ -102,7 +98,7 @@
 
 @layer components {
     .main_navbar {
-        @apply px-8 md:px-40 lg:px-64 py-4 relative flex flex-col md:flex-row items-center justify-between;
+        @apply px-4 md:px-40 lg:px-64 py-2 md:py-4 relative flex flex-row items-center justify-between;
     }
 
     .main_body {
@@ -153,6 +149,31 @@
         @apply text-center text-base md:text-sm font-medium rounded-md px-3 py-2 hover:bg-gray-700 hover:text-white;
     }
 
+    .navbar_link.active {
+        @apply bg-gray-700 text-white dark:bg-slate-300 dark:text-black;
+    }
+
+    .nav_drawer {
+        @apply hidden absolute inset-x-0 top-full z-40 flex-col items-center gap-1 py-2 border-b-2 border-solid border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 shadow-lg;
+    }
+
+    .nav_drawer.open {
+        @apply flex;
+        animation: nav_drawer_slide_down 180ms ease-out;
+    }
+
+    .nav_backdrop {
+        @apply hidden absolute inset-x-0 top-full h-screen z-30 bg-black/40;
+    }
+
+    .nav_backdrop.open {
+        @apply block;
+    }
+
+    .overflow_hidden_nav {
+        @apply overflow-hidden;
+    }
+
     .btn_status {
         @apply text-base md:text-sm font-medium rounded-md px-3 py-2;
     }
@@ -162,11 +183,11 @@
     }
 
     .footer_social_network {
-        @apply px-8 md:px-40 lg:px-64 py-4 flex items-center justify-center lg:justify-between bg-gray-50 dark:bg-slate-900;
+        @apply px-4 md:px-40 lg:px-64 py-4 flex items-center justify-center lg:justify-between bg-gray-50 dark:bg-slate-900;
     }
 
     .footer_nav {
-        @apply px-8 md:px-40 lg:px-64 py-4 text-center lg:text-left;
+        @apply px-4 md:px-40 lg:px-64 py-4 text-center lg:text-left;
     }
 
     .btn_theme {
@@ -214,7 +235,7 @@
     }
 
     .tag-dropdown.hidden {
-        @apply hidden;
+        display: none;
     }
 
     .tag-dropdown-item {
@@ -304,5 +325,16 @@
 @layer utilities {
     .admin_input {
         @apply py-1;
+    }
+}
+
+@keyframes nav_drawer_slide_down {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

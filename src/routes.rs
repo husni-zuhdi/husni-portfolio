@@ -66,8 +66,16 @@ pub fn main_route(app_state: AppState) -> Router {
             get_service(ServeDir::new("./statics/pele/")),
         )
         .nest_service(
+            "/statics/hljs",
+            get_service(ServeDir::new("./statics/hljs/")),
+        )
+        .nest_service(
             "/statics/admin-blog-editor.js",
             get_service(ServeFile::new("./statics/admin-blog-editor.js")),
+        )
+        .nest_service(
+            "/statics/nav.js",
+            get_service(ServeFile::new("./statics/nav.js")),
         )
         .nest_service("/statics", get_service(ServeDir::new("./statics/favicon/")))
         .nest_service(
