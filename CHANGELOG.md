@@ -10,14 +10,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add double-submit-cookie CSRF checks to authenticated state-changing Admin area requests.
+- Redesign the mobile navigation: sticky compact header with a hamburger slide-down drawer containing all navigation links; the drawer closes on link click, Escape, or backdrop and locks body scroll while open.
+- Highlight the navbar link matching the current page path.
+- Compact the mobile footer by hiding the duplicate Navigator list below `lg:` and tightening spacing.
+- Vendor highlight.js and the nord theme under `statics/hljs/` (they were loaded from unpkg on the public blog page).
 - Rate-limit `POST /login` with configurable burst and replenish settings.
 - Sanitize rendered Markdown HTML before including it in Blog pages.
+- Revamp the `/admin/blogs/edit` and `/admin/blogs/add` UI with a searchable tag multi-select, split-pane markdown editor, and live preview.
+- Vendor Temml for LaTeX math rendering and Pele for Mermaid diagram rendering.
+- Add `POST /admin/blogs/preview` endpoint for rendering markdown without saving.
+- Add JavaScript unit tests for `statics/admin-blog-editor.js` under `tests/js/`.
 
 ### Fixed
 
 - Fix Administrator authentication when the JWT and CSRF cookies are sent together.
+- Fix the active navbar link lighting the wrong pages: only the exact page path highlights (parent routes stay dark on child pages), and the Login link highlights correctly on `/login` via a `data-nav-path` hint.
+- Fix the Administrator area having no path back to the public homepage; the admin navbar and drawer now include a `Home` link.
 - Expand unit coverage for domain models and static handlers.
 - Fix the dark-mode toggle behavior.
+- Fix blog form parsing to ignore empty tags and malformed fields.
+- Auto-wrap rendered tables in a scrollable container.
+- Convert ` ```mermaid ` code blocks to Pele-compatible markup.
+- Fix admin blog editor script initialization so tag widget and preview render reliably after HTMX swaps; the editor script is loaded once from `admin_base.html` instead of per-form inline scripts.
+- Auto-fetch the preview when switching to the preview tab with an empty preview pane.
+- Fix tag-less blogs disappearing from blog lists and returning 404 on lookup by switching blog queries to LEFT JOINs.
+- Fix admin blog editor tag dropdown selection: dropdown items keep the search input focused on mousedown so the click is not lost when the dropdown hides.
+- Stop the mobile blog editor from auto-switching to the preview tab while typing; the background preview fetch now only runs on desktop, and the preview tab re-fetches when the body changed since the last render.
+- Load highlight.js and the nord theme in the Admin area so blog preview code blocks match the public blog page.
+- Vendor highlight.js and the nord theme under `statics/hljs/` (they were loaded from unpkg on the public blog page).
+
+### Changed
+
+- Replace MathJax with Temml for math rendering; authors now use standard `$...$` / `$$...$$` delimiters.
 
 ### Security
 

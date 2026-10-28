@@ -1,66 +1,77 @@
-<form class="admin_panel"
+<form id="blog-editor-form-{{ id }}"
+      class="admin_panel blog-editor-form"
       hx-post="/admin/blogs/add"
       hx-target="#blogs_target"
       hx-swap="innerHTML">
     <h3>Add Blog #{{ id }}</h3>
-    <div class="flex flex-row">
-        <div class="basis-1/3 px-3">
-            <div class="admin_input">
-                <label for=blog_id>Blog ID :</label>
+    <div class="admin_input">
+        <label for="blog_id">Blog ID :</label>
+        <input type="text"
+               id="blog_id"
+               name="blog_id"
+               value="{{ id }}"
+               class="readonly"
+               readonly>
+    </div>
+    <div class="admin_input">
+        <label for="blog_name">Name :</label>
+        <input type="text" id="blog_name" name="blog_name" value="">
+    </div>
+    <div class="admin_input">
+        <label>Tags :</label>
+        <div class="tag-widget"
+             data-available-tags="{{ avail_tags|join(",") }}"
+             data-selected-tags="">
+            <div class="tag-search-row">
                 <input type="text"
-                       id="blog_id"
-                       name="blog_id"
-                       value="{{ id }}"
-                       class="readonly"
-                       readonly>
+                       class="tag-search-input"
+                       placeholder="Search or create a tag..."
+                       autocomplete="off">
+                <div class="tag-dropdown hidden"></div>
             </div>
-            <div class="admin_input">
-                <label for=blog_name>Name :</label>
-                <input type="text" id="blog_name" name="blog_name" value="">
-                <br>
-            </div>
-            <div class="admin_input">
-                <label for=blog_tag>Tags :</label>
-                <br>
+            <div class="tag-selected-list"></div>
+            <noscript>
                 <select id="blog_tag" name="blog_tag" multiple>
                     {% for tag in avail_tags %}
-                        {% if tag == "" %}
-                            <!-- No tag to render  -->
-                            <!-- Skip this tag -->
-                        {% else %}
-                            <option class="admin_input" value="{{ tag }}">{{ tag }}</option>
-                        {% endif %}
+                        <option value="{{ tag }}">{{ tag }}</option>
                     {% endfor %}
                 </select>
+            </noscript>
+        </div>
+    </div>
+    <div class="admin_input body-editor">
+        <label>Body (Markdown) :</label>
+        <div class="body-editor-tabs md:hidden">
+            <button type="button" class="tab-btn active" data-tab="editor">Editor</button>
+            <button type="button" class="tab-btn" data-tab="preview">Preview</button>
+        </div>
+        <div class="body-editor-panes">
+            <div class="body-editor-pane active" data-pane="editor">
+                <textarea id="blog_body" name="blog_body" rows="20"></textarea>
             </div>
-            <div class="admin_input flex gap-1">
-                <button class="btn_text btn_green admin_icon"
-                        type="submit"
-                        aria-label="Save new blog"
-                        title="Save blog">{% include "admin/partials/icons/check.html" %}</button>
-                <button class="btn_text btn_red admin_icon"
-                        aria-label="Cancel adding blog"
-                        title="Cancel"
-                        hx-get="/admin/blogs/list"
-                        hx-target="#blogs_target"
-                        hx-swap="innerHTML">{% include "admin/partials/icons/x.html" %}</button>
+            <div class="body-editor-pane" data-pane="preview">
+                <div id="blog_preview" class="blog-preview"></div>
             </div>
         </div>
-        <div class="basis-2/3 px-3">
-            <div class="admin_input">
-                <label for=blog_body>Body :</label>
-                <br>
-                <textarea id="blog_body" name="blog_body" rows="10" cols="60">
-                    Your new blog...
-                </textarea>
-                <div class="text-sm">
-                    <p>Notes:</p>
-                    <ul>
-                        <li>Use double slash "\" to add in-line math notation.</li>
-                        <li>Wrap table inside a div with "overflow-x: auto;" style to allow table overflow.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+    </div>
+    <div class="admin_input flex gap-1 flex-wrap">
+        <button class="btn_text btn_green admin_icon"
+                type="submit"
+                aria-label="Save new blog"
+                title="Save blog">{% include "admin/partials/icons/check.html" %}</button>
+        <button class="btn_text btn_blue admin_icon"
+                type="button"
+                aria-label="Preview blog"
+                title="Preview"
+                hx-post="/admin/blogs/preview"
+                hx-include="#blog_body"
+                hx-target="#blog_preview"
+                hx-swap="innerHTML">{% include "admin/partials/icons/eye.html" %}</button>
+        <button class="btn_text btn_red admin_icon"
+                aria-label="Cancel adding blog"
+                title="Cancel"
+                hx-get="/admin/blogs/list"
+                hx-target="#blogs_target"
+                hx-swap="innerHTML">{% include "admin/partials/icons/x.html" %}</button>
     </div>
 </form>

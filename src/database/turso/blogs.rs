@@ -14,13 +14,12 @@ impl BlogDisplayRepo for TursoDatabase {
                 blogs.source AS source, 
                 blogs.filename AS filename, 
                 blogs.body AS body, 
-                group_concat(tags.name, ',') AS tags
-            FROM blog_tag_mapping 
-            JOIN blogs ON blog_ref = blogs.id
-            JOIN tags ON tag_ref = tags.id
-            WHERE blogs.id=?1
-            GROUP BY blogs.name
-            ORDER BY blogs.id;
+                COALESCE(group_concat(tags.name, ','), '') AS tags
+            FROM blogs
+            LEFT JOIN blog_tag_mapping ON blog_tag_mapping.blog_ref = blogs.id
+            LEFT JOIN tags ON blog_tag_mapping.tag_ref = tags.id
+            WHERE blogs.id = ?1
+            GROUP BY blogs.id;
         ";
         debug!("Executing query {} for id {}", &prep_query, &id);
 
@@ -49,6 +48,9 @@ impl BlogDisplayRepo for TursoDatabase {
                 let source = match source_string.as_str() {
                     "Filesystem" => BlogSource::Filesystem,
                     "Github" => BlogSource::Github,
+                    // Blogs created by the Administrator area do not
+                    // set a source. Treat it as Filesystem.
+                    "" => BlogSource::Filesystem,
                     _ => {
                         error!("Failed to parse blog source. Default to Filesystem.");
                         BlogSource::Filesystem
@@ -59,6 +61,7 @@ impl BlogDisplayRepo for TursoDatabase {
                     .get::<String>(5)
                     .unwrap_or_default()
                     .split(",")
+                    .filter(|tag| !tag.is_empty())
                     .map(|tag| tag.to_string())
                     .collect();
 
@@ -83,38 +86,39 @@ impl BlogDisplayRepo for TursoDatabase {
         let end_seq = end;
         let limit = end_seq - start_seq;
 
-        let tag_names: Vec<String> = tags
-            .split(",")
-            .map(|tag| format!(" tags.name='{tag}' "))
-            .collect();
-        let tag_names_joined = tag_names.join("OR");
-        let tags_query = if tags.is_empty() {
+        let where_clause = if tags.is_empty() {
             String::new()
         } else {
-            format!("WHERE {tag_names_joined}")
+            let tag_names: Vec<String> = tags
+                .split(",")
+                .map(|tag| format!(" tags.name='{tag}' "))
+                .collect();
+            let tag_names_joined = tag_names.join("OR");
+            format!(
+                r"
+            WHERE blogs.id IN (
+                SELECT blog_ref
+                FROM blog_tag_mapping
+                JOIN tags ON tag_ref = tags.id
+                WHERE {tag_names_joined}
+            )"
+            )
         };
         let prep_query = format!(
             r"
-            WITH blogs_with_tags AS (
-                SELECT blog_ref AS blog_id
-                FROM blog_tag_mapping
-                JOIN tags ON tag_ref=tags.id
-                {tags_query}
-                GROUP BY blog_ref
-            )
             SELECT 
-                blog_ref AS id,
+                blogs.id AS id,
                 blogs.name,
                 blogs.filename,
                 blogs.body,
                 blogs.source,
-                group_concat(tags.name, ',') AS tags
-            FROM blog_tag_mapping
-            JOIN blogs_with_tags AS bwt ON blog_ref=bwt.blog_id
-            JOIN tags ON tag_ref=tags.id
-            JOIN blogs ON blog_ref=blogs.id
-            GROUP BY blog_ref
-            ORDER BY blog_ref DESC
+                COALESCE(group_concat(tags.name, ','), '') AS tags
+            FROM blogs
+            LEFT JOIN blog_tag_mapping ON blog_tag_mapping.blog_ref = blogs.id
+            LEFT JOIN tags ON blog_tag_mapping.tag_ref = tags.id
+            {where_clause}
+            GROUP BY blogs.id
+            ORDER BY blogs.id DESC
             LIMIT ?1
             OFFSET ?2;
         "
@@ -142,6 +146,9 @@ impl BlogDisplayRepo for TursoDatabase {
             let source = match row.get::<String>(4).unwrap().as_str() {
                 "Filesystem" => BlogSource::Filesystem,
                 "Github" => BlogSource::Github,
+                // Blogs created by the Administrator area do not
+                // set a source. Treat it as Filesystem.
+                "" => BlogSource::Filesystem,
                 _ => {
                     error!("Failed to parse blog source. Default to Filesystem.");
                     BlogSource::Filesystem
@@ -152,6 +159,7 @@ impl BlogDisplayRepo for TursoDatabase {
                 .get::<String>(5)
                 .unwrap_or_default()
                 .split(",")
+                .filter(|tag| !tag.is_empty())
                 .map(|tag| tag.to_string())
                 .collect();
 

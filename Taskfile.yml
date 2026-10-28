@@ -13,7 +13,9 @@ tasks:
   test:
     summary: Run all-feature tests serially, as in CI
     cmds:
-      - RUST_LOG=debug cargo test --all-features --locked -- --test-threads=1
+      - |
+        RUST_LOG=debug cargo test --all-features --locked -- --test-threads=1
+        cd ./tests/js && npm test
   coverage:
     summary: Run tarpaulin for code coverage and produce html output
     cmds:
@@ -82,13 +84,13 @@ tasks:
           echo 'export TURSO_AUTH_TOKEN=$(turso db tokens create your-db-name -e 7d)'
           return 1;
         fi
-        gsutil cp gs://$SECRETS_BUCKET/$SECRETS_OBJECT secrets
+        gcloud storage cp gs://$SECRETS_BUCKET/$SECRETS_OBJECT secrets
         if [[ "$OSTYPE" =~ "darwin*" || $(uname) == "Darwin" ]]; then
           sed -i "" "s/TURSO_AUTH_TOKEN=.*/TURSO_AUTH_TOKEN=$TURSO_AUTH_TOKEN/" secrets
         else
           sed -i "s/TURSO_AUTH_TOKEN=.*/TURSO_AUTH_TOKEN=$TURSO_AUTH_TOKEN/" secrets
         fi
-        gsutil cp secrets gs://$SECRETS_BUCKET/$SECRETS_OBJECT
+        gcloud storage cp secrets gs://$SECRETS_BUCKET/$SECRETS_OBJECT
         rm secrets
   update-version:
     summary: Update version manifest

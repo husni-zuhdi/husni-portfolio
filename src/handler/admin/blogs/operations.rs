@@ -8,12 +8,111 @@ use crate::handler::status::{
 use crate::model::axum::AppState;
 use crate::model::blog_tag_mappings::{BlogTagMapping, BlogTagMappingCommandStatus};
 use crate::model::blogs::{BlogCommandStatus, BlogsParams};
-use crate::model::tags::{Tag, TagsListParams};
+use crate::model::tags::{Tag, TagCommandStatus, TagsListParams};
+use crate::model::templates_admin::AdminBlogPreviewTemplate;
+use crate::usecase::tags::{TagCacheUseCase, TagDBUseCase};
+use crate::utils::convert_markdown_to_html;
+use askama::Template;
 use axum::debug_handler;
 use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::response::Html;
 use tracing::{debug, error, info, warn};
+use urlencoding::decode;
+
+/// Ensure all tag names in `selected_names` exist, creating any missing tags.
+/// Returns the corresponding `Tag` records with ids.
+async fn ensure_selected_tags(
+    selected_names: Vec<String>,
+    tag_db_uc: &mut TagDBUseCase,
+    tags_cache_uc_opt: &Option<TagCacheUseCase>,
+    is_tags_cache_enabled: bool,
+) -> Option<Vec<Tag>> {
+    let available = tag_db_uc
+        .tag_display_repo
+        .find_tags(TagsListParams {
+            start: Some(0),
+            end: Some(1000),
+        })
+        .await?;
+
+    let mut result = Vec::with_capacity(selected_names.len());
+    let mut missing = Vec::new();
+
+    for name in selected_names {
+        match available.tags.iter().find(|t| t.name == name) {
+            Some(tag) => result.push(tag.clone()),
+            None => missing.push(name),
+        }
+    }
+
+    for name in missing {
+        let new_id = tag_db_uc.tag_operation_repo.get_new_id().await?;
+        let add_status = tag_db_uc.tag_operation_repo.add(new_id, name.clone()).await;
+        if add_status != Some(TagCommandStatus::Stored) {
+            error!("Failed to create new tag {}", name);
+            return None;
+        }
+        let tag = Tag {
+            id: new_id,
+            name: name.clone(),
+        };
+        if is_tags_cache_enabled {
+            let _ = tags_cache_uc_opt
+                .clone()
+                .unwrap()
+                .tag_operation_repo
+                .insert(tag.clone())
+                .await;
+        }
+        result.push(tag);
+    }
+
+    Some(result)
+}
+
+/// post_admin_blog_preview
+/// Serve POST preview blog content endpoint.
+/// Renders the markdown body without touching the database.
+#[debug_handler]
+pub async fn post_admin_blog_preview(
+    State(app_state): State<AppState>,
+    headers: HeaderMap,
+    body: String,
+) -> Html<String> {
+    if !is_auth_verified(headers.clone(), &app_state.config.secrets.jwt_secret)
+        || !verify_csrf_token(&headers)
+    {
+        return get_401_unauthorized().await;
+    }
+
+    let mut blog_body = String::new();
+    for req_field in body.split('&') {
+        let Some((key, value)) = req_field.split_once('=') else {
+            continue;
+        };
+        if key == "blog_body" {
+            blog_body = decode(value).unwrap_or_default().to_string();
+            break;
+        }
+    }
+
+    let preview = AdminBlogPreviewTemplate {
+        html: convert_markdown_to_html(&blog_body),
+    }
+    .render();
+
+    match preview {
+        Ok(html) => {
+            info!("AdminBlogPreview askama template rendered.");
+            Html(html)
+        }
+        Err(err) => {
+            error!("Failed to render admin/blogs/preview.html. {}", err);
+            get_500_internal_server_error()
+        }
+    }
+}
 
 /// post_add_admin_blog
 /// Serve POST add blog endpoint
@@ -58,9 +157,8 @@ pub async fn post_add_admin_blog(
             .await;
     }
 
-    // Check if tags is available. if not add the new tag
-    // No need to check tags. We only provide available tags for now
-    let tag_db_uc = app_state.tag_db_usecase.lock().await.clone();
+    // Ensure selected tags exist, creating any new tags inline.
+    let mut tag_db_uc = app_state.tag_db_usecase.lock().await.clone();
     let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
     let is_tags_cache_enabled = tags_cache_uc_opt.is_some();
 
@@ -69,46 +167,17 @@ pub async fn post_add_admin_blog(
         return get_500_internal_server_error();
     }
 
-    // Get Data from Cache or Database
-    let mut available_tags = if is_tags_cache_enabled {
-        tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_display_repo
-            .find_tags(TagsListParams {
-                start: Some(0),
-                end: Some(1000),
-            })
-            .await
-    } else {
-        None
-    };
-
-    if available_tags.is_none() {
-        debug!("Tags Cache is empty. Getting data from database");
-        available_tags = tag_db_uc
-            .unwrap()
-            .tag_display_repo
-            .find_tags(TagsListParams {
-                start: Some(0),
-                end: Some(1000),
-            })
-            .await;
-    }
-
-    // Filter tag id from the response body in the available_tags
-    if available_tags.is_none() {
-        error!("Failed to get all tags");
+    let Some(selected_tags) = ensure_selected_tags(
+        blog.tags.clone().unwrap_or_default(),
+        tag_db_uc.as_mut().unwrap(),
+        &tags_cache_uc_opt,
+        is_tags_cache_enabled,
+    )
+    .await
+    else {
+        error!("Failed to ensure selected tags for blog {}", blog.id);
         return get_500_internal_server_error();
-    }
-
-    let selected_tags: Vec<Tag> = available_tags
-        .unwrap()
-        .tags
-        .iter()
-        .filter(|t| blog.tags.clone().unwrap().contains(&t.name))
-        .cloned()
-        .collect();
+    };
     debug!("Selected Tags: {:?}", selected_tags);
 
     // Add blog_tag_mappings
@@ -224,8 +293,8 @@ pub async fn put_edit_admin_blog(
             .await;
     }
 
-    // Get selected tags id
-    let tag_db_uc = app_state.tag_db_usecase.lock().await.clone();
+    // Ensure selected tags exist, creating any new tags inline.
+    let mut tag_db_uc = app_state.tag_db_usecase.lock().await.clone();
     let tags_cache_uc_opt = app_state.tag_cache_usecase.lock().await.clone();
     let is_tags_cache_enabled = tags_cache_uc_opt.is_some();
 
@@ -234,44 +303,19 @@ pub async fn put_edit_admin_blog(
         return get_500_internal_server_error();
     }
 
-    // Get Data from Cache or Database
-    let mut tags_result = if is_tags_cache_enabled {
-        tags_cache_uc_opt
-            .clone()
-            .unwrap()
-            .tag_display_repo
-            .find_tags(TagsListParams {
-                start: Some(0),
-                end: Some(1000),
-            })
-            .await
-    } else {
-        None
-    };
-
-    if tags_result.is_none() {
-        debug!("Tags Cache is empty. Getting data from database");
-        tags_result = tag_db_uc
-            .unwrap()
-            .tag_display_repo
-            .find_tags(TagsListParams {
-                start: Some(0),
-                end: Some(1000),
-            })
-            .await;
-    }
-
-    let Some(tags) = tags_result else {
-        error!("Failed to get Tags with id from 0 - 1000");
+    let Some(selected_tags) = ensure_selected_tags(
+        blog.tags.clone().unwrap_or_default(),
+        tag_db_uc.as_mut().unwrap(),
+        &tags_cache_uc_opt,
+        is_tags_cache_enabled,
+    )
+    .await
+    else {
+        error!("Failed to ensure selected tags for blog {}", blog.id);
         return get_500_internal_server_error();
     };
 
-    let selected_tag_ids: Vec<i64> = tags
-        .tags
-        .iter()
-        .filter(|t| blog.tags.clone().unwrap().contains(&t.name))
-        .map(|t| t.id)
-        .collect();
+    let selected_tag_ids: Vec<i64> = selected_tags.iter().map(|t| t.id).collect();
     debug!("Selected Tag IDs {:?}", &selected_tag_ids);
 
     // Get blog tag mapping by blog id and tag id
@@ -487,4 +531,24 @@ pub async fn delete_delete_admin_blog(
     };
 
     get_admin_blogs_list(State(app_state), headers, Query(query_params)).await
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::config::Config;
+    use crate::state::state_factory;
+
+    fn unauthorized_html(html: &Html<String>) -> bool {
+        html.0.contains("401 Unauthorized")
+    }
+
+    #[tokio::test]
+    async fn test_post_admin_blog_preview_unauthorized() {
+        let state = state_factory(Config::default()).await;
+        let headers = HeaderMap::new();
+        let body = "blog_body=%23%20Hello".to_string();
+        let result = post_admin_blog_preview(State(state), headers, body).await;
+        assert!(unauthorized_html(&result));
+    }
 }

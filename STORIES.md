@@ -24,11 +24,13 @@ Inspired by bigboxSWE [video](https://www.youtube.com/watch?v=nqqmwRXSvrw) about
     - I think it's better to have some kind of *versioning* for profile.
     - For example by set the `datetime` as profile_id. We can roll-back or see the historical profile.
     - The versioning can be implemented in another features like `Blogs` too.
-- [ ] As an Administrator, I want a better experience writing Blogs in the Admin area.
-    - The Blogs section of the Admin area still has many caveats for writing content directly.
-        - Use double slash "\" to add in-line math notation
-        - Wrap table inside a div with "overflow-x: auto;" style to allow table overflow
-        - Use """ to create a single double quote
+- [x] As an Administrator, I want a better experience writing Blogs in the Admin area.
+    - Rebuilt the `/admin/blogs/edit` and `/admin/blogs/add` forms with a searchable tag multi-select, split-pane markdown editor, and live preview.
+    - Replaced MathJax with Temml for LaTeX math; authors write `$...$` / `$$...$$`.
+    - Added Pele for fast Mermaid diagram rendering.
+    - Tables are now auto-wrapped in a scrollable container.
+    - Empty tags and malformed form fields are handled correctly.
+    - New tags can be created inline while editing a blog.
 
 ### Engineering stories
 - [x] As an Engineer, I want to have a useful CHANGELOG.md file to track releases.

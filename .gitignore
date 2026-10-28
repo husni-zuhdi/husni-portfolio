@@ -5,3 +5,5 @@
 **/local.db
 **husni-portfolio.db**
 tarpaulin-report.html
+tests/js/node_modules/
+**node_modules

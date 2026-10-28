@@ -28,32 +28,69 @@
         <!-- Sttlesheet CSS -->
         <link rel="stylesheet" href="/styles.css" />
         {% include "partials/theme_fouc_prevention.html" %}
+        <script src="/statics/nav.js" defer></script>
     </head>
     <body id="body_target">
         <!-- Navbar Section -->
-        <nav id="navbar_target">
+        <nav id="navbar_target" class="sticky top-0 z-40">
             <div class="main_navbar">
                 <!-- Logo -->
-                <div class="py-3 md:py-0 flex items-center md:items-stretch md:justify-start">
+                <div class="flex items-center justify-start">
                     <img class="w-auto" src="/statics/favicon-32x32.png" alt="Husni Zuhdi">
                 </div>
-                <!-- Web Menu -->
-                <div class="flex flex-col md:flex-row md:mx-3 md:space-x-4 items-center">
-                    <a href="/" class="navbar_link" aria-current="page">Home</a>
+                <!-- Web Menu (desktop) -->
+                <div class="hidden md:flex md:flex-row md:mx-3 md:space-x-4 items-center">
+                    <a href="/" class="navbar_link">Home</a>
                     <a href="/blogs" class="navbar_link">Blogs</a>
                     <a href="/talks" class="navbar_link">Talks</a>
                 </div>
-                <!-- User Management -->
-                <div class="flex flex-row md:mx-3 md:space-x-4">
+                <!-- User Management (desktop) -->
+                <div class="hidden md:flex md:flex-row md:mx-3 md:space-x-4 items-center">
                     {% include "partials/theme_button.html" %}
                     <!-- Login -->
                     <a href="/"
                        class="navbar_link"
+                       data-nav-path="/login"
                        hx-get="/login"
                        hx-target="#main_body_target"
                        hx-replace-url="true"
                        hx-swap="innerHTML">Login</a>
                 </div>
+                <!-- Mobile controls -->
+                <div class="md:hidden flex items-center">
+                    {% include "partials/theme_button.html" %}
+                    <button id="nav_drawer_toggle_target"
+                            type="button"
+                            class="btn_theme p-1"
+                            aria-controls="nav_drawer_target"
+                            aria-expanded="false">
+                        <svg class="w-5 h-5 fill-none"
+                             stroke="currentColor"
+                             stroke-width="2"
+                             stroke-linecap="round"
+                             stroke-linejoin="round"
+                             viewBox="0 0 24 24">
+                            <path d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Mobile backdrop -->
+                <div id="nav_backdrop_target" class="nav_backdrop" aria-hidden="true"></div>
+            </div>
+            <!-- Mobile drawer -->
+            <div id="nav_drawer_target"
+                 class="nav_drawer md:hidden"
+                 aria-hidden="true">
+                <a href="/" class="navbar_link">Home</a>
+                <a href="/blogs" class="navbar_link">Blogs</a>
+                <a href="/talks" class="navbar_link">Talks</a>
+                <a href="/"
+                   class="navbar_link"
+                   data-nav-path="/login"
+                   hx-get="/login"
+                   hx-target="#main_body_target"
+                   hx-replace-url="true"
+                   hx-swap="innerHTML">Login</a>
             </div>
         </nav>
         <!-- Main Section -->
@@ -92,13 +129,13 @@
                 </div>
                 <!-- Navigator -->
                 <div id="footer_nav_target" class="footer_nav">
-                    <div class="grid gap-8 lg:grid-cols-3">
+                    <div class="grid gap-4 lg:grid-cols-3 lg:gap-8">
                         <div id="footer_quote_target">
                             <h2>Husni Zuhdi</h2>
                             <p>Character is Destiny</p>
                             <p><i>~ Heraclitus</i></p>
                         </div>
-                        <div id="footer_navigator_target">
+                        <div id="footer_navigator_target" class="hidden lg:block">
                             <h2>Navigator</h2>
                             <p><a href="/">Home</a></p>
                             <p><a href="/blogs">Blogs</a></p>

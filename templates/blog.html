@@ -2,28 +2,30 @@
 {% block title %}{{ id }} - {{ name }}{% endblock %}
 {% block description %}"Blog {{ id }} - {{ name }}"{% endblock %}
 {% block content %}
-    <!-- Syntax  Highlithing -->
-    <link href="https://unpkg.com/nord-highlightjs@0.1.0/dist/nord.css"
-          rel="stylesheet"
-          type="text/css" />
-    <script src="https://unpkg.com/@highlightjs/cdn-assets@11.11.1/highlight.min.js"></script>
+    <!-- Syntax Highlighting -->
+    <link href="/statics/hljs/nord.css" rel="stylesheet" type="text/css" />
+    <script src="/statics/hljs/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
-    <!-- MathJax-->
-    <script id="MathJax-script"
-            async
-            src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <!-- Temml -->
+    <link rel="stylesheet" href="/statics/temml/Temml-Local.css" />
+    <script src="/statics/temml/temml.min.js"></script>
+    <!-- Pele -->
+    <script src="/statics/pele/pele.global.js"></script>
     <script>
-        MathJax = {
-          output: {
-            displayOverflow: 'linebreak',  // break long lines
-            linebreaks: {                  // options for when overflow is linebreak
-              inline: true,                   // true for browser-based breaking of in-line equations
-              width: '100%',                  // a fixed size or a percentage of the container width
-              lineleading: .2,                // the default lineleading in em units
-              LinebreakVisitor: null,         // The LinebreakVisitor to use
-            }
-          }
+        function renderBlogMathAndDiagrams(root) {
+            root = root || document.body;
+            temml.renderMathInElement(root, { fences: "$+" });
+            root.querySelectorAll('pre.mermaid').forEach(function(el) {
+                try {
+                    pele.mount(el, el.textContent, { zoom: false });
+                } catch (err) {
+                    console.error('Pele render failed:', err);
+                }
+            });
         }
+        document.addEventListener('DOMContentLoaded', function() {
+            renderBlogMathAndDiagrams(document.body);
+        });
     </script>
     <div>{{ body|safe }}</div>
     <div>

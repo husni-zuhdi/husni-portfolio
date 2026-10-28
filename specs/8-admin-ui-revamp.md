@@ -78,6 +78,68 @@ buttons; the `active_tag` variant stays inverted (gray background, white
 text). Hover effect is bold for both variants. Chips were grilled as a
 deliberate design choice; public pages were included for consistency.
 
+## Blog editor enhancements
+
+The Blog add/edit forms received a separate pass after the initial revamp:
+
+- **Tags:** replaced the native `<select multiple>` with a searchable dropdown,
+  selected pill chips, and an inline "Create new tag" option.
+- **Body:** split-pane markdown editor + live preview on desktop, tabbed editor
+  / preview on mobile. Both debounced live preview and a manual preview button
+  are available via `POST /admin/blogs/preview`.
+- **Math:** MathJax was replaced with vendored Temml; authors write standard
+  `$...$` / `$$...$$` delimiters.
+- **Diagrams:** ` ```mermaid ` code blocks are converted to `<pre class="mermaid">`
+  and rendered with vendored Pele.
+- **Bugs fixed:** empty tag values no longer leak into the database, form fields
+  without `=` are skipped, rendered tables are auto-wrapped in `.table-wrapper`,
+  and new tags are created automatically when explicitly chosen.
+
+## Editor script initialization and tag-less blogs
+
+A follow-up pass fixed two interaction bugs introduced by the revamp:
+
+- **Script init race:** the per-form inline `<script>initBlogEditor(...)</script>`
+  executed before `admin-blog-editor.js` loaded inside HTMX-swapped fragments,
+  so the tag widget, tab switching, and preview rendering randomly failed
+  ("initBlogEditor is not defined"). The editor script now loads once from
+  `admin_base.html` `<head>` and the forms are initialized globally via
+  `htmx:load`; Temml/Pele preview rendering runs globally on
+  `htmx:afterSwap` for `#blog_preview` through the exported
+  `renderBlogPreviewContent`. Per-form inline scripts are gone.
+- **Mobile preview tab:** activating the preview tab with an empty preview
+  triggers the preview request automatically (tab clicks only; the eye button
+  and debounced refresh do not re-trigger to avoid request loops).
+- **Tag-less blogs:** blog list and lookup queries joined through
+  `blog_tag_mapping` with inner joins, so blogs without any tag disappeared
+  from `/blogs`, `/admin/blogs/list`, and resolved to `404` on direct lookups
+  (cache briefly masked this until it drained). The Turso queries in
+  `src/database/turso/blogs.rs` now use LEFT JOINs with
+  `COALESCE(group_concat(...), '')`; tag-less blogs appear unfiltered and are
+  hidden only while a tag filter is active. An empty `source` value (legacy
+  admin-created rows) maps to `Filesystem` without an error log.
+- **Tag dropdown blur race:** dropdown items were non-focusable `<div>`s;
+  mousedown blurred the search input, the `focusout` handler hid the dropdown
+  between mousedown and mouseup, and the click never landed — adding tags
+  failed on add and edit forms while removal worked. Items now call
+  `preventDefault()` on mousedown so the input keeps focus and the click
+  completes.
+- **Mobile preview auto-switch:** the debounced background refresh reused the
+  eye button's click, which also switched the active tab — on mobile, typing
+  yanked the view to the preview pane. The background refresh now runs only
+  on desktop (matchMedia `min-width: 768px`) and never switches tabs; a
+  `previewDirty` flag makes the preview tab re-fetch when the body changed
+  since the last render.
+- **Preview code-block parity:** the public blog page loads highlight.js with
+  the nord theme; the Admin preview did not, so `pre`/code blocks looked
+  different (affecting the surrounding mermaid frame). `admin_base.html` now
+  loads the same nord.css/highlight.js assets, and the preview renderer
+  runs `hljs.highlightElement()` on `pre code` inside `#blog_preview`.
+- **Vendored syntax highlighting:** highlight.js 11.11.1 and the nord theme
+  live in `statics/hljs/` (served via a dedicated route like Temml and Pele);
+  the public blog page and the Admin area both load them locally instead of
+  from unpkg.
+
 ## Known limitations
 
 - The profile page-title section row shows `[Title]` next to its position and

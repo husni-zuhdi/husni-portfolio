@@ -150,6 +150,12 @@ pub struct AdminGetDeleteBlogTemplate {
 }
 
 #[derive(Template, Debug)]
+#[template(path = "admin/blogs/preview.html")]
+pub struct AdminBlogPreviewTemplate {
+    pub html: String,
+}
+
+#[derive(Template, Debug)]
 #[template(path = "admin/blogs/tags/tags.html")]
 pub struct AdminBlogTagsTemplate {}
 

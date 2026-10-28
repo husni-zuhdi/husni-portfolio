@@ -6,7 +6,7 @@ hooks = [
   { id = "check-toml" },
   { id = "check-json" },
   { id = "end-of-file-fixer" },
-  { id = "check-added-large-files" },
+  { id = "check-added-large-files", args = ['--maxkb=750']},
 ]
 
 [[repos]]
