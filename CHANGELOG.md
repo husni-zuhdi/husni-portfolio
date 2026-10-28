@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Consolidate the Admin navbar "Admin *" links into an "Admin" dropdown (Profile, Blogs, Blog Tags, Talks): desktop hover/click and touch tapping with a tap-then-navigate contract; the mobile drawer Admin row becomes an expandable group, and the trigger highlights on any `/admin/*` page.
 - Swap the forwarding usecase layer for deep per-entity usecases (`BlogUseCase`, `TagUseCase`, `TalkUseCase`, `ProfileUseCase`, and an internal `BlogTagMappingUseCase`): handlers call verb methods only, and each usecase owns its database repos, the optional cache, and the read-write choreography.
 - Make Blog, Tag, and Talk list reads all-or-nothing through per-entity cache id indexes: a partially expired cache falls through to the database and refills instead of returning a stale short list.
 - Move the startup cache prefill onto the per-entity usecases' `prefill` verbs.

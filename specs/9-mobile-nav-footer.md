@@ -55,6 +55,41 @@ footer dropped its duplicate navigation block. Desktop layouts are preserved.
 - `nav_drawer_slide_down` keyframes live at the bottom of `statics/input.css`.
 - The `/statics/nav.js` route mirrors `/statics/theme.js` (`ServeFile`).
 
+## Admin dropdown (consolidated Admin links)
+
+The Admin navbar consolidates the three "Admin *" links into one "Admin"
+dropdown (Profile, Blogs, Blog Tags, Talks management, where Blog Tags was
+previously reachable only from the `/admin` landing cards):
+
+- **Desktop header**: the trigger stays a real link to `/admin`. Hover or
+  keyboard focus opens the menu with a 150ms mouse-out grace delay (Escape,
+  outside click/tap, and navigation away also close it); a desktop click on
+  "Admin" still navigates to the landing page. The menu is an absolute
+  panel (`.admin_dropdown_menu`) under the trigger with a rotating chevron.
+- **Touch (md+ without hover)**: `matchMedia('(hover: hover)')` decides —
+  the first tap opens the menu, a second tap on the trigger navigates to
+  `/admin`. No user-agent sniffing.
+- **Mobile drawer**: `Admin` becomes an in-place expandable group
+  (`.admin_drawer_group`): on touch, the first tap expands the indented
+  submenu (Profile, Blogs, Blog Tags, Talks) and the second tap on the
+  trigger navigates to `/admin` — the same tap-then-navigate contract as
+  the header trigger, so there is no separate Overview item; child taps
+  navigate and close the drawer. Collapse behavior and its trade-off are
+  covered in "Trade-off: the drawer Admin group has no collapse gesture"
+  below.
+- **Highlighting**: the trigger carries `data-nav-prefix="/admin"` and
+  lights on any `/admin/*` page (wayfinding while the child links are
+  inside a menu); dropdown/drawer items keep exact-match highlighting, and
+  `Home`/public links are unchanged.
+- **Accessibility**: `aria-haspopup="menu"` + JS-synced `aria-expanded` on
+  the trigger, `role="menu"` panels of plain link items, chevron rotation
+  as the open cue.
+- `statics/nav.js` owns all dropdown and drawer-group behavior alongside
+  the drawer (re-init on the same `htmx:afterSettle` cycle; the group menu
+  open state is not persisted across loads); covered by
+  `tests/js/nav.test.js` (hover/grace/outside/Escape, tap-then-navigate,
+  prefix highlighting, drawer group toggle and child navigation).
+
 ## Known limitations
 
 - The hardcoded `aria-current="page"` was removed from the initial markup;
@@ -66,3 +101,19 @@ footer dropped its duplicate navigation block. Desktop layouts are preserved.
 - The drawer re-binds link-close listeners on every `htmx:afterSettle`; the
   remove-before-add pattern keeps this idempotent, but binding cost scales
   with drawer link count (single digits today).
+
+## Trade-off: the drawer Admin group has no collapse gesture
+
+**Status: accepted (user decision, 2026-10-28).** The mobile drawer "Admin"
+group shares one tap contract with the desktop header trigger:
+**first tap expands the submenu, second tap navigates to `/admin`**. A
+deliberate consequence — once the group is expanded, tapping the trigger
+again cannot collapse it, because that gesture must navigate (this is what
+made the separate "Overview" item removable). The expand state resets when
+the drawer closes (backdrop, Escape, child navigation) or the page changes;
+the group menu open state is never persisted across loads.
+
+If in-page collapse is ever needed, options are a dedicated third gesture,
+a chevron-prop toggle (currently the chevron is inside the `<a>`), or
+restoring a collapsed-state tap at the cost of a two-tap route to `/admin`
+— none implemented.
